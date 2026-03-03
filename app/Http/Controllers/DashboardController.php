@@ -1,0 +1,141 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Expense;
+use App\Models\Income;
+use App\Models\Wallet;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class DashboardController extends Controller
+{
+    public function index(Request $request)
+    {
+        if ($request->user()->can('access_admin_panel')) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        $user = $request->user();
+        $families = $user->families()->get();
+        $familyIds = $families->pluck('id')->toArray();
+
+        $currency = config('currencies.default', 'TZS');
+        $currentFamily = $families->first();
+        if ($currentFamily) {
+            $currency = $currentFamily->currency_code ?? $currency;
+        }
+
+        $now = Carbon::now();
+        $startOfMonth = $now->copy()->startOfMonth();
+        $endOfMonth = $now->copy()->endOfMonth();
+
+        // Totals for user's families (current month)
+        $totalIncome = Income::whereIn('family_id', $familyIds)
+            ->whereBetween('received_date', [$startOfMonth, $endOfMonth])
+            ->sum('amount');
+
+        $totalExpenses = Expense::whereIn('family_id', $familyIds)
+            ->whereBetween('expense_date', [$startOfMonth, $endOfMonth])
+            ->sum('amount');
+
+        // Total wallet balance across all user's family wallets
+        $wallets = Wallet::whereIn('family_id', $familyIds)
+            ->withSum('incomes', 'amount')
+            ->withSum('expenses', 'amount')
+            ->withSum('incomingTransfers', 'amount')
+            ->withSum('outgoingTransfers', 'amount')
+            ->get();
+        $totalSavings = $wallets->sum(fn ($w) => (float) $w->initial_balance
+            + (float) ($w->incomes_sum_amount ?? 0)
+            - (float) ($w->expenses_sum_amount ?? 0)
+            + (float) ($w->incoming_transfers_sum_amount ?? 0)
+            - (float) ($w->outgoing_transfers_sum_amount ?? 0));
+
+        // Budget: total planned vs used this month (simplified – sum of budgets that have expenses)
+        $budgetUsedPercent = 0;
+        $budgetUsedLabel = '—';
+        if ($currentFamily) {
+            $budgets = $currentFamily->budgets()
+                ->with(['wallets', 'categories'])
+                ->where('start_date', '<=', $endOfMonth)
+                ->where('end_date', '>=', $startOfMonth)
+                ->get();
+            $totalBudget = $budgets->sum('amount');
+            $totalBudgetUsed = $budgets->sum('used_amount');
+            if ($totalBudget > 0) {
+                $budgetUsedPercent = min(100, round(($totalBudgetUsed / $totalBudget) * 100));
+                $budgetUsedLabel = number_format($totalBudgetUsed, 0) . ' ' . $currency . ' of ' . number_format($totalBudget, 0);
+            }
+        }
+
+        // Last 6 months for income vs expense chart
+        $months = [];
+        $incomeByMonth = [];
+        $expenseByMonth = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $d = $now->copy()->subMonths($i);
+            $months[] = $d->format('M');
+            $start = $d->copy()->startOfMonth();
+            $end = $d->copy()->endOfMonth();
+            $incomeByMonth[] = (float) Income::whereIn('family_id', $familyIds)->whereBetween('received_date', [$start, $end])->sum('amount');
+            $expenseByMonth[] = (float) Expense::whereIn('family_id', $familyIds)->whereBetween('expense_date', [$start, $end])->sum('amount');
+        }
+
+        // Expenses by category (current month)
+        $expensesByCategory = Expense::whereIn('expenses.family_id', $familyIds)
+            ->whereBetween('expenses.expense_date', [$startOfMonth, $endOfMonth])
+            ->join('expense_categories', 'expenses.category_id', '=', 'expense_categories.id')
+            ->select('expense_categories.name as category_name', DB::raw('SUM(expenses.amount) as total'))
+            ->groupBy('expense_categories.id', 'expense_categories.name')
+            ->orderByDesc('total')
+            ->limit(8)
+            ->get();
+
+        // Recent activity: incomes and expenses combined, sorted by date
+        $recentIncomes = Income::whereIn('family_id', $familyIds)
+            ->with('category')
+            ->orderByDesc('received_date')
+            ->limit(15)
+            ->get();
+
+        $recentExpenses = Expense::whereIn('family_id', $familyIds)
+            ->with('category')
+            ->orderByDesc('expense_date')
+            ->limit(15)
+            ->get();
+
+        $recentActivity = $recentIncomes->map(fn ($i) => (object)[
+            'description' => $i->source ?: 'Income',
+            'category' => $i->category->name ?? 'Income',
+            'amount' => $i->amount,
+            'currency_code' => $i->currency_code,
+            'date' => $i->received_date,
+            'type' => 'income',
+        ])->concat($recentExpenses->map(fn ($e) => (object)[
+            'description' => $e->description ?: 'Expense',
+            'category' => $e->category->name ?? 'Expense',
+            'amount' => $e->amount,
+            'currency_code' => $e->currency_code,
+            'date' => $e->expense_date,
+            'type' => 'expense',
+        ]))->sortByDesc('date')->take(10)->values();
+
+        return view('dashboard', [
+            'families' => $families,
+            'currentFamily' => $currentFamily,
+            'currency' => $currency,
+            'totalIncome' => $totalIncome,
+            'totalExpenses' => $totalExpenses,
+            'totalSavings' => $totalSavings,
+            'budgetUsedPercent' => $budgetUsedPercent,
+            'budgetUsedLabel' => $budgetUsedLabel,
+            'chartMonths' => $months,
+            'chartIncome' => $incomeByMonth,
+            'chartExpense' => $expenseByMonth,
+            'expensesByCategory' => $expensesByCategory,
+            'recentActivity' => $recentActivity,
+        ]);
+    }
+}

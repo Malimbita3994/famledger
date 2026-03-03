@@ -1,0 +1,112 @@
+@extends('layouts.metronic')
+
+@section('title', 'Edit Savings Goal')
+@section('page_title', 'Edit Savings Goal')
+
+@section('content')
+<div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
+    <a href="{{ route('families.savings-goals.show', [$family, $savingsGoal]) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+        <i class="ki-filled ki-left text-base mr-1"></i>
+        Back to goal
+    </a>
+
+    <form action="{{ route('families.savings-goals.update', [$family, $savingsGoal]) }}" method="POST">
+        @csrf
+        @method('PUT')
+
+        <div class="grid gap-5 lg:gap-7.5 xl:w-[38.75rem] mx-auto">
+            <div class="kt-card pb-2.5">
+                <div class="kt-card-header">
+                    <h3 class="kt-card-title">Edit savings goal</h3>
+                </div>
+                <div class="kt-card-content grid gap-5">
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="name" class="kt-form-label max-w-56">Name <span class="text-destructive">*</span></label>
+                        <div class="grow">
+                            <input type="text" name="name" id="name" value="{{ old('name', $savingsGoal->name) }}" required class="kt-input" />
+                            @error('name')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="description" class="kt-form-label max-w-56">Description</label>
+                        <div class="grow">
+                            <textarea name="description" id="description" rows="2" class="kt-input">{{ old('description', $savingsGoal->description) }}</textarea>
+                            @error('description')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="target_amount" class="kt-form-label max-w-56">Target amount <span class="text-destructive">*</span></label>
+                        <div class="grow">
+                            <input type="number" name="target_amount" id="target_amount" value="{{ old('target_amount', $savingsGoal->target_amount) }}" required step="0.01" min="0.01" class="kt-input" />
+                            @error('target_amount')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="currency_code" class="kt-form-label max-w-56">Currency <span class="text-destructive">*</span></label>
+                        <div class="grow">
+                            <select name="currency_code" id="currency_code" required class="kt-select">
+                                @foreach ($currencies as $code => $label)
+                                    <option value="{{ $code }}" {{ old('currency_code', $savingsGoal->currency_code) === $code ? 'selected' : '' }}>{{ $code }} – {{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('currency_code')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="wallet_id" class="kt-form-label max-w-56">Wallet <span class="text-destructive">*</span></label>
+                        <div class="grow">
+                            <select name="wallet_id" id="wallet_id" required class="kt-select">
+                                @foreach ($wallets as $w)
+                                    <option value="{{ $w->id }}" {{ old('wallet_id', $savingsGoal->wallet_id) == $w->id ? 'selected' : '' }}>{{ $w->name }} ({{ $w->currency_code }})</option>
+                                @endforeach
+                            </select>
+                            @error('wallet_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="target_date" class="kt-form-label max-w-56">Target date</label>
+                        <div class="grow">
+                            <input type="date" name="target_date" id="target_date" value="{{ old('target_date', $savingsGoal->target_date?->format('Y-m-d')) }}" class="kt-input" />
+                            @error('target_date')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="priority" class="kt-form-label max-w-56">Priority</label>
+                        <div class="grow">
+                            <select name="priority" id="priority" class="kt-select">
+                                @foreach (\App\Models\SavingsGoal::priorities() as $value => $label)
+                                    <option value="{{ $value }}" {{ old('priority', $savingsGoal->priority) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('priority')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="status" class="kt-form-label max-w-56">Status</label>
+                        <div class="grow">
+                            <select name="status" id="status" class="kt-select">
+                                @foreach (\App\Models\SavingsGoal::statuses() as $value => $label)
+                                    <option value="{{ $value }}" {{ old('status', $savingsGoal->status) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('status')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-2 gap-2">
+                        <a href="{{ route('families.savings-goals.show', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-outline">Cancel</a>
+                        <button type="submit" class="kt-btn kt-btn-primary">Update goal</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+@endsection

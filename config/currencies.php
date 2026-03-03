@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'default' => 'TZS',
+    'AED' => 'AED – UAE Dirham',
+    'AUD' => 'AUD – Australian Dollar',
+    'BRL' => 'BRL – Brazilian Real',
+    'CAD' => 'CAD – Canadian Dollar',
+    'CHF' => 'CHF – Swiss Franc',
+    'CNY' => 'CNY – Chinese Yuan',
+    'EGP' => 'EGP – Egyptian Pound',
+    'EUR' => 'EUR – Euro',
+    'GBP' => 'GBP – British Pound',
+    'INR' => 'INR – Indian Rupee',
+    'JPY' => 'JPY – Japanese Yen',
+    'KES' => 'KES – Kenyan Shilling',
+    'MXN' => 'MXN – Mexican Peso',
+    'NGN' => 'NGN – Nigerian Naira',
+    'RUB' => 'RUB – Russian Ruble',
+    'SAR' => 'SAR – Saudi Riyal',
+    'TZS' => 'TZS – Tanzanian Shilling',
+    'UGX' => 'UGX – Ugandan Shilling',
+    'USD' => 'USD – US Dollar',
+    'ZAR' => 'ZAR – South African Rand',
+];
