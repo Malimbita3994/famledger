@@ -42,16 +42,19 @@
         @endif
 
         {{-- Filters --}}
-        <div class="flex flex-wrap items-center gap-3">
-            <a href="{{ route('families.projects.index', [$family, 'filter' => 'all']) }}" class="kt-btn kt-btn-sm {{ ($filter ?? 'all') === 'all' ? 'kt-btn-primary' : 'kt-btn-outline' }}">All</a>
-            <a href="{{ route('families.projects.index', [$family, 'filter' => 'active']) }}" class="kt-btn kt-btn-sm {{ ($filter ?? '') === 'active' ? 'kt-btn-primary' : 'kt-btn-outline' }}">Active</a>
-            <a href="{{ route('families.projects.index', [$family, 'filter' => 'completed']) }}" class="kt-btn kt-btn-sm {{ ($filter ?? '') === 'completed' ? 'kt-btn-primary' : 'kt-btn-outline' }}">Completed</a>
-            <a href="{{ route('families.projects.index', [$family, 'filter' => 'planning']) }}" class="kt-btn kt-btn-sm {{ ($filter ?? '') === 'planning' ? 'kt-btn-primary' : 'kt-btn-outline' }}">Planning</a>
+        <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs text-muted-foreground mr-1">Filter:</span>
+                <a href="{{ route('families.projects.index', [$family, 'filter' => 'all']) }}" class="kt-btn kt-btn-xs {{ ($filter ?? 'all') === 'all' ? 'kt-btn-primary' : 'kt-btn-outline' }}">All</a>
+                <a href="{{ route('families.projects.index', [$family, 'filter' => 'active']) }}" class="kt-btn kt-btn-xs {{ ($filter ?? '') === 'active' ? 'kt-btn-primary' : 'kt-btn-outline' }}">Active</a>
+                <a href="{{ route('families.projects.index', [$family, 'filter' => 'completed']) }}" class="kt-btn kt-btn-xs {{ ($filter ?? '') === 'completed' ? 'kt-btn-primary' : 'kt-btn-outline' }}">Completed</a>
+                <a href="{{ route('families.projects.index', [$family, 'filter' => 'planning']) }}" class="kt-btn kt-btn-xs {{ ($filter ?? '') === 'planning' ? 'kt-btn-primary' : 'kt-btn-outline' }}">Planning</a>
+            </div>
         </div>
 
-        {{-- Cards grid (dashboard-style) --}}
+        {{-- Cards grid (Metronic 3-columns style) --}}
         <div id="projects_cards">
-            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-7.5">
                 @forelse ($projects as $project)
                 @php
                     $fundingSum = (float) ($project->fundings_sum_amount ?? 0);
@@ -66,33 +69,72 @@
                         'cancelled' => 'kt-badge-destructive',
                         default => 'kt-badge-outline',
                     };
+                    $startLabel = $project->start_date ? $project->start_date->format('M d') : null;
+                    $endLabel = $project->target_end_date ? $project->target_end_date->format('M d') : null;
+                    $initial = mb_strtoupper(mb_substr($project->name ?? 'P', 0, 1));
                 @endphp
-                <div class="kt-card flex flex-col rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-                    <div class="flex items-center justify-between gap-3 mb-3">
-                        <span class="text-muted-foreground text-sm font-medium">{{ $projectStatuses[$project->status] ?? $project->status }}</span>
-                        <span class="rounded-full size-10 flex items-center justify-center bg-primary/10 text-primary shrink-0">
-                            <i class="ki-filled ki-briefcase text-xl"></i>
+                <div
+                    class="kt-card flex flex-col rounded-2xl border border-border shadow-sm overflow-hidden bg-card"
+                    style="padding: 1.75rem 1.75rem 1.5rem;">
+                    <div class="flex items-center justify-between mb-3 lg:mb-6">
+                        <div class="flex items-center justify-center size-[50px] rounded-lg bg-accent/60">
+                            <span class="text-lg font-semibold text-primary">
+                                {{ $initial }}
+                            </span>
+                        </div>
+                        <span class="kt-badge kt-badge-sm {{ $statusBadge }} kt-badge-outline">
+                            {{ $projectStatuses[$project->status] ?? ucfirst($project->status) }}
                         </span>
                     </div>
-                    <a href="{{ route('families.projects.show', [$family, $project]) }}" class="text-xl font-bold text-foreground hover:text-primary mb-1 block">{{ $project->name }}</a>
-                    <p class="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">{{ $project->description ?: ($projectTypes[$project->type] ?? 'Project') }}</p>
-                    @if($project->start_date || $project->target_end_date)
-                    <div class="text-muted-foreground text-sm mt-2">
-                        @if($project->start_date) Start: <span class="font-medium text-foreground">{{ $project->start_date->format('M j') }}</span>@endif
-                        @if($project->start_date && $project->target_end_date) · @endif
-                        @if($project->target_end_date) End: <span class="font-medium text-foreground">{{ $project->target_end_date->format('M j') }}</span>@endif
+
+                    <div class="flex flex-col mb-3 lg:mb-6">
+                        <a href="{{ route('families.projects.show', [$family, $project]) }}"
+                           class="text-lg font-semibold text-mono hover:text-primary mb-px">
+                            {{ $project->name }}
+                        </a>
+                        <span class="text-sm text-secondary-foreground leading-relaxed">
+                            {{ $project->description ?: ($projectTypes[$project->type] ?? 'Family project') }}
+                        </span>
                     </div>
-                    @endif
-                    <div class="mt-4 pt-4 border-t border-border">
-                        <p class="text-muted-foreground text-sm font-medium mb-1">Spending vs budget</p>
-                        <div class="text-lg font-bold text-foreground tabular-nums">{{ number_format($expenseSum, 0) }} / {{ number_format($planned, 0) }} {{ $project->currency_code }}</div>
-                        <div class="kt-progress h-2 {{ $spendingPct >= 100 ? 'kt-progress-destructive' : 'kt-progress-primary' }} mt-2">
-                            <div class="kt-progress-indicator" style="width: {{ min(100, $spendingPct) }}%"></div>
+
+                    <div class="flex items-center gap-5 mb-3.5 lg:mb-7 text-sm text-secondary-foreground">
+                        @if($startLabel)
+                            <span>
+                                Start:
+                                <span class="font-medium text-foreground">{{ $startLabel }}</span>
+                            </span>
+                        @endif
+                        @if($endLabel)
+                            <span>
+                                End:
+                                <span class="font-medium text-foreground">{{ $endLabel }}</span>
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="kt-progress h-1.5 {{ $spendingPct >= 100 ? 'kt-progress-destructive' : 'kt-progress-primary' }} mb-4 lg:mb-8">
+                        <div class="kt-progress-indicator" style="width: {{ max(3, min(100, $spendingPct)) }}%"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-muted-foreground">
+                            Budget:
+                            <span class="font-medium text-foreground">
+                                {{ number_format($planned, 0) }} {{ $project->currency_code }}
+                            </span>
+                        </span>
+                        <div class="flex -space-x-2">
+                            <div class="flex">
+                                <span class="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 ring-background size-[30px] bg-primary/10 text-xs font-semibold text-primary">
+                                    {{ mb_substr($family->name, 0, 1) }}
+                                </span>
+                            </div>
+                            <div class="flex">
+                                <span class="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 ring-background size-[30px] bg-muted text-[11px] font-semibold text-muted-foreground">
+                                    +{{ $project->id }}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="mt-4 flex items-center justify-between gap-2">
-                        <span class="text-sm text-muted-foreground">Funding: <span class="font-medium text-foreground">{{ number_format($fundingSum, 0) }} {{ $project->currency_code }}</span></span>
-                        <a href="{{ route('families.projects.show', [$family, $project]) }}" class="kt-btn kt-btn-sm kt-btn-ghost text-primary shrink-0">View</a>
                     </div>
                 </div>
                 @empty

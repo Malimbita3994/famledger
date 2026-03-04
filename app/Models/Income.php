@@ -15,6 +15,7 @@ class Income extends Model
         'family_id',
         'wallet_id',
         'category_id',
+        'family_liability_id',
         'amount',
         'currency_code',
         'source',
@@ -56,6 +57,11 @@ class Income extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function familyLiability(): BelongsTo
+    {
+        return $this->belongsTo(FamilyLiability::class, 'family_liability_id');
     }
 
     public function reconciliation(): BelongsTo

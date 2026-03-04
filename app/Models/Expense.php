@@ -16,6 +16,7 @@ class Expense extends Model
         'wallet_id',
         'category_id',
         'project_id',
+        'family_liability_id',
         'amount',
         'currency_code',
         'description',
@@ -82,5 +83,10 @@ class Expense extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function familyLiability(): BelongsTo
+    {
+        return $this->belongsTo(FamilyLiability::class, 'family_liability_id');
     }
 }

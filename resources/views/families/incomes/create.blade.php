@@ -99,6 +99,32 @@
 
                     <input type="hidden" name="currency_code" id="currency_code" value="{{ old('currency_code', $wallets->first()?->currency_code ?? '') }}" />
 
+                    {{-- Liability linkage (optional) --}}
+                    @php
+                        $liabilities = $family->liabilities()->orderBy('name')->get();
+                    @endphp
+                    @if($liabilities->isNotEmpty())
+                    <div class="grid gap-5">
+                        <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                            <label for="family_liability_id" class="kt-form-label max-w-56">Linked liability</label>
+                            <div class="grow">
+                                <select name="family_liability_id" id="family_liability_id" class="kt-select w-full">
+                                    <option value="">— None —</option>
+                                    @foreach($liabilities as $liab)
+                                        <option value="{{ $liab->id }}" {{ old('family_liability_id') == $liab->id ? 'selected' : '' }}>
+                                            {{ $liab->name }} ({{ ucfirst($liab->type) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="text-xs text-muted-foreground mt-1">
+                                    Use when this income represents a loan drawdown or additional borrowing.
+                                </p>
+                                @error('family_liability_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
                     {{-- Additional details --}}
                     <div class="grid gap-5">
                         <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">

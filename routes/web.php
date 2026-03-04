@@ -23,6 +23,8 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\PropertyConfigController;
+use App\Http\Controllers\WealthController;
+use App\Http\Controllers\FamilyLiabilityController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\ContactController;
 
@@ -81,6 +83,9 @@ Route::middleware('auth')->group(function () {
     // Family Management (CRUD)
     Route::resource('families', FamilyController::class);
 
+    // Family wealth
+    Route::get('families/{family}/wealth', [WealthController::class, 'index'])->name('families.wealth.index');
+
     // Family Members (add, edit role, remove)
     Route::prefix('families/{family}')->name('families.')->group(function () {
         Route::get('members/create', [FamilyMemberController::class, 'create'])->name('members.create');
@@ -94,6 +99,15 @@ Route::middleware('auth')->group(function () {
 
         // Family Wallets (stand-alone internal ledger)
         Route::resource('wallets', WalletController::class)->names('wallets');
+
+        // Family Liabilities (loans, debts, credit purchases)
+        Route::get('liabilities', [FamilyLiabilityController::class, 'index'])->name('liabilities.index');
+        Route::get('liabilities/create', [FamilyLiabilityController::class, 'create'])->name('liabilities.create');
+        Route::post('liabilities', [FamilyLiabilityController::class, 'store'])->name('liabilities.store');
+        Route::get('liabilities/{liability}', [FamilyLiabilityController::class, 'show'])->name('liabilities.show');
+        Route::get('liabilities/{liability}/edit', [FamilyLiabilityController::class, 'edit'])->name('liabilities.edit');
+        Route::put('liabilities/{liability}', [FamilyLiabilityController::class, 'update'])->name('liabilities.update');
+        Route::delete('liabilities/{liability}', [FamilyLiabilityController::class, 'destroy'])->name('liabilities.destroy');
 
         // Income (all income goes into a wallet)
         Route::get('incomes', [IncomeController::class, 'index'])->name('incomes.index');

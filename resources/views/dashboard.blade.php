@@ -213,13 +213,72 @@ document.addEventListener('DOMContentLoaded', function() {
     if (categoryEl) {
         if (categoryNames.length && categoryAmounts.length) {
             new ApexCharts(categoryEl, {
-                series: categoryAmounts.map(Number),
-                labels: categoryNames,
-                chart: { type: 'donut', height: 260 },
-                colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'],
-                legend: { position: 'bottom', labels: { colors: 'var(--color-muted-foreground)' } },
-                dataLabels: { formatter: function(val) { return (val || 0).toLocaleString() + ' ' + currency; } },
-                tooltip: { y: { formatter: function(v) { return (v || 0).toLocaleString() + ' ' + currency; } } }
+                series: [{
+                    name: 'Expenses',
+                    data: categoryAmounts.map(Number),
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 260,
+                    toolbar: { show: false },
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 4,
+                        barHeight: '60%',
+                        distributed: true, // give each bar its own color
+                    },
+                },
+                // Palette based on FamLedger logo color for each category
+                colors: [
+                    '#009EF7',
+                    '#38bdf8',
+                    '#0ea5e9',
+                    '#0369a1',
+                    '#22c55e',
+                    '#a855f7',
+                    '#f97316',
+                    '#ef4444'
+                ],
+                dataLabels: {
+                    enabled: true,
+                    style: { colors: ['#374151'], fontSize: '11px' },
+                    formatter: function (val) {
+                        return (val || 0).toLocaleString() + ' ' + currency;
+                    },
+                },
+                xaxis: {
+                    categories: categoryNames,
+                    labels: {
+                        style: { colors: 'var(--color-muted-foreground)', fontSize: '11px' },
+                        formatter: function (v) {
+                            return (v || 0).toLocaleString();
+                        },
+                    },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: 'var(--color-muted-foreground)', fontSize: '11px' },
+                    },
+                },
+                grid: {
+                    borderColor: 'var(--color-border)',
+                    strokeDashArray: 4,
+                    xaxis: { lines: { show: true } },
+                    yaxis: { lines: { show: false } },
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: {
+                        formatter: function (v) {
+                            return (v || 0).toLocaleString() + ' ' + currency;
+                        },
+                    },
+                },
+                legend: { show: false },
             }).render();
         } else {
             categoryEl.innerHTML = '<div class="flex items-center justify-center h-full text-muted-foreground text-sm">No expense data this month</div>';

@@ -28,7 +28,7 @@
     @endif
 
     @if ($wallets->isNotEmpty())
-        <div class="kt-card mb-6">
+        <div class="kt-card mb-4">
             <div class="kt-card-header">
                 <h3 class="kt-card-title text-sm">Wallet current balance</h3>
             </div>
@@ -46,17 +46,19 @@
         </div>
     @endif
 
-    <div class="kt-card kt-card-grid min-w-full">
+    <div class="kt-card kt-card-grid min-w-full mt-4">
         <div class="kt-card-header flex-wrap gap-2">
             <h3 class="kt-card-title text-sm">Income records</h3>
             <form method="get" action="{{ route('families.incomes.index', $family) }}" class="flex flex-wrap items-center gap-2 justify-end w-full md:w-auto">
                 <label for="wallet_id" class="text-sm text-muted-foreground">Wallet</label>
-                <select name="wallet_id" id="wallet_id" class="kt-select kt-select-sm w-full md:w-auto" onchange="this.form.submit()">
-                    <option value="">All wallets</option>
-                    @foreach ($wallets as $w)
-                        <option value="{{ $w->id }}" {{ request('wallet_id') == $w->id ? 'selected' : '' }}>{{ $w->name }} ({{ $w->currency_code }})</option>
-                    @endforeach
-                </select>
+                <div class="inline-flex">
+                    <select name="wallet_id" id="wallet_id" class="kt-select kt-select-sm" style="width: 180px;" onchange="this.form.submit()">
+                        <option value="">All wallets</option>
+                        @foreach ($wallets as $w)
+                            <option value="{{ $w->id }}" {{ request('wallet_id') == $w->id ? 'selected' : '' }}>{{ $w->name }} ({{ $w->currency_code }})</option>
+                        @endforeach
+                    </select>
+                </div>
             </form>
         </div>
         <div class="kt-card-content p-0">

@@ -96,4 +96,9 @@ class Family extends Model
     {
         return $this->hasMany(Property::class);
     }
+
+    public function liabilities(): HasMany
+    {
+        return $this->hasMany(FamilyLiability::class);
+    }
 }

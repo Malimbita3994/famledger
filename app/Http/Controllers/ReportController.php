@@ -13,6 +13,7 @@ use App\Models\PropertyValuation;
 use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\Wallet;
+use App\Models\FamilyLiability;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -91,6 +92,10 @@ class ReportController extends Controller
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
         $formatAmount = fn ($n) => number_format((float) $n, 0) . ' ' . $currency;
 
+        // Liabilities snapshot for the family (computed outstanding)
+        $liabilities = FamilyLiability::where('family_id', $family->id)->get();
+        $totalLiabilities = $liabilities->sum->outstanding_balance;
+
         return view('families.reports.index', [
             'family' => $family,
             'wallets' => $wallets,
@@ -107,6 +112,7 @@ class ReportController extends Controller
             'formatAmount' => $formatAmount,
             'currency' => $currency,
             'budgetRows' => $budgetRows,
+            'totalLiabilities' => $totalLiabilities,
         ]);
     }
 
@@ -406,6 +412,8 @@ class ReportController extends Controller
         $totalExpenses = 0;
         $netFlow = 0;
         $closingBalance = 0;
+        $liabilityChange = 0;
+        $periodLiabilityTotal = 0;
         $bySource = collect();
         $byCategory = collect();
         $months = [];
@@ -432,6 +440,20 @@ class ReportController extends Controller
                 ->sum('amount');
             $netFlow = $totalIncome - $totalExpenses;
             $closingBalance = $openingBalance + $netFlow;
+
+            // Liability movement (loan draws minus repayments) and closing outstanding
+            $liabilityIn = Income::where('family_id', $family->id)
+                ->whereIn('wallet_id', $walletIds)
+                ->whereBetween('received_date', [$from, $to])
+                ->whereNotNull('family_liability_id')
+                ->sum('amount');
+            $liabilityOut = Expense::where('family_id', $family->id)
+                ->whereIn('wallet_id', $walletIds)
+                ->whereBetween('expense_date', [$from, $to])
+                ->whereNotNull('family_liability_id')
+                ->sum('amount');
+            $liabilityChange = $liabilityIn - $liabilityOut;
+            $periodLiabilityTotal = FamilyLiability::where('family_id', $family->id)->get()->sum->outstanding_balance;
         }
 
         if ($report === 'income') {
@@ -561,6 +583,8 @@ class ReportController extends Controller
             'totalExpenses' => $totalExpenses,
             'netFlow' => $netFlow,
             'closingBalance' => $closingBalance,
+            'liabilityChange' => $liabilityChange,
+            'periodLiabilityTotal' => $periodLiabilityTotal,
             'bySource' => $bySource,
             'byCategory' => $byCategory,
             'months' => $months,

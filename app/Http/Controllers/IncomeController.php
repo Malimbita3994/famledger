@@ -68,6 +68,7 @@ class IncomeController extends Controller
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency_code' => ['required', 'string', 'size:3', Rule::in([strtoupper($wallet->currency_code)])],
             'category_id' => ['nullable', Rule::exists('income_categories', 'id')],
+            'family_liability_id' => ['nullable', Rule::exists('family_liabilities', 'id')->where('family_id', $family->id)],
             'source' => ['nullable', 'string', 'max:255'],
             'received_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -80,6 +81,7 @@ class IncomeController extends Controller
         $family->incomes()->create([
             'wallet_id' => $validated['wallet_id'],
             'category_id' => $validated['category_id'] ?? null,
+            'family_liability_id' => $validated['family_liability_id'] ?? null,
             'amount' => $validated['amount'],
             'currency_code' => strtoupper($validated['currency_code']),
             'source' => $validated['source'] ?? null,

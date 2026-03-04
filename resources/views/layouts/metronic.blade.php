@@ -1347,6 +1347,17 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            </span>
           </div>
           <div class="kt-menu-accordion gap-px ps-2.5">
+           {{-- Wealth overview --}}
+           <div class="kt-menu-item">
+            <a href="{{ route('families.wealth.index', $currentFamily) }}"
+               class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.wealth.index') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
+              <i class="ki-filled ki-dollar text-lg"></i>
+             </span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Wealth</span>
+            </a>
+           </div>
+
            {{-- General / Family report --}}
            <div class="kt-menu-item">
             <a href="{{ route('families.reports.index', $currentFamily) }}"

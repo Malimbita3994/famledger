@@ -74,6 +74,7 @@ class ExpenseController extends Controller
             'reference' => ['nullable', 'string', 'max:100'],
             'is_recurring' => ['nullable', 'boolean'],
             'project_id' => ['nullable', Rule::exists('projects', 'id')->where('family_id', $family->id)],
+            'family_liability_id' => ['nullable', Rule::exists('family_liabilities', 'id')->where('family_id', $family->id)],
         ], [
             'wallet_id.required' => 'Please select a wallet. Every expense must reduce a wallet.',
             'amount.min' => 'Amount must be greater than zero.',
@@ -84,6 +85,7 @@ class ExpenseController extends Controller
             'wallet_id' => $validated['wallet_id'],
             'category_id' => $validated['category_id'] ?? null,
             'project_id' => $validated['project_id'] ?? null,
+            'family_liability_id' => $validated['family_liability_id'] ?? null,
             'amount' => $validated['amount'],
             'currency_code' => strtoupper($validated['currency_code']),
             'description' => $validated['description'] ?? null,

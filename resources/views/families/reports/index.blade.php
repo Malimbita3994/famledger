@@ -70,11 +70,11 @@
         </div>
         <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Active Projects</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-briefcase"></i></span>
+                <span class="text-muted-foreground text-sm font-medium">Total Liabilities</span>
+                <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-debit"></i></span>
             </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $activeProjects }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Budget used: {{ $budgetUsedPercent }}%</div>
+            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-red-600">{{ $formatAmount($totalLiabilities) }}</div>
+            <div class="text-muted-foreground text-sm mt-2">Outstanding loans and debts (all time).</div>
         </div>
     </div>
 
@@ -239,14 +239,17 @@
                             <td class="py-2 text-right font-medium text-blue-600">{{ $formatAmount($savings) }}</td>
                         </tr>
                         <tr>
-                            <td class="py-2 text-muted-foreground">Active projects</td>
-                            <td class="py-2 text-right font-medium">{{ $activeProjects }}</td>
+                            <td class="py-2 text-muted-foreground">Total liabilities (loans, debts)</td>
+                            <td class="py-2 text-right font-medium text-red-600">{{ $formatAmount($totalLiabilities) }}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
 
+    {{-- Budgets & Savings snapshot row (2 columns) --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {{-- Budgets snapshot table --}}
         @php
             /** @var array<int,array{budget:mixed,planned:float,used:float,over:bool}>|null $budgetRows */

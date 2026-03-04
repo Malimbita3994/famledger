@@ -93,11 +93,18 @@
         </div>
         <div class="cash-flow-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Closing balance</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-safe"></i></span>
+                <span class="text-muted-foreground text-sm font-medium">Liabilities</span>
+                <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-debit"></i></span>
             </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ number_format($closingBalance, 0) }} {{ $currency }}</div>
-            <div class="text-sm mt-2 {{ $netFlow >= 0 ? 'text-green-600' : 'text-red-600' }} font-medium">Net flow: {{ $netFlow >= 0 ? '+' : '' }}{{ number_format($netFlow, 0) }} {{ $currency }}</div>
+            <div class="text-sm font-medium mt-3 text-foreground tabular-nums">
+                Change this period:
+                <span class="{{ $liabilityChange >= 0 ? 'text-red-600' : 'text-green-600' }}">
+                    {{ $liabilityChange >= 0 ? '+' : '' }}{{ number_format($liabilityChange, 0) }} {{ $currency }}
+                </span>
+            </div>
+            <div class="text-sm text-muted-foreground mt-2">
+                Closing outstanding: <span class="font-semibold text-red-600">{{ number_format($periodLiabilityTotal, 0) }} {{ $currency }}</span>
+            </div>
         </div>
     </div>
 
@@ -135,6 +142,16 @@
                         <tr class="border-t-2 border-border">
                             <td class="font-semibold text-foreground">Closing balance (end of period)</td>
                             <td class="text-right tabular-nums font-bold">{{ number_format($closingBalance, 0) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted-foreground">Change in liabilities (loan draws − repayments)</td>
+                            <td class="text-right tabular-nums font-medium {{ $liabilityChange >= 0 ? 'text-red-600' : 'text-green-600' }}">
+                                {{ $liabilityChange >= 0 ? '+' : '' }}{{ number_format($liabilityChange, 0) }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted-foreground">Closing liabilities (outstanding)</td>
+                            <td class="text-right tabular-nums font-medium text-red-600">{{ number_format($periodLiabilityTotal, 0) }}</td>
                         </tr>
                     </tbody>
                 </table>
