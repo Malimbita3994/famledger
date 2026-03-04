@@ -10,12 +10,12 @@
         Back to {{ $family->name }}
     </a>
 
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div class="flex flex-wrap items-center gap-3 mb-4">
         <div>
             <h1 class="font-medium text-lg text-mono">Family Wallets</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Stand-alone wallets where family money lives. No bank link.</p>
         </div>
-        <div class="flex flex-wrap gap-2">
+        <div class="ml-auto flex flex-wrap justify-end gap-1.5">
             <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-outline">
                 <i class="ki-filled ki-arrow-up"></i>
                 Record income
@@ -60,9 +60,10 @@
             </div>
         </div>
     @else
-        <div class="kt-card kt-card-grid min-w-full">
+        <div class="kt-card kt-card-grid min-w-full mt-4">
             <div class="kt-card-content p-0">
-                <div class="kt-scrollable-x-auto">
+                {{-- Desktop / tablet table --}}
+                <div class="kt-scrollable-x-auto hidden md:block">
                     <table class="kt-table table-auto kt-table-border">
                         <thead>
                             <tr>
@@ -142,6 +143,80 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+
+                {{-- Mobile cards --}}
+                <div class="md:hidden p-4 space-y-4">
+                    @foreach ($wallets as $wallet)
+                        <div class="rounded-2xl border border-border bg-background shadow-sm p-4 flex flex-col gap-3">
+                            {{-- Header --}}
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <span class="flex items-center justify-center rounded-full size-9 shrink-0 bg-muted text-foreground">
+                                        <i class="ki-filled ki-wallet text-lg"></i>
+                                    </span>
+                                    <div class="flex flex-col min-w-0">
+                                        <a href="{{ route('families.wallets.show', [$family, $wallet]) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
+                                            {{ $wallet->name }}
+                                        </a>
+                                        @if ($wallet->description)
+                                            <span class="text-[11px] text-secondary-foreground mt-0.5 line-clamp-2">
+                                                {{ $wallet->description }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <span class="kt-badge kt-badge-sm {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline shrink-0">
+                                    {{ ucfirst($wallet->status) }}
+                                </span>
+                            </div>
+
+                            {{-- Key numbers --}}
+                            <div class="flex items-center justify-between gap-3 border border-border/60 rounded-xl px-3 py-2 bg-muted/40">
+                                <div class="flex flex-col">
+                                    <span class="text-[11px] text-muted-foreground uppercase tracking-wide">Balance</span>
+                                    <span class="text-sm font-semibold text-foreground tabular-nums">
+                                        {{ number_format($wallet->balance, 2) }} {{ $wallet->currency_code }}
+                                    </span>
+                                </div>
+                                <div class="flex flex-col text-right">
+                                    <span class="text-[11px] text-muted-foreground uppercase tracking-wide">Type</span>
+                                    <span class="text-xs font-medium text-foreground">
+                                        {{ $walletTypes[$wallet->type] ?? $wallet->type }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- Meta --}}
+                            <div class="flex items-center justify-between text-[11px] text-muted-foreground">
+                                <span>Currency: <span class="font-medium text-foreground">{{ $wallet->currency_code }}</span></span>
+                                <span>
+                                    @if ($wallet->is_shared)
+                                        <span class="kt-badge kt-badge-xs kt-badge-success kt-badge-outline">Shared</span>
+                                    @else
+                                        <span class="kt-badge kt-badge-xs kt-badge-secondary kt-badge-outline">Personal</span>
+                                    @endif
+                                </span>
+                            </div>
+
+                            {{-- Actions --}}
+                            <div class="flex flex-wrap justify-end gap-2 pt-1">
+                                <a href="{{ route('families.wallets.show', [$family, $wallet]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                    View
+                                </a>
+                                <a href="{{ route('families.wallets.edit', [$family, $wallet]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                    Edit
+                                </a>
+                                <form action="{{ route('families.wallets.destroy', [$family, $wallet]) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Remove this wallet?" data-confirm-message="This cannot be undone.">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="kt-btn kt-btn-xs kt-btn-ghost text-destructive">
+                                        Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>

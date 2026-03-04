@@ -12,12 +12,12 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
 
     <title>{{ $title ?? config('app.name', 'FamLedger') }}</title>
 
-    <link href="{{ asset('metronic/assets/media/app/favicon.ico') }}" rel="shortcut icon"/>
-    <link href="{{ asset('metronic/assets/media/app/favicon-32x32.png') }}" rel="icon" sizes="32x32" type="image/png"/>
-    <link href="{{ asset('metronic/assets/media/app/favicon-16x16.png') }}" rel="icon" sizes="16x16" type="image/png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Flavicon.png') }}"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Flavicon.png') }}"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="{{ asset('metronic/assets/vendors/keenicons/styles.bundle.css') }}" rel="stylesheet"/>
     <link href="{{ asset('metronic/assets/css/styles.css') }}" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="antialiased flex h-full text-base text-foreground bg-background">
     <!-- Theme Mode -->
@@ -101,6 +101,9 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
             animation: auth-login-fade-up 0.5s ease-out forwards;
         }
         .auth-login-card-error {
+            /* On error, make sure card is fully visible and shake */
+            opacity: 1 !important;
+            transform: translateY(0) !important;
             animation: auth-login-shake 0.3s ease;
         }
         .auth-feature-row {
@@ -140,6 +143,59 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         .auth-feature-icon--projects {
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
         }
+        /* Footer / version strip */
+        .auth-footer {
+            max-width: 720px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-top: 1rem;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+            color: #0f172a;
+        }
+        @media (min-width: 640px) {
+            .auth-footer {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+        .auth-footer-pills {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 1.25rem;
+            color: #1e293b;
+        }
+        .auth-footer-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 0.2rem 0.6rem;
+            background: rgba(15, 23, 42, 0.04);
+            box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.4);
+        }
+        .auth-footer-mark {
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: linear-gradient(120deg, #0f766e, #0284c7, #4f46e5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .auth-footer-subtitle {
+            font-size: 0.75rem;
+            color: #0f172a;
+            opacity: 0.85;
+        }
         /* Shared auth text input focus style */
         .auth-text-input {
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
@@ -162,7 +218,25 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
     @php
         $isLoginRoute = request()->routeIs('login');
         $loginHasErrors = $isLoginRoute && $errors->any();
+        $loginErrorMessage = $isLoginRoute ? ($errors->first('email') ?: $errors->first('password') ?: null) : null;
     @endphp
+
+    @if ($isLoginRoute && $loginErrorMessage)
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof Swal === 'undefined') {
+                    return;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Login failed',
+                    text: @json($loginErrorMessage),
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#2563eb'
+                });
+            });
+        </script>
+    @endif
 
     <div class="grid lg:grid-cols-2 w-full">
         <!-- Form column -->
@@ -240,10 +314,10 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                     </div>
                 </div>
 
-                {{-- BOTTOM: Trust signals + version anchored to bottom --}}
+                {{-- BOTTOM: Trust signals + modern version strip --}}
                 <div class="w-full mt-8">
-                    <div class="pt-4 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 max-w-[720px] mx-auto text-xs">
-                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-600">
+                    <div class="auth-footer">
+                        <div class="auth-footer-pills">
                             <span class="inline-flex items-center gap-1.5">
                                 <span class="size-5 inline-flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                                     <i class="ki-filled ki-lock text-[10px]"></i>
@@ -259,11 +333,9 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                             </span>
                         </div>
 
-                        <div class="text-slate-500 flex items-center gap-2">
-                            <span class="inline-flex items-center justify-center rounded-full bg-slate-100 text-slate-700 px-2 py-0.5">
-                                <span class="font-medium">FamLedger v1.0</span>
-                            </span>
-                            <span>· {{ __('Private Family System') }}</span>
+                        <div class="flex flex-col items-start sm:items-end text-left sm:text-right gap-0.5">
+                            <span class="auth-footer-mark">FamLedger v1.0</span>
+                            <span class="auth-footer-subtitle">{{ __('Private Family System') }}</span>
                         </div>
                     </div>
                 </div>

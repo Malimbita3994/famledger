@@ -202,7 +202,8 @@
                             <p class="text-sm text-secondary-foreground mt-1">@if ($canManageMembers ?? false)<a href="{{ route('families.members.create', $family) }}" class="text-primary hover:underline">Add a member</a>@else Invite members from Settings (coming soon).@endif</p>
                         </div>
                     @else
-                        <div class="kt-scrollable-x-auto">
+                        {{-- Desktop / tablet table --}}
+                        <div class="kt-scrollable-x-auto hidden md:block">
                             <table class="kt-table table-auto kt-table-border">
                                 <thead>
                                     <tr>
@@ -318,6 +319,74 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                        </div>
+
+                        {{-- Mobile cards --}}
+                        <div class="md:hidden space-y-3">
+                            @foreach ($family->familyMembers as $member)
+                                <div class="rounded-2xl border border-border bg-background shadow-sm p-4 flex flex-col gap-3">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <span class="flex items-center justify-center rounded-full size-9 shrink-0 bg-muted text-foreground font-medium text-sm">
+                                                {{ strtoupper(substr($member->user->name ?? '?', 0, 1)) }}
+                                            </span>
+                                            <div class="flex flex-col min-w-0">
+                                                <span class="text-sm font-medium text-mono truncate">
+                                                    {{ $member->member_name ?? $member->user->name ?? 'Unknown' }}
+                                                </span>
+                                                <span class="text-xs text-secondary-foreground truncate">
+                                                    {{ $member->user->email ?? '—' }}
+                                                </span>
+                                                @if ($member->sex || $member->member_type)
+                                                    <span class="text-[11px] text-muted-foreground mt-0.5">
+                                                        {{ ucfirst($member->sex ?? '') }}{{ $member->sex && $member->member_type ? ' · ' : '' }}{{ ucfirst($member->member_type ?? '') }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <span class="kt-badge kt-badge-sm {{ ($member->status ?? 'active') === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-[30px] shrink-0">
+                                            <span class="kt-badge-dot size-1.5"></span>
+                                            {{ ucfirst($member->status ?? 'active') }}
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between text-[11px] text-muted-foreground">
+                                        <span>
+                                            {{ __('Role:') }}
+                                            <span class="font-medium text-foreground">{{ $member->role->name ?? '—' }}</span>
+                                        </span>
+                                        <span>
+                                            @if ($member->is_primary)
+                                                <span class="kt-badge kt-badge-xs kt-badge-primary kt-badge-outline">Primary</span>
+                                            @endif
+                                        </span>
+                                    </div>
+
+                                    @if ($canManageMembers ?? false)
+                                        <div class="flex flex-wrap justify-end gap-2 pt-1">
+                                            <a href="{{ route('families.members.edit', [$family, $member]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                                Edit
+                                            </a>
+                                            @if (! $member->is_primary)
+                                            <form action="{{ route('families.members.transfer-ownership', [$family, $member]) }}" method="POST" class="inline-block js-confirm-delete" data-confirm-title="Transfer ownership?" data-confirm-message="Current owner role will be downgraded.">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="kt-btn kt-btn-xs kt-btn-outline">
+                                                    Transfer ownership
+                                                </button>
+                                            </form>
+                                            @endif
+                                            <form action="{{ route('families.members.destroy', [$family, $member]) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Delete this member?" data-confirm-message="They will be removed from this family and lose access.">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="kt-btn kt-btn-xs kt-btn-ghost text-destructive">
+                                                    Remove
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
                         </div>
                         @if ($canManageMembers ?? false)
                         <p class="text-xs text-muted-foreground mt-3">Add members by email from the button above.</p>

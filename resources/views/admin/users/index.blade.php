@@ -21,8 +21,8 @@
     @endif
 
     <div class="mb-4 flex justify-end">
-        <form method="get" class="flex flex-nowrap items-center gap-2">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name or email" class="kt-input w-48 sm:w-64 min-w-0 shrink-0" />
+        <form method="get" class="flex flex-wrap items-center gap-2 justify-end w-full md:w-auto">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name or email" class="kt-input w-full sm:w-64 min-w-0 shrink-0" />
             <select name="status" class="kt-select !w-[140px] shrink-0" style="width: 140px;">
                 <option value="">All statuses</option>
                 @foreach (App\Models\User::statuses() as $value => $label)
@@ -34,7 +34,8 @@
     </div>
 
     <div class="kt-card p-0">
-        <div class="kt-scrollable-x-auto">
+        {{-- Desktop / tablet table --}}
+        <div class="kt-scrollable-x-auto hidden md:block">
             <table class="kt-table table-auto kt-table-border">
                 <thead>
                     <tr>
@@ -67,6 +68,51 @@
                 </tbody>
             </table>
         </div>
+
+        {{-- Mobile cards --}}
+        <div class="md:hidden p-4 space-y-4">
+            @foreach ($users as $u)
+                <div class="rounded-2xl border border-border bg-background shadow-sm px-5 py-4 flex flex-col gap-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="flex items-center justify-center rounded-full size-9 shrink-0 bg-muted text-foreground font-medium text-sm">
+                                {{ strtoupper(substr($u->name ?? '?', 0, 1)) }}
+                            </span>
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-sm font-medium text-mono truncate">
+                                    {{ $u->name }}
+                                </span>
+                                <span class="text-xs text-secondary-foreground truncate">
+                                    {{ $u->email }}
+                                </span>
+                            </div>
+                        </div>
+                        <span class="kt-badge kt-badge-sm kt-badge-outline shrink-0">
+                            {{ App\Models\User::statuses()[$u->status] ?? $u->status }}
+                        </span>
+                    </div>
+
+                    <div class="text-[11px] text-muted-foreground">
+                        @php
+                            $systemNames = $u->roles->pluck('name');
+                            $roleText = $systemNames->isNotEmpty() ? $systemNames->join(', ') : ($u->familyMemberships->first()?->role?->name ?? '—');
+                        @endphp
+                        <span class="uppercase tracking-wide">Roles:</span>
+                        <span class="font-medium text-foreground">{{ $roleText }}</span>
+                    </div>
+
+                    <div class="flex flex-wrap justify-end gap-2 pt-1">
+                        <a href="{{ route('admin.users.show', $u) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                            View
+                        </a>
+                        <a href="{{ route('admin.users.edit', $u) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                            Edit
+                        </a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
         <div class="px-4 py-3 border-t border-border">{{ $users->withQueryString()->links() }}</div>
     </div>
 </div>

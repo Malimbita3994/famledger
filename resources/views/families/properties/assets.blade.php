@@ -21,7 +21,7 @@
 
     .properties-filter-row {
         display: grid !important;
-        grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(160px, 1fr)) auto !important;
+        grid-template-columns: 1fr !important;
         gap: 0.75rem !important;
         align-items: flex-end !important;
         width: 100% !important;
@@ -30,6 +30,12 @@
     .properties-filter-row .kt-input,
     .properties-filter-row .kt-select {
         width: 100% !important;
+    }
+
+    @media (min-width: 900px) {
+        .properties-filter-row {
+            grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(160px, 1fr)) auto !important;
+        }
     }
     </style>
 
@@ -112,7 +118,8 @@
                     </form>
                 </div>
 
-                <div class="kt-scrollable-x-auto mt-2">
+                {{-- Desktop / tablet table --}}
+                <div class="kt-scrollable-x-auto mt-2 hidden md:block">
                     <table class="kt-table table-auto kt-table-border">
                         <thead>
                             <tr>
@@ -146,6 +153,33 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+
+                {{-- Mobile cards --}}
+                <div class="md:hidden p-4 space-y-4">
+                    @foreach ($properties as $property)
+                        <div class="rounded-2xl border border-border bg-background shadow-sm px-5 py-4 flex flex-col gap-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex flex-col min-w-0">
+                                    <span class="text-sm font-semibold text-foreground truncate">
+                                        {{ $property->name }}
+                                    </span>
+                                    <span class="text-[11px] text-muted-foreground truncate mt-0.5">
+                                        {{ $property->property_code }}
+                                    </span>
+                                    <span class="text-[11px] text-secondary-foreground mt-0.5">
+                                        {{ $property->category->name ?? '—' }}
+                                        @if ($property->subcategory)
+                                            / {{ $property->subcategory->name }}
+                                        @endif
+                                    </span>
+                                </div>
+                                <span class="kt-badge kt-badge-sm kt-badge-outline {{ $property->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} shrink-0">
+                                    {{ ucfirst($property->status) }}
+                                </span>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
 
                 <div class="px-5 py-3 border-t border-border">

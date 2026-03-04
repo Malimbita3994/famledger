@@ -8,8 +8,13 @@ use App\Models\Property;
 use App\Models\PropertyAttribute;
 use App\Models\PropertyAttributeValue;
 use App\Models\PropertyCategory;
+use App\Models\PropertyMaintenance;
+use App\Models\PropertyDocument;
+use App\Models\PropertyValuation;
+use App\Models\PropertyDepreciation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -355,21 +360,87 @@ class PropertyController extends Controller
         return redirect()->route('families.properties.assets', $family)->with('success', 'Property created.');
     }
 
-    public function maintenance(Family $family): View
+    public function maintenance(Request $request, Family $family): View
     {
         $this->authorizePropertyManager($family);
+
+        $properties = Property::where('family_id', $family->id)
+            ->orderBy('name')
+            ->get();
+
+        $propertyId = (int) $request->query('property_id', 0);
+        $from = $request->query('from');
+        $to = $request->query('to');
+
+        $query = PropertyMaintenance::with('property')
+            ->whereHas('property', function ($q) use ($family) {
+                $q->where('family_id', $family->id);
+            })
+            ->orderByDesc('service_date');
+
+        if ($propertyId) {
+            $query->where('property_id', $propertyId);
+        }
+        if ($from) {
+            $query->whereDate('service_date', '>=', $from);
+        }
+        if ($to) {
+            $query->whereDate('service_date', '<=', $to);
+        }
+
+        $maintenances = $query->paginate(25)->withQueryString();
 
         return view('families.properties.maintenance', [
             'family' => $family,
+            'properties' => $properties,
+            'maintenances' => $maintenances,
+            'filters' => [
+                'property_id' => $propertyId ?: null,
+                'from' => $from,
+                'to' => $to,
+            ],
         ]);
     }
 
-    public function valuations(Family $family): View
+    public function valuations(Request $request, Family $family): View
     {
         $this->authorizePropertyManager($family);
 
+        $properties = Property::where('family_id', $family->id)
+            ->orderBy('name')
+            ->get();
+
+        $propertyId = (int) $request->query('property_id', 0);
+        $from = $request->query('from');
+        $to = $request->query('to');
+
+        $query = PropertyValuation::with('property')
+            ->whereHas('property', function ($q) use ($family) {
+                $q->where('family_id', $family->id);
+            })
+            ->orderByDesc('valuation_date');
+
+        if ($propertyId) {
+            $query->where('property_id', $propertyId);
+        }
+        if ($from) {
+            $query->whereDate('valuation_date', '>=', $from);
+        }
+        if ($to) {
+            $query->whereDate('valuation_date', '<=', $to);
+        }
+
+        $valuations = $query->paginate(25)->withQueryString();
+
         return view('families.properties.valuations', [
             'family' => $family,
+            'properties' => $properties,
+            'valuations' => $valuations,
+            'filters' => [
+                'property_id' => $propertyId ?: null,
+                'from' => $from,
+                'to' => $to,
+            ],
         ]);
     }
 
@@ -377,18 +448,262 @@ class PropertyController extends Controller
     {
         $this->authorizePropertyManager($family);
 
+        $properties = Property::where('family_id', $family->id)
+            ->orderBy('name')
+            ->get();
+
+        $propertyId = (int) request()->query('property_id', 0);
+        $type = request()->query('document_type');
+        $search = trim((string) request()->query('q', ''));
+
+        $query = PropertyDocument::with('property')
+            ->whereHas('property', function ($q) use ($family) {
+                $q->where('family_id', $family->id);
+            })
+            ->orderByDesc('created_at');
+
+        if ($propertyId) {
+            $query->where('property_id', $propertyId);
+        }
+        if ($type) {
+            $query->where('document_type', $type);
+        }
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('original_name', 'like', '%'.$search.'%')
+                  ->orWhere('document_type', 'like', '%'.$search.'%');
+            });
+        }
+
+        $documents = $query->paginate(25)->withQueryString();
+
         return view('families.properties.documents', [
             'family' => $family,
+            'properties' => $properties,
+            'documents' => $documents,
+            'filters' => [
+                'property_id' => $propertyId ?: null,
+                'document_type' => $type ?: null,
+                'q' => $search,
+            ],
         ]);
     }
 
-    public function depreciation(Family $family): View
+    public function depreciation(Request $request, Family $family): View
     {
         $this->authorizePropertyManager($family);
 
+        $properties = Property::where('family_id', $family->id)
+            ->orderBy('name')
+            ->get();
+
+        $propertyId = (int) $request->query('property_id', 0);
+        $year = $request->query('year');
+
+        $query = PropertyDepreciation::with('property')
+            ->whereHas('property', function ($q) use ($family) {
+                $q->where('family_id', $family->id);
+            })
+            ->orderByDesc('year');
+
+        if ($propertyId) {
+            $query->where('property_id', $propertyId);
+        }
+        if ($year) {
+            $query->where('year', (int) $year);
+        }
+
+        $depreciations = $query->paginate(25)->withQueryString();
+
         return view('families.properties.depreciation', [
             'family' => $family,
+            'properties' => $properties,
+            'depreciations' => $depreciations,
+            'filters' => [
+                'property_id' => $propertyId ?: null,
+                'year' => $year,
+            ],
         ]);
+    }
+
+    public function storeDocument(Request $request, Family $family)
+    {
+        $this->authorizePropertyManager($family);
+
+        $rules = [
+            'property_id' => ['required', 'integer', 'exists:properties,id'],
+            'document_type' => ['nullable', 'string', 'max:100'],
+            'file' => ['required', 'file', 'max:8192', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,txt'],
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            $first = $validator->errors()->first();
+
+            return back()
+                ->withErrors($validator)
+                ->with('error', $first)
+                ->withInput();
+        }
+
+        $validated = $validator->validated();
+
+        // Ensure property belongs to this family
+        $property = Property::where('family_id', $family->id)
+            ->where('id', $validated['property_id'])
+            ->firstOrFail();
+
+        $file = $request->file('file');
+        $originalName = $file->getClientOriginalName();
+        $mime = $file->getClientMimeType();
+        $size = $file->getSize();
+
+        $path = $file->storeAs(
+            'property-documents/'.$family->id.'/'.$property->id,
+            now()->format('Ymd_His').'_'.$originalName,
+            'public'
+        );
+
+        PropertyDocument::create([
+            'property_id' => $property->id,
+            'document_type' => $validated['document_type'] ?? null,
+            'original_name' => $originalName,
+            'path' => $path,
+            'size' => $size,
+            'mime_type' => $mime,
+            'is_archived' => false,
+            'uploaded_by' => auth()->id(),
+        ]);
+
+        return redirect()
+            ->route('families.properties.documents', $family)
+            ->with('success', 'Document uploaded.');
+    }
+
+    public function storeValuation(Request $request, Family $family)
+    {
+        $this->authorizePropertyManager($family);
+
+        $rules = [
+            'property_id' => ['required', 'integer', 'exists:properties,id'],
+            'valuation_date' => ['required', 'date', 'before_or_equal:today'],
+            'estimated_value' => ['required', 'numeric', 'min:0'],
+            'valuator' => ['nullable', 'string', 'max:255'],
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            $first = $validator->errors()->first();
+
+            return back()
+                ->withErrors($validator)
+                ->with('error', $first)
+                ->withInput();
+        }
+
+        $validated = $validator->validated();
+
+        $property = Property::where('family_id', $family->id)
+            ->where('id', $validated['property_id'])
+            ->firstOrFail();
+
+        PropertyValuation::create([
+            'property_id' => $property->id,
+            'valuation_date' => $validated['valuation_date'],
+            'estimated_value' => $validated['estimated_value'],
+            'valuator' => $validated['valuator'] ?? null,
+            'created_by' => auth()->id(),
+        ]);
+
+        return redirect()
+            ->route('families.properties.valuations', $family)
+            ->with('success', 'Valuation recorded.');
+    }
+
+    public function storeMaintenance(Request $request, Family $family)
+    {
+        $this->authorizePropertyManager($family);
+
+        $rules = [
+            'property_id' => ['required', 'integer', 'exists:properties,id'],
+            'service_date' => ['required', 'date', 'before_or_equal:today'],
+            'cost' => ['nullable', 'numeric', 'min:0'],
+            'service_provider' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'next_due_date' => ['nullable', 'date', 'after_or_equal:service_date'],
+        ];
+
+        $validated = $request->validate($rules);
+
+        // Ensure the property belongs to this family
+        $property = Property::where('family_id', $family->id)
+            ->where('id', $validated['property_id'])
+            ->firstOrFail();
+
+        PropertyMaintenance::create([
+            'property_id' => $property->id,
+            'service_date' => $validated['service_date'],
+            'cost' => $validated['cost'] ?? null,
+            'service_provider' => $validated['service_provider'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'next_due_date' => $validated['next_due_date'] ?? null,
+            'created_by' => auth()->id(),
+        ]);
+
+        return redirect()
+            ->route('families.properties.maintenance', $family)
+            ->with('success', 'Maintenance record added.');
+    }
+
+    public function storeDepreciation(Request $request, Family $family)
+    {
+        $this->authorizePropertyManager($family);
+
+        $currentYear = now()->year;
+
+        $rules = [
+            'property_id' => ['required', 'integer', 'exists:properties,id'],
+            'method' => ['required', 'string', 'in:straight_line,declining_balance,manual'],
+            'year' => ['required', 'integer', 'min:1900', 'max:'.($currentYear + 10)],
+            'depreciation_amount' => ['required', 'numeric', 'min:0'],
+            'book_value' => ['required', 'numeric', 'min:0'],
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            $first = $validator->errors()->first();
+
+            return back()
+                ->withErrors($validator)
+                ->with('error', $first)
+                ->withInput();
+        }
+
+        $validated = $validator->validated();
+
+        $property = Property::where('family_id', $family->id)
+            ->where('id', $validated['property_id'])
+            ->firstOrFail();
+
+        PropertyDepreciation::updateOrCreate(
+            [
+                'property_id' => $property->id,
+                'year' => $validated['year'],
+                'method' => $validated['method'],
+            ],
+            [
+                'depreciation_amount' => $validated['depreciation_amount'],
+                'book_value' => $validated['book_value'],
+                'created_by' => auth()->id(),
+            ]
+        );
+
+        return redirect()
+            ->route('families.properties.depreciation', $family)
+            ->with('success', 'Depreciation updated.');
     }
 }
 

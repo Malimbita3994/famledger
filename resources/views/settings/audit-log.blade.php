@@ -126,7 +126,7 @@
       </div>
      </div>
 
-     {{-- Audit table --}}
+     {{-- Audit table (desktop / tablet) --}}
      <div class="kt-card">
       <div class="kt-card-header items-center justify-between gap-3">
        <h3 class="kt-card-title text-sm">
@@ -140,7 +140,7 @@
        </div>
       </div>
       <div class="kt-card-content px-0 pb-3">
-       <div class="kt-scrollable-x-auto">
+       <div class="kt-scrollable-x-auto hidden md:block">
         <table class="kt-table align-middle text-xs text-secondary-foreground">
          <thead>
           <tr class="bg-accent/40">
@@ -311,6 +311,108 @@
           </tr>
          </tbody>
         </table>
+       </div>
+
+       {{-- Mobile cards --}}
+       <div class="md:hidden px-4 space-y-3 text-xs text-secondary-foreground">
+        {{-- First event --}}
+        <div class="rounded-xl border border-border bg-background p-3 flex flex-col gap-2">
+         <div class="flex items-start justify-between gap-3">
+          <div>
+           <div class="font-medium text-mono text-[11px]">
+            {{ __('Today · 09:14') }}
+           </div>
+           <div class="text-[11px] text-muted-foreground">
+            {{ __('2 minutes ago') }}
+           </div>
+          </div>
+          <span class="kt-badge kt-badge-xs kt-badge-outline kt-badge-primary">
+           {{ __('Budgets') }}
+          </span>
+         </div>
+         <div class="text-[11px] text-muted-foreground">
+          <span class="font-semibold text-foreground">{{ __('You') }}</span>
+          <span class="mx-1">·</span>
+          <span>{{ auth()->user()->email ?? 'user@example.com' }}</span>
+         </div>
+         <div class="flex flex-col gap-0.5">
+          <span class="text-xs font-medium text-foreground">
+           {{ __('Updated monthly grocery budget') }}
+          </span>
+          <span class="text-[11px] text-muted-foreground">
+           {{ __('Limit changed from 450,000 to 500,000 · Wallet: Household · Currency: TZS') }}
+          </span>
+         </div>
+         <div class="text-[11px] text-muted-foreground flex justify-between">
+          <span>{{ __('IP: 192.168.0.10') }}</span>
+         </div>
+        </div>
+
+        {{-- Second event --}}
+        <div class="rounded-xl border border-border bg-background p-3 flex flex-col gap-2">
+         <div class="flex items-start justify-between gap-3">
+          <div>
+           <div class="font-medium text-mono text-[11px]">
+            {{ __('Yesterday · 21:03') }}
+           </div>
+           <div class="text-[11px] text-muted-foreground">
+            {{ __('1 day ago') }}
+           </div>
+          </div>
+          <span class="kt-badge kt-badge-xs kt-badge-outline kt-badge-secondary">
+           {{ __('Members & roles') }}
+          </span>
+         </div>
+         <div class="text-[11px] text-muted-foreground">
+          <span class="font-semibold text-foreground">{{ __('Family member') }}</span>
+          <span class="mx-1">·</span>
+          <span>{{ __('Invited user') }}</span>
+         </div>
+         <div class="flex flex-col gap-0.5">
+          <span class="text-xs font-medium text-foreground">
+           {{ __('Changed role from Viewer to Owner') }}
+          </span>
+          <span class="text-[11px] text-muted-foreground">
+           {{ __('Ownership transferred · Family: Main household') }}
+          </span>
+         </div>
+         <div class="text-[11px] text-muted-foreground flex justify-between">
+          <span>{{ __('IP: 102.89.14.23') }}</span>
+         </div>
+        </div>
+
+        {{-- Third event --}}
+        <div class="rounded-xl border border-border bg-background p-3 flex flex-col gap-2">
+         <div class="flex items-start justify-between gap-3">
+          <div>
+           <div class="font-medium text-mono text-[11px]">
+            {{ __('2 days ago · 08:27') }}
+           </div>
+           <div class="text-[11px] text-muted-foreground">
+            {{ __('2 days ago') }}
+           </div>
+          </div>
+          <span class="kt-badge kt-badge-xs kt-badge-outline kt-badge-success">
+           {{ __('Security') }}
+          </span>
+         </div>
+         <div class="text-[11px] text-muted-foreground">
+          <span class="font-semibold text-foreground">{{ __('You') }}</span>
+          <span class="mx-1">·</span>
+          <span>{{ __('Login') }}</span>
+         </div>
+         <div class="flex flex-col gap-0.5">
+          <span class="text-xs font-medium text-foreground">
+           {{ __('Signed in to FamLedger') }}
+          </span>
+          <span class="text-[11px] text-muted-foreground">
+           {{ __('2FA verified via email code · Device: Chrome · Windows') }}
+          </span>
+         </div>
+         <div class="text-[11px] text-muted-foreground flex justify-between">
+          <span>{{ __('IP: 41.59.192.5') }}</span>
+         </div>
+        </div>
        </div>
       </div>
       <div class="kt-card-footer justify-between items-center flex-wrap gap-3">

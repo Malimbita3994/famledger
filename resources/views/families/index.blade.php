@@ -47,7 +47,7 @@
                 <div class="kt-card-header flex-wrap gap-2">
                     <h3 class="kt-card-title text-sm">Showing {{ $families->count() }} {{ Str::plural('family', $families->count()) }}</h3>
                     <div class="flex flex-wrap gap-2 lg:gap-5">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 families-view-toggle-wrapper hidden md:flex">
                             <span class="text-sm text-secondary-foreground">View:</span>
                             <div class="kt-menu kt-menu-default" data-kt-menu="true">
                                 <div class="kt-menu-item" data-kt-menu-item-offset="0, 4" data-kt-menu-item-placement="bottom-start" data-kt-menu-item-toggle="dropdown" data-kt-menu-item-trigger="click">
@@ -76,7 +76,7 @@
                 </div>
                 <div class="kt-card-content">
                     {{-- Table view (default) --}}
-                    <div id="families_table_view" class="families-view-panel">
+                    <div id="families_table_view" class="families-view-panel hidden md:block">
                         <div class="kt-scrollable-x-auto">
                             <table class="kt-table table-auto kt-table-border">
                                 <thead>
@@ -152,7 +152,7 @@
                     </div>
 
                     {{-- Cards view (optional) --}}
-                    <div id="families_cards_view" class="families-view-panel hidden">
+                    <div id="families_cards_view" class="families-view-panel md:hidden">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 families-grid">
                             @foreach ($families as $family)
                             <div class="rounded-2xl border border-border bg-background shadow-sm overflow-hidden hover:shadow-md hover:border-primary/20 transition-all duration-200 relative min-h-[140px] flex flex-col">
@@ -202,6 +202,14 @@
     var labelEl = toggleBtn ? toggleBtn.querySelector('.families-view-label') : null;
 
     function setView(view) {
+        // On small screens, always show cards for better responsiveness
+        if (window.innerWidth < 768) {
+            if (tablePanel) tablePanel.classList.add('hidden');
+            if (cardsPanel) cardsPanel.classList.remove('hidden');
+            if (labelEl) labelEl.textContent = 'Cards';
+            return;
+        }
+
         view = view === 'cards' ? 'cards' : 'table';
         try { localStorage.setItem(KEY, view); } catch (e) {}
         if (tablePanel) tablePanel.classList.toggle('hidden', view !== 'table');
@@ -212,7 +220,12 @@
     function init() {
         var saved = '';
         try { saved = localStorage.getItem(KEY) || ''; } catch (e) {}
-        setView(saved === 'cards' ? 'cards' : 'table');
+
+        if (saved === 'cards' || saved === 'table') {
+            setView(saved);
+        } else {
+            setView('table');
+        }
     }
 
     document.querySelectorAll('.js-families-view').forEach(function (a) {

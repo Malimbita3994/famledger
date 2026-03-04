@@ -81,14 +81,21 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:30'],
             'status' => ['required', Rule::in(array_keys(User::statuses()))],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['exists:roles,name'],
-        ]);
+        ];
+
+        // Only allow Super Admins to reset another user's password
+        if (auth()->user()?->hasRole('Super Admin')) {
+            $rules['password'] = ['nullable', 'confirmed', Password::defaults()];
+        }
+
+        $validated = $request->validate($rules);
 
         $user->update([
             'name' => $validated['name'],
@@ -96,6 +103,12 @@ class UserController extends Controller
             'phone' => $validated['phone'] ?? null,
             'status' => $validated['status'],
         ]);
+
+        if (isset($validated['password']) && $validated['password']) {
+            $user->forceFill([
+                'password' => Hash::make($validated['password']),
+            ])->save();
+        }
 
         if (array_key_exists('roles', $validated)) {
             $user->syncRoles($validated['roles'] ?? []);

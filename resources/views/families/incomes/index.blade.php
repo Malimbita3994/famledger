@@ -49,9 +49,9 @@
     <div class="kt-card kt-card-grid min-w-full">
         <div class="kt-card-header flex-wrap gap-2">
             <h3 class="kt-card-title text-sm">Income records</h3>
-            <form method="get" action="{{ route('families.incomes.index', $family) }}" class="flex items-center gap-2">
+            <form method="get" action="{{ route('families.incomes.index', $family) }}" class="flex flex-wrap items-center gap-2 justify-end w-full md:w-auto">
                 <label for="wallet_id" class="text-sm text-muted-foreground">Wallet</label>
-                <select name="wallet_id" id="wallet_id" class="kt-select kt-select-sm w-auto" onchange="this.form.submit()">
+                <select name="wallet_id" id="wallet_id" class="kt-select kt-select-sm w-full md:w-auto" onchange="this.form.submit()">
                     <option value="">All wallets</option>
                     @foreach ($wallets as $w)
                         <option value="{{ $w->id }}" {{ request('wallet_id') == $w->id ? 'selected' : '' }}>{{ $w->name }} ({{ $w->currency_code }})</option>
@@ -67,7 +67,8 @@
                     <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-outline mt-4">Record income</a>
                 </div>
             @else
-                <div class="kt-scrollable-x-auto">
+                {{-- Desktop / tablet table --}}
+                <div class="kt-scrollable-x-auto hidden md:block">
                     <table class="kt-table table-auto kt-table-border">
                         <thead>
                             <tr>
@@ -96,6 +97,50 @@
                         </tbody>
                     </table>
                 </div>
+
+                {{-- Mobile cards --}}
+                <div class="md:hidden p-4 mt-2 space-y-5">
+                    @foreach ($incomes as $income)
+                        <div class="rounded-2xl border border-border bg-background shadow-sm px-5 py-5 flex flex-col gap-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex flex-col min-w-0">
+                                    <span class="text-sm font-semibold text-foreground">
+                                        {{ $income->wallet->name }}
+                                    </span>
+                                    <span class="text-[11px] text-muted-foreground">
+                                        {{ $income->received_date->format('M j, Y') }}
+                                    </span>
+                                    @if ($income->category?->name)
+                                        <span class="text-[11px] text-secondary-foreground mt-0.5">
+                                            {{ $income->category->name }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <span class="text-sm font-semibold text-success tabular-nums shrink-0">
+                                    + {{ number_format($income->amount, 2) }} {{ $income->currency_code }}
+                                </span>
+                            </div>
+
+                            <div class="text-[11px] text-muted-foreground">
+                                @if ($income->source)
+                                    <span class="font-medium text-foreground">Source:</span>
+                                    <span>{{ $income->source }}</span>
+                                @endif
+                            </div>
+
+                            <div class="flex items-center justify-between text-[11px] text-muted-foreground">
+                                <span>
+                                    {{ __('Recorded by:') }}
+                                    <span class="font-medium text-foreground">{{ $income->createdBy?->name ?? '—' }}</span>
+                                </span>
+                                <a href="{{ route('families.wallets.show', [$family, $income->wallet]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                    Wallet
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
                 <div class="px-4 py-3 border-t border-border">
                     {{ $incomes->withQueryString()->links() }}
                 </div>

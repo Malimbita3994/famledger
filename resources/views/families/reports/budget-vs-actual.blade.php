@@ -86,7 +86,8 @@
             <h3 class="kt-card-title text-sm">Budgets</h3>
         </div>
         <div class="kt-card-content p-0">
-            <div class="kt-scrollable-x-auto">
+            {{-- Desktop / tablet table --}}
+            <div class="kt-scrollable-x-auto hidden md:block">
                 <table class="kt-table table-auto kt-table-border">
                     <thead>
                         <tr>
@@ -109,8 +110,43 @@
                                 <td colspan="4" class="py-8 px-4 text-center text-muted-foreground text-sm">No budgets in the current period. Create a budget from the Budgets section.</td>
                             </tr>
                         @endforelse
-                    </tbody>
+                </tbody>
                 </table>
+            </div>
+
+            {{-- Mobile cards --}}
+            <div class="md:hidden p-4 space-y-4">
+                @forelse($rows as $sn => $row)
+                    <div class="rounded-2xl border border-border bg-background shadow-sm px-5 py-4 flex flex-col gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-[11px] text-muted-foreground uppercase tracking-wide">Budget {{ $sn + 1 }}</span>
+                                <span class="text-sm font-semibold text-foreground truncate">
+                                    {{ $row['budget']->name }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px] text-muted-foreground border border-border/60 rounded-xl px-3 py-2 bg-muted/30">
+                            <div>
+                                <span class="uppercase tracking-wide block mb-0.5">Allocated</span>
+                                <span class="text-sm font-semibold text-foreground tabular-nums">
+                                    {{ number_format($row['planned'], 0) }} {{ $currency }}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span class="uppercase tracking-wide block mb-0.5">Spent</span>
+                                <span class="text-sm font-semibold tabular-nums {{ $row['over'] ? 'text-red-600' : 'text-foreground' }}">
+                                    {{ number_format($row['used'], 0) }} {{ $currency }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="py-8 px-4 text-center text-muted-foreground text-sm">
+                        No budgets in the current period. Create a budget from the Budgets section.
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>

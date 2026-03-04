@@ -1326,6 +1326,12 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
              <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Permissions</span>
             </a>
            </div>
+           <div class="kt-menu-item">
+            <a href="{{ route('admin.contact-messages.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('admin.contact-messages.*') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-message-text"></i></span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Contact messages</span>
+            </a>
+           </div>
           </div>
         </div>
         @endcan
@@ -1749,9 +1755,12 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           </span>
           <input class="kt-switch" data-kt-theme-switch-state="dark" data-kt-theme-switch-toggle="true" name="check" type="checkbox" value="1"/>
          </div>
-         <a class="kt-btn kt-btn-outline justify-center w-full" href="#">
-          Log out
-         </a>
+         <form method="POST" action="{{ route('logout') }}">
+          @csrf
+          <button type="submit" class="kt-btn kt-btn-outline justify-center w-full">
+           Log out
+          </button>
+         </form>
         </div>
        </div>
       </div>
@@ -3045,10 +3054,13 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        </div>
        <!--End of Notifications Drawer-->
        <!-- End of Notifications -->
-       <a class="kt-btn kt-btn-ghost kt-btn-icon size-8 hover:bg-background hover:[&_i]:text-primary" href="#">
+      <form method="POST" action="{{ route('logout') }}">
+       @csrf
+       <button class="kt-btn kt-btn-ghost kt-btn-icon size-8 hover:bg-background hover:[&_i]:text-destructive" type="submit" title="Logout">
         <i class="ki-filled ki-exit-right">
         </i>
-       </a>
+       </button>
+      </form>
       </div>
      </div>
      <!-- End of Footer -->
@@ -3156,29 +3168,23 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        <!-- Container -->
        <div class="kt-container-fixed">
         <div class="flex flex-col md:flex-row justify-center md:justify-between items-center gap-3 py-5">
-         <div class="flex order-2 md:order-1 gap-2 font-normal text-sm">
+         <div class="flex order-2 md:order-1 gap-2 font-normal text-sm items-center">
           <span class="text-muted-foreground">
-           2026©
+           {{ now()->year }}©
           </span>
-          <a class="text-secondary-foreground hover:text-primary" href="https://keenthemes.com">
-           Keenthemes Inc.
+          <a href="{{ route('landing') }}" class="text-secondary-foreground font-medium hover:text-primary">
+           FamLedger
           </a>
+          <span class="hidden sm:inline text-xs text-muted-foreground">
+           · Private family finance system
+          </span>
          </div>
          <nav class="flex order-1 md:order-2 gap-4 font-normal text-sm text-secondary-foreground">
-          <a class="hover:text-primary" href="https://keenthemes.com/metronic/tailwind/docs">
+          <a class="hover:text-primary" href="https://github.com/Malimbita3994/famledger" target="_blank" rel="noopener">
+           GitHub
+          </a>
+          <a class="hover:text-primary" href="https://github.com/Malimbita3994/famledger#readme" target="_blank" rel="noopener">
            Docs
-          </a>
-          <a class="hover:text-primary" href="https://1.envato.market/Vm7VRE">
-           Purchase
-          </a>
-          <a class="hover:text-primary" href="https://keenthemes.com/metronic/tailwind/docs/getting-started/license">
-           FAQ
-          </a>
-          <a class="hover:text-primary" href="https://devs.keenthemes.com">
-           Support
-          </a>
-          <a class="hover:text-primary" href="https://keenthemes.com/metronic/tailwind/docs/getting-started/license">
-           License
           </a>
          </nav>
         </div>

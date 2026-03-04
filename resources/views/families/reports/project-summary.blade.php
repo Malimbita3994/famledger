@@ -98,7 +98,8 @@
             <h3 class="kt-card-title text-sm">Projects</h3>
         </div>
         <div class="kt-card-content p-0">
-            <div class="kt-scrollable-x-auto">
+            {{-- Desktop / tablet table --}}
+            <div class="kt-scrollable-x-auto hidden md:block">
                 <table class="kt-table table-auto kt-table-border">
                     <thead>
                         <tr>
@@ -149,8 +150,88 @@
                                 <td colspan="7" class="py-8 px-4 text-center text-muted-foreground text-sm">No projects in this view.</td>
                             </tr>
                         @endforelse
-                    </tbody>
+                </tbody>
                 </table>
+            </div>
+
+            {{-- Mobile cards --}}
+            <div class="md:hidden p-4 space-y-4">
+                @forelse ($projects as $p)
+                    @php
+                        $planned = (float) $p->planned_budget;
+                        $spent = (float) ($p->expenses_sum_amount ?? 0);
+                        $funded = (float) ($p->fundings_sum_amount ?? 0);
+                        $remaining = $planned - $spent;
+                        $pct = $planned > 0 ? min(100, round(($spent / $planned) * 100, 1)) : 0;
+                    @endphp
+                    <div class="rounded-2xl border border-border bg-background shadow-sm px-5 py-4 flex flex-col gap-3">
+                        {{-- Header: name + status --}}
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex flex-col min-w-0">
+                                <a href="{{ route('families.projects.show', [$family, $p]) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
+                                    {{ $p->name }}
+                                </a>
+                                @if ($p->category)
+                                    <span class="text-[11px] text-secondary-foreground mt-0.5 truncate">
+                                        {{ $p->category }}
+                                    </span>
+                                @endif
+                            </div>
+                            <span class="kt-badge kt-badge-sm {{ $p->status === 'active' ? 'kt-badge-primary' : ($p->status === 'completed' ? 'kt-badge-success' : 'kt-badge-secondary') }} kt-badge-outline shrink-0">
+                                {{ ucfirst($p->status) }}
+                            </span>
+                        </div>
+
+                        {{-- Budget / Spent / Remaining --}}
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px] text-muted-foreground border border-border/60 rounded-xl px-3 py-2 bg-muted/30">
+                            <div>
+                                <span class="uppercase tracking-wide block mb-0.5">Budget</span>
+                                <span class="text-sm font-semibold text-foreground tabular-nums">
+                                    {{ number_format($planned, 0) }} {{ $currency }}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span class="uppercase tracking-wide block mb-0.5">Spent</span>
+                                <span class="text-sm font-semibold text-red-600 tabular-nums">
+                                    {{ number_format($spent, 0) }} {{ $currency }}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="uppercase tracking-wide block mb-0.5">Remaining</span>
+                                <span class="text-sm font-semibold tabular-nums {{ $remaining >= 0 ? 'text-foreground' : 'text-red-600' }}">
+                                    {{ number_format($remaining, 0) }} {{ $currency }}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span class="uppercase tracking-wide block mb-0.5">Completion</span>
+                                <div class="inline-flex items-center gap-1">
+                                    <div class="w-16 h-2 rounded-full bg-muted overflow-hidden">
+                                        <div class="h-full rounded-full {{ $pct >= 100 ? 'bg-red-500' : 'bg-primary' }}" style="width: {{ min(100, $pct) }}%"></div>
+                                    </div>
+                                    <span class="tabular-nums text-[11px]">{{ $pct }}%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Dates --}}
+                        <div class="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
+                            <span>
+                                @if($p->start_date)
+                                    {{ __('Start:') }}
+                                    <span class="font-medium text-foreground">{{ $p->start_date->format('M j, Y') }}</span>
+                                @endif
+                            </span>
+                            <span class="text-right">
+                                @if($p->target_end_date)
+                                    {{ __('Target end:') }}
+                                    <span class="font-medium text-foreground">{{ $p->target_end_date->format('M j, Y') }}</span>
+                                @endif
+                            </span>
+                        </div>
+                    </div>
+                @empty
+                    <div class="py-8 px-4 text-center text-muted-foreground text-sm">No projects in this view.</div>
+                @endforelse
             </div>
         </div>
     </div>

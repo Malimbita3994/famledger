@@ -23,10 +23,14 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\PropertyConfigController;
+use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\ContactController;
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
-});
+    return view('marketing.landing');
+})->name('landing');
+
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 Route::get('/dashboard', [MainDashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
@@ -138,9 +142,13 @@ Route::middleware('auth')->group(function () {
         Route::get('properties/{property}/edit', [PropertyController::class, 'edit'])->name('properties.edit');
         Route::put('properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
         Route::get('properties/maintenance', [PropertyController::class, 'maintenance'])->name('properties.maintenance');
+        Route::post('properties/maintenance', [PropertyController::class, 'storeMaintenance'])->name('properties.maintenance.store');
         Route::get('properties/valuations', [PropertyController::class, 'valuations'])->name('properties.valuations');
+        Route::post('properties/valuations', [PropertyController::class, 'storeValuation'])->name('properties.valuations.store');
         Route::get('properties/documents', [PropertyController::class, 'documents'])->name('properties.documents');
+        Route::post('properties/documents', [PropertyController::class, 'storeDocument'])->name('properties.documents.store');
         Route::get('properties/depreciation', [PropertyController::class, 'depreciation'])->name('properties.depreciation');
+        Route::post('properties/depreciation', [PropertyController::class, 'storeDepreciation'])->name('properties.depreciation.store');
         Route::get('properties/{property}', [PropertyController::class, 'show'])->name('properties.show');
 
         // Financial Accounts (sidebar links)
@@ -237,6 +245,16 @@ Route::middleware('auth')->group(function () {
         Route::get('reports/families', [AdminReportController::class, 'families'])
             ->name('reports.families')
             ->middleware('permission:reports_view|reports_general_view_dashboard|reports_finance_view');
+
+        // Contact messages (landing page "Talk to the FamLedger team")
+        Route::get('contact-messages', [ContactMessageController::class, 'index'])
+            ->name('contact-messages.index');
+        Route::get('contact-messages/{contact_message}', [ContactMessageController::class, 'show'])
+            ->name('contact-messages.show');
+        Route::patch('contact-messages/{contact_message}/read-status', [ContactMessageController::class, 'updateReadStatus'])
+            ->name('contact-messages.read-status');
+        Route::delete('contact-messages/{contact_message}', [ContactMessageController::class, 'destroy'])
+            ->name('contact-messages.destroy');
     });
 });
 

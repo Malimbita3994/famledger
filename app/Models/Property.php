@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Property extends Model
 {
@@ -71,6 +72,26 @@ class Property extends Model
     public function attributeValues(): HasMany
     {
         return $this->hasMany(PropertyAttributeValue::class, 'property_id');
+    }
+
+    public function maintenances(): HasMany
+    {
+        return $this->hasMany(PropertyMaintenance::class, 'property_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(PropertyDocument::class, 'property_id');
+    }
+
+    public function valuations(): HasMany
+    {
+        return $this->hasMany(PropertyValuation::class, 'property_id');
+    }
+
+    public function depreciations(): HasMany
+    {
+        return $this->hasMany(PropertyDepreciation::class, 'property_id');
     }
 }
 

@@ -91,4 +91,9 @@ class Family extends Model
     {
         return $this->hasMany(Project::class);
     }
+
+    public function properties(): HasMany
+    {
+        return $this->hasMany(Property::class);
+    }
 }

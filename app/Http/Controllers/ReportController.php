@@ -7,6 +7,9 @@ use App\Models\Expense;
 use App\Models\Family;
 use App\Models\Income;
 use App\Models\Project;
+use App\Models\Property;
+use App\Models\PropertyDepreciation;
+use App\Models\PropertyValuation;
 use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\Wallet;
@@ -176,7 +179,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Property report — high-level view of funded projects as family assets.
+     * Property report — overview of family properties, value and book value.
      */
     public function property(Request $request, Family $family): View
     {
@@ -184,16 +187,58 @@ class ReportController extends Controller
 
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
 
-        $projects = Project::where('family_id', $family->id)
-            ->withSum('fundings', 'amount')
-            ->withSum('expenses', 'amount')
-            ->orderBy('name')
-            ->get();
+        $query = Property::where('family_id', $family->id)
+            ->with(['category'])
+            ->orderBy('name');
+
+        $status = $request->input('status');
+        $categoryId = $request->input('category_id');
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+        if ($categoryId) {
+            $query->where('category_id', (int) $categoryId);
+        }
+
+        $properties = $query->get();
+
+        // Attach latest valuation and depreciation book value per property
+        $propertyIds = $properties->pluck('id')->all();
+
+        $latestValuations = PropertyValuation::whereIn('property_id', $propertyIds)
+            ->select('property_id', 'estimated_value', 'valuation_date')
+            ->orderBy('valuation_date', 'desc')
+            ->get()
+            ->groupBy('property_id')
+            ->map->first();
+
+        $latestDepreciations = PropertyDepreciation::whereIn('property_id', $propertyIds)
+            ->select('property_id', 'year', 'book_value')
+            ->orderBy('year', 'desc')
+            ->get()
+            ->groupBy('property_id')
+            ->map->first();
+
+        $categories = $family->properties()
+            ->with('category')
+            ->get()
+            ->pluck('category')
+            ->filter()
+            ->unique('id')
+            ->values();
 
         return view('families.reports.property', [
             'family' => $family,
-            'projects' => $projects,
+            'properties' => $properties,
             'currency' => $currency,
+            'latestValuations' => $latestValuations,
+            'latestDepreciations' => $latestDepreciations,
+            'categories' => $categories,
+            'filters' => [
+                'status' => $status,
+                'category_id' => $categoryId,
+            ],
         ]);
     }
 

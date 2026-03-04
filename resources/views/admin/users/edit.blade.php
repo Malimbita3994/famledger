@@ -88,15 +88,59 @@
                 <h3 class="text-sm font-semibold text-foreground mb-3">
                     Roles
                 </h3>
-                <div class="space-y-2">
-                    @foreach ($roles as $role)
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" name="roles[]" value="{{ $role->name }}" {{ $user->hasRole($role->name) ? 'checked' : '' }} class="kt-checkbox" />
-                            {{ $role->name }}
-                        </label>
-                    @endforeach
-                </div>
+                @php
+                    $roleChunks = $roles->chunk(5);
+                @endphp
+                @foreach ($roleChunks as $chunk)
+                    <div class="user-main-row mb-2">
+                        @foreach ($chunk as $role)
+                            <div class="user-main-col">
+                                <label class="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-sm">
+                                    <input type="checkbox" name="roles[]" value="{{ $role->name }}" {{ $user->hasRole($role->name) ? 'checked' : '' }} class="kt-checkbox" />
+                                    <span class="truncate">{{ $role->name }}</span>
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                @endforeach
             </div>
+
+            @if(auth()->user() && auth()->user()->hasRole('Super Admin'))
+                <div>
+                    <h3 class="text-sm font-semibold text-foreground mb-3">
+                        Security
+                    </h3>
+                    <div class="user-main-row">
+                        <div class="user-main-col grid gap-1.5">
+                            <label for="password" class="kt-form-label">New password</label>
+                            <input
+                                type="password"
+                                name="password"
+                                id="password"
+                                class="kt-input"
+                                autocomplete="new-password"
+                                placeholder="Leave blank to keep current password"
+                            />
+                            @error('password')
+                                <p class="kt-form-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="user-main-col grid gap-1.5">
+                            <label for="password_confirmation" class="kt-form-label">Confirm new password</label>
+                            <input
+                                type="password"
+                                name="password_confirmation"
+                                id="password_confirmation"
+                                class="kt-input"
+                                autocomplete="new-password"
+                            />
+                        </div>
+                    </div>
+                    <p class="text-xs text-muted-foreground mt-2">
+                        Only Super Admins can reset passwords. Leave these fields empty to keep the current password.
+                    </p>
+                </div>
+            @endif
 
             <div class="flex justify-end gap-2 pt-4">
                 <a href="{{ route('admin.users.show', $user) }}" class="kt-btn kt-btn-outline">
