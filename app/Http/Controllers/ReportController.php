@@ -645,6 +645,18 @@ class ReportController extends Controller
 
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
 
+        // "Mother" family budget (umbrella plan for the family)
+        $motherBudget = $family->budgets()
+            ->where('type', Budget::TYPE_FAMILY)
+            ->orderBy('start_date')
+            ->first();
+
+        // Primary family wallet (main wallet other wallets draw from)
+        $primaryWallet = $family->wallets()
+            ->where('is_primary', true)
+            ->orderBy('id')
+            ->first();
+
         return view('families.reports.budget-vs-actual', [
             'family' => $family,
             'rows' => $rows,
@@ -654,6 +666,8 @@ class ReportController extends Controller
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
             'budgetTypes' => Budget::types(),
+            'motherBudget' => $motherBudget,
+            'primaryWallet' => $primaryWallet,
         ]);
     }
 
@@ -702,6 +716,7 @@ class ReportController extends Controller
         $search = $request->input('search');
 
         $baseQuery = $family->projects()
+            ->with(['budget'])
             ->withSum('fundings', 'amount')
             ->withSum('expenses', 'amount');
 

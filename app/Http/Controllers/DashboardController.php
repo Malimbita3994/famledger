@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Expense;
 use App\Models\Income;
 use App\Models\Wallet;
+use App\Models\Project;
+use App\Models\Property;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -122,6 +124,25 @@ class DashboardController extends Controller
             'type' => 'expense',
         ]))->sortByDesc('date')->take(10)->values();
 
+        // Project and property statistics for the current family (if any)
+        $projectCount = 0;
+        $activeProjectCount = 0;
+        $propertyCount = 0;
+        $propertyTotalValue = 0.0;
+
+        if ($currentFamily) {
+            $projectCount = Project::where('family_id', $currentFamily->id)->count();
+            $activeProjectCount = Project::where('family_id', $currentFamily->id)
+                ->where('status', 'active')
+                ->count();
+
+            $properties = Property::where('family_id', $currentFamily->id)->get();
+            $propertyCount = $properties->count();
+            $propertyTotalValue = (float) $properties->sum(function (Property $p) {
+                return (float) ($p->current_estimated_value ?? $p->purchase_price ?? 0);
+            });
+        }
+
         return view('dashboard', [
             'families' => $families,
             'currentFamily' => $currentFamily,
@@ -136,6 +157,10 @@ class DashboardController extends Controller
             'chartExpense' => $expenseByMonth,
             'expensesByCategory' => $expensesByCategory,
             'recentActivity' => $recentActivity,
+            'projectCount' => $projectCount,
+            'activeProjectCount' => $activeProjectCount,
+            'propertyCount' => $propertyCount,
+            'propertyTotalValue' => $propertyTotalValue,
         ]);
     }
 }

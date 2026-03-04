@@ -28,9 +28,15 @@ class WealthController extends Controller
 
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
 
-        // Wallet total (use accessor-based balance)
+        // Wallet totals (real cash only, split between general wallets and project wallets)
         $wallets = Wallet::where('family_id', $family->id)->get();
-        $walletTotal = (float) $wallets->sum(function (Wallet $w) {
+
+        // Project wallets hold funds reserved for projects (type = project_fund).
+        $projectWallets = $wallets->where('type', 'project_fund');
+        $otherWallets = $wallets->where('type', '!=', 'project_fund');
+
+        // Real cash in normal family wallets
+        $walletTotal = (float) $otherWallets->sum(function (Wallet $w) {
             return $w->balance;
         });
 
@@ -62,8 +68,10 @@ class WealthController extends Controller
             $propertyTotal += $book;
         }
 
-        // Projects: use planned_budget as conservative value
-        $projectTotal = (float) Project::where('family_id', $family->id)->sum('planned_budget');
+        // Projects: use real funded cash sitting in project wallets (not planned budgets)
+        $projectTotal = (float) $projectWallets->sum(function (Wallet $w) {
+            return $w->balance;
+        });
 
         // Liabilities: sum outstanding balance for this family
         $liabilityTotal = (float) FamilyLiability::where('family_id', $family->id)
@@ -72,12 +80,12 @@ class WealthController extends Controller
 
         $netWealth = $walletTotal + $propertyTotal + $projectTotal - $liabilityTotal;
 
-        // Asset allocation percentages
-        $totalBasis = max($netWealth, 0.0);
-        if ($totalBasis > 0) {
-            $walletPct = round(($walletTotal / $totalBasis) * 100, 1);
-            $propertyPct = round(($propertyTotal / $totalBasis) * 100, 1);
-            $projectPct = round(($projectTotal / $totalBasis) * 100, 1);
+        // Asset allocation percentages (based on total assets, not net wealth)
+        $totalAssets = $walletTotal + $propertyTotal + $projectTotal;
+        if ($totalAssets > 0) {
+            $walletPct = round(($walletTotal / $totalAssets) * 100, 1);
+            $propertyPct = round(($propertyTotal / $totalAssets) * 100, 1);
+            $projectPct = round(($projectTotal / $totalAssets) * 100, 1);
         } else {
             $walletPct = $propertyPct = $projectPct = 0.0;
         }

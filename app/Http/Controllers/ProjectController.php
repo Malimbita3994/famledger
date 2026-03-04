@@ -125,7 +125,7 @@ class ProjectController extends Controller
             abort(404);
         }
 
-        $project->load(['wallet', 'fundings.wallet:id,name,currency_code', 'expenses.category:id,name']);
+        $project->load(['wallet', 'fundings.wallet:id,name,currency_code', 'expenses.category:id,name', 'budget']);
         $project->loadSum('fundings', 'amount');
         $project->loadSum('expenses', 'amount');
 

@@ -115,7 +115,7 @@
                     <tbody>
                         @forelse($projects as $p)
                             @php
-                                $planned = (float) $p->planned_budget;
+                                $planned = (float) optional($p->budget)->amount ?: (float) $p->planned_budget;
                                 $spent = (float) ($p->expenses_sum_amount ?? 0);
                                 $funded = (float) ($p->fundings_sum_amount ?? 0);
                                 $remaining = $planned - $spent;
@@ -158,7 +158,7 @@
             <div class="md:hidden p-4 space-y-4">
                 @forelse ($projects as $p)
                     @php
-                        $planned = (float) $p->planned_budget;
+                        $planned = (float) optional($p->budget)->amount ?: (float) $p->planned_budget;
                         $spent = (float) ($p->expenses_sum_amount ?? 0);
                         $funded = (float) ($p->fundings_sum_amount ?? 0);
                         $remaining = $planned - $spent;

@@ -126,6 +126,7 @@
                                 <th class="min-w-[140px]">Code</th>
                                 <th class="min-w-[200px]">Property</th>
                                 <th class="min-w-[140px]">Category</th>
+                                <th class="min-w-[140px] text-right">Price</th>
                                 <th class="min-w-[140px]">Status</th>
                             </tr>
                         </thead>
@@ -143,6 +144,9 @@
                                         @if ($property->subcategory)
                                             <span class="text-xs text-muted-foreground">/ {{ $property->subcategory->name }}</span>
                                         @endif
+                                    </td>
+                                    <td class="text-sm text-right tabular-nums">
+                                        {{ number_format($property->purchase_price ?? 0, 0) }} {{ $family->currency_code }}
                                     </td>
                                     <td class="text-sm">
                                         <span class="kt-badge kt-badge-sm kt-badge-outline {{ $property->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }}">
@@ -172,6 +176,12 @@
                                         @if ($property->subcategory)
                                             / {{ $property->subcategory->name }}
                                         @endif
+                                        <span class="block mt-0.5">
+                                            <span class="text-[11px] text-muted-foreground">Price:</span>
+                                            <span class="text-[11px] font-semibold text-foreground tabular-nums">
+                                                {{ number_format($property->purchase_price ?? 0, 0) }} {{ $family->currency_code }}
+                                            </span>
+                                        </span>
                                     </span>
                                 </div>
                                 <span class="kt-badge kt-badge-sm kt-badge-outline {{ $property->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} shrink-0">

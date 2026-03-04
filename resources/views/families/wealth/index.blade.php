@@ -22,7 +22,7 @@
         <div>
             <h1 class="font-medium text-lg text-mono">Family Wealth</h1>
             <p class="text-sm text-muted-foreground mt-0.5">
-                Net worth derived from wallets, properties and projects for {{ $family->name }}.
+                Live net worth from real wallet balances, property values and funded projects for {{ $family->name }}.
             </p>
         </div>
     </div>
@@ -116,7 +116,7 @@
     <div class="kt-card rounded-2xl border border-border shadow-sm bg-card">
         <div class="kt-card-header border-b border-border flex items-center justify-between gap-3">
             <h3 class="kt-card-title text-sm">Wealth trend</h3>
-            <span class="text-xs text-muted-foreground">Snapshots over time (one per day when viewed).</span>
+            <span class="text-xs text-muted-foreground">Historical daily snapshots. Cards above are always based on live balances.</span>
         </div>
         <div class="kt-card-content p-0">
             @if ($trend->isEmpty())
@@ -154,5 +154,16 @@
         </div>
     </div>
 </div>
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Lightweight auto-refresh so wealth stays in sync with new transactions.
+            setInterval(function () {
+                if (document.visibilityState === 'visible') {
+                    window.location.reload();
+                }
+            }, 15000); // 15 seconds
+        });
+    </script>
+@endpush
 @endsection
-

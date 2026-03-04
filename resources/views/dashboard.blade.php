@@ -25,18 +25,17 @@
 .dashboard-kpi-grid {
     display: grid !important;
     width: 100% !important;
-    gap: 1.5rem !important;
+    gap: 1.25rem !important;
     margin-top: 0.5rem !important;
     margin-bottom: 1.5rem !important;
 }
 .dashboard-kpi-grid .dashboard-kpi-card {
     min-width: 0 !important;
     box-sizing: border-box !important;
-    margin: 0.5rem !important;
 }
 @media (min-width: 768px) {
     .dashboard-kpi-grid .dashboard-kpi-card {
-        margin: 0.75rem !important;
+        /* keep natural padding, no extra margin to avoid overflow */
     }
 }
 @media (min-width: 1024px) {
@@ -49,7 +48,7 @@
     .dashboard-kpi-grid { grid-template-columns: 1fr !important; }
 }
 </style>
-<div class="kt-container-fixed px-4 lg:px-6 pb-8">
+<div class="kt-container-fixed px-4 lg:px-6 pb-8 max-w-full overflow-x-hidden">
     <div class="mb-6">
         <h2 class="text-2xl font-bold text-foreground">FamLedger Dashboard</h2>
         <p class="text-muted-foreground mt-1">Welcome to your Family Finance & Budget Management System. Default currency: {{ $currency }}.</p>
@@ -62,7 +61,7 @@
     @endif
 
     <div class="dashboard-kpi-grid">
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="income" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
                 <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Income</span>
                 <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-arrow-up"></i></span>
@@ -70,7 +69,7 @@
             <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $formatAmount($totalIncome, $currency) }}</div>
             <div class="text-muted-foreground text-sm mt-2">This month</div>
         </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="expenses" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
                 <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Expenses</span>
                 <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-arrow-down"></i></span>
@@ -78,7 +77,7 @@
             <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $formatAmount($totalExpenses, $currency) }}</div>
             <div class="text-muted-foreground text-sm mt-2">This month</div>
         </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="budget" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
                 <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Budget Used</span>
                 <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie"></i></span>
@@ -86,7 +85,7 @@
             <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $budgetUsedPercent }}%</div>
             <div class="text-gray-600 dark:text-gray-300 text-sm mt-2">{{ $budgetUsedLabel }}</div>
         </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="wallets" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
                 <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Balance</span>
                 <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-safe"></i></span>
@@ -94,6 +93,24 @@
             <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $formatAmount($totalSavings, $currency) }}</div>
             <div class="text-muted-foreground text-sm mt-2">All wallets</div>
         </div>
+        @if(isset($currentFamily) && $currentFamily)
+        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="projects" style="padding: 1.25rem 1.5rem;">
+            <div class="flex items-center justify-between gap-3">
+                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Projects</span>
+                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-briefcase"></i></span>
+            </div>
+            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white tabular-nums">{{ $projectCount ?? 0 }}</div>
+            <div class="text-muted-foreground text-sm mt-2">{{ $activeProjectCount ?? 0 }} active</div>
+        </div>
+        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="properties" style="padding: 1.25rem 1.5rem;">
+            <div class="flex items-center justify-between gap-3">
+                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Properties</span>
+                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-home-3"></i></span>
+            </div>
+            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white tabular-nums">{{ $propertyCount ?? 0 }}</div>
+            <div class="text-muted-foreground text-sm mt-2">Value: {{ number_format($propertyTotalValue ?? 0, 0) }} {{ $currency }}</div>
+        </div>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-5 mb-6">
@@ -161,6 +178,95 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Lightweight auto-refresh so dashboard stats stay up to date
+    setInterval(function () {
+        if (document.visibilityState === 'visible') {
+            window.location.reload();
+        }
+    }, 60000); // 1 minute
+
+    // Clickable KPI cards -> SweetAlert2 modals with more detail
+    try {
+        var dashboardCards = document.querySelectorAll('.js-dashboard-card');
+        dashboardCards.forEach(function(card) {
+            card.addEventListener('click', function () {
+                var type = card.getAttribute('data-card-type');
+                var currency = @json($currency);
+                var totalIncome = @json($totalIncome);
+                var totalExpenses = @json($totalExpenses);
+                var totalSavings = @json($totalSavings);
+                var budgetUsedPercent = @json($budgetUsedPercent);
+                var budgetUsedLabel = @json($budgetUsedLabel);
+                var projectCount = @json($projectCount ?? 0);
+                var activeProjectCount = @json($activeProjectCount ?? 0);
+                var propertyCount = @json($propertyCount ?? 0);
+                var propertyTotalValue = @json($propertyTotalValue ?? 0);
+
+                var title = '';
+                var html = '';
+
+                switch (type) {
+                    case 'income':
+                        title = 'Total Income (This month)';
+                        html = '<p class="text-sm mb-2">Sum of all income recorded this month across your families.</p>' +
+                               '<p class="text-lg font-semibold">' + (totalIncome || 0).toLocaleString() + ' ' + currency + '</p>';
+                        break;
+                    case 'expenses':
+                        title = 'Total Expenses (This month)';
+                        html = '<p class="text-sm mb-2">Sum of all expenses recorded this month across your families.</p>' +
+                               '<p class="text-lg font-semibold">' + (totalExpenses || 0).toLocaleString() + ' ' + currency + '</p>';
+                        break;
+                    case 'budget':
+                        title = 'Budget Used (This month)';
+                        html = '<p class="text-sm mb-2">Usage across all active budgets in the current family and month.</p>' +
+                               '<p class="text-lg font-semibold">' + (budgetUsedPercent || 0) + '%</p>' +
+                               '<p class="text-sm text-muted-foreground mt-1">' + (budgetUsedLabel || '') + '</p>';
+                        break;
+                    case 'wallets':
+                        title = 'Total Wallet Balance';
+                        html = '<p class="text-sm mb-2">All family wallets: initial balance + income − expenses ± transfers.</p>' +
+                               '<p class="text-lg font-semibold">' + (totalSavings || 0).toLocaleString() + ' ' + currency + '</p>';
+                        break;
+                    case 'projects':
+                        title = 'Projects Overview';
+                        html = '<p class="text-sm mb-2">Projects for the current family.</p>' +
+                               '<p class="text-lg font-semibold mb-1">' + (projectCount || 0) + ' projects</p>' +
+                               '<p class="text-sm text-muted-foreground">' + (activeProjectCount || 0) + ' active right now.</p>';
+                        break;
+                    case 'properties':
+                        title = 'Properties Overview';
+                        html = '<p class="text-sm mb-2">Properties for the current family.</p>' +
+                               '<p class="text-lg font-semibold mb-1">' + (propertyCount || 0) + ' properties</p>' +
+                               '<p class="text-sm text-muted-foreground">Total value ' + (propertyTotalValue || 0).toLocaleString() + ' ' + currency + ' (purchase/estimated).</p>';
+                        break;
+                    default:
+                        return;
+                }
+
+                if (typeof window.swalAlert === 'function') {
+                    window.swalAlert({
+                        title: title,
+                        html: html,
+                        icon: 'info',
+                        confirmButtonText: 'Close',
+                    });
+                } else if (window.Swal && typeof window.Swal.fire === 'function') {
+                    window.Swal.fire({
+                        title: title,
+                        html: html,
+                        icon: 'info',
+                        confirmButtonText: 'Close',
+                    });
+                } else {
+                    // Fallback if SweetAlert2 is not available
+                    window.alert(title + '\n\n' + html.replace(/<[^>]+>/g, ' '));
+                }
+            });
+        });
+    } catch (e) {
+        console.error(e);
+    }
+
     if (typeof ApexCharts === 'undefined') return;
 
     var chartMonths = @json($chartMonths);

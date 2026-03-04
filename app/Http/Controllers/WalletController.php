@@ -95,7 +95,18 @@ class WalletController extends Controller
         $outgoingTransfers = $wallet->outgoingTransfers()->with('toWallet:id,name,currency_code')->orderByDesc('transfer_date')->limit(10)->get();
         $incomingTransfers = $wallet->incomingTransfers()->with('fromWallet:id,name,currency_code')->orderByDesc('transfer_date')->limit(10)->get();
 
-        return view('families.wallets.show', compact('family', 'wallet', 'walletTypes', 'outgoingTransfers', 'incomingTransfers'));
+        $recentIncomes = $wallet->incomes()->orderByDesc('received_date')->limit(10)->get();
+        $recentExpenses = $wallet->expenses()->orderByDesc('expense_date')->limit(10)->get();
+
+        return view('families.wallets.show', compact(
+            'family',
+            'wallet',
+            'walletTypes',
+            'outgoingTransfers',
+            'incomingTransfers',
+            'recentIncomes',
+            'recentExpenses',
+        ));
     }
 
     public function edit(Family $family, Wallet $wallet)

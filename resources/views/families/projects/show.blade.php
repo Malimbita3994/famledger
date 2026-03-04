@@ -68,9 +68,11 @@
     @endif
 
     @php
+        $linkedBudget = $project->budget;
+        // Prefer linked budget amount when available, fall back to project's own planned_budget field
+        $planned = (float) optional($linkedBudget)->amount ?: (float) $project->planned_budget;
         $totalFunding = (float) ($project->fundings_sum_amount ?? 0);
         $totalExpenses = (float) ($project->expenses_sum_amount ?? 0);
-        $planned = (float) $project->planned_budget;
         $remaining = $totalFunding - $totalExpenses;
         $spendingPct = $planned > 0 ? round(($totalExpenses / $planned) * 100, 1) : 0;
         $fundingPct = $planned > 0 ? min(100, round(($totalFunding / $planned) * 100, 1)) : 0;
@@ -103,6 +105,30 @@
         <div class="kt-progress h-2 {{ $spendingPct >= 100 ? 'kt-progress-destructive' : 'kt-progress-primary' }}">
             <div class="kt-progress-indicator" style="width: {{ min(100, $spendingPct) }}%"></div>
         </div>
+        @if($linkedBudget)
+            @php
+                $budgetUsed = (float) $linkedBudget->used_amount;
+                $budgetRemaining = max(0, (float) $linkedBudget->amount - $budgetUsed);
+                $budgetPct = (float) $linkedBudget->amount > 0 ? min(100, round(($budgetUsed / (float) $linkedBudget->amount) * 100, 1)) : 0;
+            @endphp
+            <div class="mt-4 pt-3 border-t border-dashed border-border text-sm text-muted-foreground">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span>Linked budget: <span class="font-medium text-foreground">{{ $linkedBudget->name }}</span></span>
+                    <span class="tabular-nums">{{ number_format($budgetPct, 1) }}%</span>
+                </div>
+                <div class="flex items-center justify-between text-xs mb-1">
+                    <span>Allocated: <span class="font-semibold text-foreground">{{ number_format($linkedBudget->amount, 0) }} {{ $linkedBudget->currency_code }}</span></span>
+                    <span>Used: <span class="font-semibold text-destructive">{{ number_format($budgetUsed, 0) }} {{ $linkedBudget->currency_code }}</span></span>
+                </div>
+                <div class="flex items-center justify-between text-xs mb-2">
+                    <span>Remaining</span>
+                    <span class="font-semibold {{ $budgetRemaining > 0 ? 'text-foreground' : 'text-destructive' }}">{{ number_format($budgetRemaining, 0) }} {{ $linkedBudget->currency_code }}</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div class="h-full rounded-full {{ $budgetPct >= 100 ? 'bg-red-500' : 'bg-primary' }}" style="width: {{ min(100, $budgetPct) }}%"></div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

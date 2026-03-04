@@ -10,6 +10,29 @@
         Back to {{ $family->name }}
     </a>
 
+    <style>
+    .liability-kpi-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        width: 100%;
+    }
+    @media (min-width: 768px) {
+        .liability-kpi-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    .liability-kpi-card {
+        transition: transform 160ms ease-out, box-shadow 160ms ease-out, border-color 160ms ease-out, background-color 160ms ease-out;
+    }
+    .liability-kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.10);
+        border-color: rgba(239, 68, 68, 0.4);
+        background-color: rgba(254, 242, 242, 0.95);
+    }
+    </style>
+
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="font-medium text-lg text-mono">Family Liabilities</h1>
@@ -26,35 +49,36 @@
     </div>
 
     {{-- KPI row --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="kt-card rounded-2xl border border-border bg-card p-4">
+    <div class="liability-kpi-grid mb-6">
+        <div class="liability-kpi-card kt-card rounded-xl border border-border bg-card p-5">
             <div class="text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">Total outstanding</div>
             <div class="text-xl font-semibold tabular-nums">
                 {{ number_format($totals['total_outstanding'], 0) }} {{ $family->currency_code ?? config('currencies.default', 'TZS') }}
             </div>
         </div>
-        <div class="kt-card rounded-2xl border border-border bg-card p-4">
+        <div class="liability-kpi-card kt-card rounded-xl border border-border bg-card p-5">
             <div class="text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">Active liabilities</div>
             <div class="text-lg font-semibold tabular-nums">{{ $totals['active_count'] }}</div>
         </div>
-        <div class="kt-card rounded-2xl border border-border bg-card p-4">
+        <div class="liability-kpi-card kt-card rounded-xl border border-border bg-card p-5">
             <div class="text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">Closed liabilities</div>
             <div class="text-lg font-semibold tabular-nums">{{ $totals['closed_count'] }}</div>
         </div>
     </div>
 
     {{-- List --}}
-    <div class="kt-card rounded-2xl border border-border bg-card">
+    <div class="mt-4 kt-card rounded-xl border border-border bg-card">
         <div class="kt-card-header border-b border-border flex items-center justify-between gap-3">
             <h3 class="kt-card-title text-sm">Liabilities</h3>
         </div>
-        <div class="kt-card-content p-0">
+        <div class="kt-card-content p-4 lg:p-5">
             @if ($liabilities->isEmpty())
                 <div class="py-10 text-center text-muted-foreground text-sm">
                     No liabilities recorded yet. Record loans, mortgages or debts so Wealth can calculate net wealth accurately.
                 </div>
             @else
-                <div class="kt-scrollable-x-auto">
+                {{-- Desktop / tablet table --}}
+                <div class="kt-scrollable-x-auto hidden md:block">
                     <table class="kt-table table-auto kt-table-border text-xs">
                         <thead>
                             <tr>
@@ -121,6 +145,73 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+
+                {{-- Mobile cards --}}
+                <div class="md:hidden space-y-4">
+                    @foreach ($liabilities as $liability)
+                        <div class="rounded-2xl border border-border bg-background shadow-sm px-5 py-4 flex flex-col gap-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex flex-col min-w-0">
+                                    <a href="{{ route('families.liabilities.show', [$family, $liability]) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
+                                        {{ $liability->name }}
+                                    </a>
+                                    <span class="text-[11px] text-muted-foreground mt-0.5">
+                                        Principal: {{ number_format($liability->principal_amount, 0) }} {{ $family->currency_code ?? config('currencies.default', 'TZS') }}
+                                    </span>
+                                    <span class="text-[11px] text-secondary-foreground mt-0.5">
+                                        Type: {{ ucfirst($liability->type) }}
+                                    </span>
+                                </div>
+                                @php
+                                    $badgeClass = match($liability->status) {
+                                        'active' => 'kt-badge-primary',
+                                        'overdue' => 'kt-badge-destructive',
+                                        'closed' => 'kt-badge-success',
+                                        default => 'kt-badge-outline',
+                                    };
+                                @endphp
+                                <span class="kt-badge kt-badge-sm {{ $badgeClass }} kt-badge-outline shrink-0">
+                                    {{ ucfirst($liability->status) }}
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px] text-muted-foreground border border-border/60 rounded-xl px-3 py-2 bg-muted/30">
+                                <div>
+                                    <span class="uppercase tracking-wide block mb-0.5">Outstanding</span>
+                                    <span class="text-sm font-semibold text-foreground tabular-nums">
+                                        {{ number_format($liability->outstanding_balance, 0) }} {{ $family->currency_code ?? config('currencies.default', 'TZS') }}
+                                    </span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="uppercase tracking-wide block mb-0.5">Due date</span>
+                                    <span class="text-sm font-semibold text-foreground">
+                                        {{ $liability->due_date ? $liability->due_date->format('M j, Y') : '—' }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="uppercase tracking-wide block mb-0.5">Linked to</span>
+                                    <span class="text-sm font-medium text-foreground">
+                                        @if($liability->property)
+                                            Property: {{ $liability->property->name }}
+                                        @elseif($liability->project)
+                                            Project: {{ $liability->project->name }}
+                                        @elseif($liability->wallet)
+                                            Wallet: {{ $liability->wallet->name }}
+                                        @else
+                                            Unlinked
+                                        @endif
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end pt-1">
+                                <a href="{{ route('families.liabilities.edit', [$family, $liability]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                    Edit
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
                 @if($liabilities->hasPages())
                     <div class="flex justify-center pt-4 pb-5">

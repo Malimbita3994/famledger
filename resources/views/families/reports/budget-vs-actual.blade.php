@@ -13,9 +13,61 @@
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="font-medium text-lg text-mono">Budget</h1>
-            <p class="text-sm text-muted-foreground mt-0.5">Planned budget and actual spending. Filter by type, status, or date range.</p>
+            <p class="text-sm text-muted-foreground mt-0.5">Planned budget and actual spending. Each sub-budget sits under the family master budget and draws from the main family wallet.</p>
         </div>
     </div>
+
+    @if($motherBudget || $primaryWallet)
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            @if($motherBudget)
+                <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <div>
+                            <p class="text-xs text-muted-foreground uppercase tracking-wide">Family master budget</p>
+                            <p class="text-sm font-semibold text-foreground">{{ $motherBudget->name }}</p>
+                        </div>
+                        <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie-simple"></i></span>
+                    </div>
+                    <p class="text-xs text-muted-foreground mb-1">
+                        Umbrella budget for the whole family. All other budgets (wallet, category, project) should fit inside this plan.
+                    </p>
+                    <div class="flex items-baseline justify-between mt-2 text-sm">
+                        <span class="text-muted-foreground">Allocated</span>
+                        <span class="font-semibold tabular-nums text-foreground">
+                            {{ number_format($motherBudget->amount, 0) }} {{ $motherBudget->currency_code ?? $currency }}
+                        </span>
+                    </div>
+                    <div class="flex items-baseline justify-between mt-1 text-sm">
+                        <span class="text-muted-foreground">Spent</span>
+                        <span class="font-semibold tabular-nums {{ $motherBudget->is_exceeded ? 'text-red-600' : 'text-foreground' }}">
+                            {{ number_format($motherBudget->used_amount, 0) }} {{ $motherBudget->currency_code ?? $currency }}
+                        </span>
+                    </div>
+                </div>
+            @endif
+
+            @if($primaryWallet)
+                <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <div>
+                            <p class="text-xs text-muted-foreground uppercase tracking-wide">Main family wallet</p>
+                            <a href="{{ route('families.wallets.show', [$family, $primaryWallet]) }}" class="text-sm font-semibold text-primary hover:underline">
+                                {{ $primaryWallet->name }}
+                            </a>
+                        </div>
+                        <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-wallet"></i></span>
+                    </div>
+                    <p class="text-xs text-muted-foreground mb-1">
+                        Core cash wallet for the family. Other wallets and project wallets are usually funded from here.
+                    </p>
+                    <div class="flex items-baseline justify-between mt-2 text-sm">
+                        <span class="text-muted-foreground">Currency</span>
+                        <span class="font-semibold text-foreground">{{ $primaryWallet->currency_code }}</span>
+                    </div>
+                </div>
+            @endif
+        </div>
+    @endif
 
     {{-- Filter report card (standard) --}}
     <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card mb-6">

@@ -364,9 +364,20 @@ class PropertyController extends Controller
     {
         $this->authorizePropertyManager($family);
 
+        // Only list properties that realistically need maintenance (e.g. buildings, vehicles),
+        // excluding assets like bare land.
         $properties = Property::where('family_id', $family->id)
+            ->with(['category', 'subcategory'])
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->filter(function (Property $prop) {
+                $categoryName = mb_strtolower($prop->category->name ?? '');
+                $subcategoryName = mb_strtolower($prop->subcategory->name ?? '');
+
+                // Exclude "Land" category/subcategory from maintenance list
+                return $categoryName !== 'land' && $subcategoryName !== 'land';
+            })
+            ->values();
 
         $propertyId = (int) $request->query('property_id', 0);
         $from = $request->query('from');

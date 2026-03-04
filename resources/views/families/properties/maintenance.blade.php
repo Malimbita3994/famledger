@@ -30,39 +30,56 @@
             flex: 1 1 0;
         }
     }
+
+    .maintenance-filter-row {
+        display: grid !important;
+        grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(160px, 1fr)) auto !important;
+        gap: 0.75rem !important;
+        align-items: flex-end !important;
+        width: 100% !important;
+    }
+
+    @media (max-width: 768px) {
+        .maintenance-filter-row {
+            grid-template-columns: 1fr !important;
+        }
+    }
     </style>
 
     <div class="kt-card p-5 lg:p-7.5 mb-5">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div>
                 <h1 class="text-lg font-semibold text-mono">Maintenance</h1>
                 <p class="text-sm text-muted-foreground mt-0.5">
                     Log maintenance tasks, repairs and inspections for family properties.
                 </p>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <form method="GET" class="flex flex-wrap items-end gap-2">
-                    <select name="property_id" class="kt-select min-w-[180px]">
-                        <option value="">All properties</option>
-                        @foreach ($properties as $prop)
-                            <option value="{{ $prop->id }}" @selected(($filters['property_id'] ?? null) == $prop->id)>
-                                {{ $prop->property_code }} · {{ $prop->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <div class="flex items-center gap-2">
-                        <div class="flex flex-col">
-                            <label class="kt-form-label text-xs" for="from">From</label>
-                            <input id="from" type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="kt-input h-9">
-                        </div>
-                        <div class="flex flex-col">
-                            <label class="kt-form-label text-xs" for="to">To</label>
-                            <input id="to" type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="kt-input h-9">
-                        </div>
+            <div class="flex flex-wrap gap-2 w-full lg:w-auto">
+                <form method="GET" class="maintenance-filter-row">
+                    <div class="flex flex-col">
+                        <label class="kt-form-label text-xs mb-1" for="property_id">Property</label>
+                        <select name="property_id" id="property_id" class="kt-select min-w-[180px]">
+                            <option value="">All properties</option>
+                            @foreach ($properties as $prop)
+                                <option value="{{ $prop->id }}" @selected(($filters['property_id'] ?? null) == $prop->id)>
+                                    {{ $prop->property_code }} · {{ $prop->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
-                    <button type="submit" class="kt-btn kt-btn-outline kt-btn-sm mt-4">
-                        Filter
-                    </button>
+                    <div class="flex flex-col">
+                        <label class="kt-form-label text-xs mb-1" for="from">From</label>
+                        <input id="from" type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="kt-input h-9">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="kt-form-label text-xs mb-1" for="to">To</label>
+                        <input id="to" type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="kt-input h-9">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="kt-btn kt-btn-outline kt-btn-sm">
+                            Filter
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

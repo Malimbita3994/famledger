@@ -90,4 +90,23 @@
         </div>
     </form>
 </div>
+@push('scripts')
+    @if($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const firstError = @json($errors->first());
+                if (window.Swal && firstError) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Funding failed',
+                        text: firstError,
+                        confirmButtonText: 'OK',
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                }
+            });
+        </script>
+    @endif
+@endpush
 @endsection
