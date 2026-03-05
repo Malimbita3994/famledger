@@ -219,6 +219,9 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         $isLoginRoute = request()->routeIs('login');
         $loginHasErrors = $isLoginRoute && $errors->any();
         $loginErrorMessage = $isLoginRoute ? ($errors->first('email') ?: $errors->first('password') ?: null) : null;
+        $isRegisterRoute = request()->routeIs('register');
+        $registerHasErrors = $isRegisterRoute && $errors->any();
+        $registerErrorMessage = $isRegisterRoute ? ($errors->first('email') ?: $errors->first('password') ?: $errors->first('name') ?: null) : null;
         $guestFlash = [
             'success' => session('success'),
             'error'   => session('error'),
@@ -237,6 +240,23 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                     icon: 'error',
                     title: 'Login failed',
                     text: @json($loginErrorMessage),
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#2563eb'
+                });
+            });
+        </script>
+    @endif
+
+    @if ($isRegisterRoute && $registerErrorMessage)
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof Swal === 'undefined') {
+                    return;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Sign up failed',
+                    text: @json($registerErrorMessage),
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#2563eb'
                 });
