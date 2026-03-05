@@ -113,8 +113,8 @@
     </div>
    </div>
 
-  {{-- Audit log (System admin only) --}}
-  @if (auth()->user() && auth()->user()->hasRole('Super Admin'))
+  {{-- Audit log (Super Admin & Auditor: full platform audit) --}}
+  @if (auth()->user() && (auth()->user()->hasRole('Super Admin') || auth()->user()->hasRole('Auditor')))
   <div class="kt-card p-5 lg:p-7.5 lg:pt-7">
     <div class="flex flex-col gap-4">
      <div class="flex items-center justify-between gap-2">
@@ -125,34 +125,33 @@
        Audit log
       </a>
       <span class="text-sm text-secondary-foreground leading-5">
-       Review who changed what across wallets, budgets, projects and members for this family.
-      </span>
-      <span class="text-xs text-muted-foreground">
-       Detailed audit views will appear here as the feature is implemented.
+       View all platform activity across families. Filter by date and type.
       </span>
      </div>
     </div>
    </div>
+  @endif
 
-   {{-- Property configuration (System admin only) --}}
-   <div class="kt-card p-5 lg:p-7.5 lg:pt-7">
-    <div class="flex flex-col gap-4">
-     <div class="flex items-center justify-between gap-2">
-      <i class="ki-filled ki-home-3 text-2xl text-primary"></i>
-     </div>
-     <div class="flex flex-col gap-3">
-      <a href="{{ route('settings.property.index') }}" class="text-base font-medium leading-none text-foreground hover:text-primary">
-       Property configuration
-      </a>
-      <span class="text-sm text-secondary-foreground leading-5">
-       Manage property categories and dynamic attributes used across all family properties.
-      </span>
-      <span class="text-xs text-muted-foreground">
-       System-wide configuration, available only to platform administrators.
-      </span>
-     </div>
+  {{-- Property configuration (System admin only) --}}
+  @if (auth()->user() && auth()->user()->hasRole('Super Admin'))
+  <div class="kt-card p-5 lg:p-7.5 lg:pt-7">
+   <div class="flex flex-col gap-4">
+    <div class="flex items-center justify-between gap-2">
+     <i class="ki-filled ki-home-3 text-2xl text-primary"></i>
+    </div>
+    <div class="flex flex-col gap-3">
+     <a href="{{ route('settings.property.index') }}" class="text-base font-medium leading-none text-foreground hover:text-primary">
+      Property configuration
+     </a>
+     <span class="text-sm text-secondary-foreground leading-5">
+      Manage property categories and dynamic attributes used across all family properties.
+     </span>
+     <span class="text-xs text-muted-foreground">
+      System-wide configuration, available only to platform administrators.
+     </span>
     </div>
    </div>
+  </div>
   @endif
   </div>
  </div>

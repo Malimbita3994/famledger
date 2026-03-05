@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\AuditLogger;
+use App\Models\AuditLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +30,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        try {
+            AuditLogger::application(AuditLog::ACTION_LOGIN, 'Signed in to FamLedger', [
+                'email' => $request->user()->email,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -36,6 +46,17 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        try {
+            if ($user) {
+                AuditLogger::application(AuditLog::ACTION_LOGOUT, 'Signed out of FamLedger', [
+                    'email' => $user->email,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

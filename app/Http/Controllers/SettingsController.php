@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\ExpenseCategory;
+use App\Models\Family;
 use App\Models\FamilyRole;
 use App\Models\IncomeCategory;
 use App\Models\SystemLookup;
@@ -347,11 +349,45 @@ class SettingsController extends Controller
     }
 
     /**
-     * Audit log settings (placeholder for now).
+     * Global audit log (Super Admin / Auditor): whole system or filter by a family the user belongs to.
      */
-    public function auditLog(): View
+    public function auditLog(Request $request): View
     {
-        return view('settings.audit-log');
+        $query = AuditLog::with(['user:id,name,email', 'family:id,name'])
+            ->orderByDesc('created_at');
+
+        // Scope: whole system or a specific family (families the user belongs to or owns)
+        if ($request->filled('family_id')) {
+            $familyId = (int) $request->input('family_id');
+            $userFamilies = $request->user()->families()->pluck('families.id')->toArray();
+            if (in_array($familyId, $userFamilies, true)) {
+                $query->forFamily($familyId);
+            }
+        }
+
+        if ($request->filled('type')) {
+            if ($request->input('type') === AuditLog::TYPE_APPLICATION) {
+                $query->application();
+            } elseif ($request->input('type') === AuditLog::TYPE_DATABASE) {
+                $query->database();
+            }
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->input('from'));
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->input('to'));
+        }
+
+        $logs = $query->paginate(50)->withQueryString();
+
+        // Families the user belongs to (for scope dropdown: "Whole system" or pick a family)
+        $families = $request->user()->families()->select('families.id as id', 'families.name as name')->orderBy('families.name')->get();
+
+        return view('settings.audit-log', [
+            'logs' => $logs,
+            'families' => $families,
+        ]);
     }
 }
 

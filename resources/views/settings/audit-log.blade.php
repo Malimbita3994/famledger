@@ -60,67 +60,55 @@
       z-index: 10;
       overflow: visible;
   }
+
+  .audit-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
  </style>
 
  <div class="kt-container-fixed pb-6">
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 lg:gap-7.5">
    <div class="col-span-2">
     <div class="flex flex-col gap-5 lg:gap-7.5">
-     {{-- Filters --}}
+     {{-- Scope & filters (Super Admin / Auditor: whole system or a family you belong to) --}}
      <div class="kt-card audit-filter-card">
       <div class="kt-card-header flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center">
        <div class="flex flex-col gap-1">
         <h3 class="kt-card-title">
          {{ __('Filter activity') }}
         </h3>
-        <span class="text-xs text-secondary-foreground">
-         {{ __('Narrow down events by date, member, area and severity.') }}
-        </span>
        </div>
       </div>
       <div class="kt-card-content px-5 pb-5 pt-1">
-       <form class="audit-filter-row">
-        <div class="flex flex-col gap-1.5 audit-filter-field">
-         <label for="audit_date_range" class="text-xs font-medium text-secondary-foreground">
-          {{ __('Date range') }}
-         </label>
-         <div class="kt-input">
-          <i class="ki-filled ki-calendar"></i>
-          <input id="audit_date_range" type="text" placeholder="{{ __('Last 30 days') }}" />
-         </div>
-        </div>
-        <div class="flex flex-col gap-1.5 audit-filter-field">
-         <label for="audit_member" class="text-xs font-medium text-secondary-foreground">
-          {{ __('Family member') }}
-         </label>
-         <select id="audit_member" class="kt-select w-full" data-kt-select="true">
-          <option value="all">{{ __('All members') }}</option>
-          <option value="me">{{ __('Only my activity') }}</option>
+       <form method="get" action="{{ route('settings.audit-log') }}" class="audit-filter-row">
+        <div class="flex flex-col gap-1.5 audit-filter-field" style="min-width: 180px;">
+         <label for="audit_scope" class="text-xs font-medium text-secondary-foreground">{{ __('Scope') }}</label>
+         <select id="audit_scope" name="family_id" class="kt-select w-full">
+          <option value="">{{ __('Whole system') }}</option>
+          @foreach($families ?? [] as $f)
+           <option value="{{ $f->id }}" {{ request('family_id') == $f->id ? 'selected' : '' }}>{{ $f->name }}</option>
+          @endforeach
          </select>
         </div>
         <div class="flex flex-col gap-1.5 audit-filter-field">
-         <label for="audit_area" class="text-xs font-medium text-secondary-foreground">
-          {{ __('Area') }}
-         </label>
-         <select id="audit_area" class="kt-select w-full" data-kt-select="true">
-          <option value="all">{{ __('All areas') }}</option>
-          <option value="wallets">{{ __('Wallets & accounts') }}</option>
-          <option value="budgets">{{ __('Budgets & envelopes') }}</option>
-          <option value="transactions">{{ __('Transactions') }}</option>
-          <option value="members">{{ __('Members & roles') }}</option>
-          <option value="settings">{{ __('Settings & categories') }}</option>
-         </select>
+         <label for="audit_from" class="text-xs font-medium text-secondary-foreground">{{ __('From') }}</label>
+         <input id="audit_from" type="date" name="from" value="{{ request('from') }}" class="kt-input w-full" />
         </div>
         <div class="flex flex-col gap-1.5 audit-filter-field">
-         <label for="audit_severity" class="text-xs font-medium text-secondary-foreground">
-          {{ __('Severity') }}
-         </label>
-         <select id="audit_severity" class="kt-select w-full" data-kt-select="true">
-          <option value="all">{{ __('All severities') }}</option>
-          <option value="info">{{ __('Info only') }}</option>
-          <option value="warning">{{ __('Warnings') }}</option>
-          <option value="critical">{{ __('Critical only') }}</option>
+         <label for="audit_to" class="text-xs font-medium text-secondary-foreground">{{ __('To') }}</label>
+         <input id="audit_to" type="date" name="to" value="{{ request('to') }}" class="kt-input w-full" />
+        </div>
+        <div class="flex flex-col gap-1.5 audit-filter-field">
+         <label for="audit_type" class="text-xs font-medium text-secondary-foreground">{{ __('Type') }}</label>
+         <select id="audit_type" name="type" class="kt-select w-full">
+          <option value="">{{ __('All') }}</option>
+          <option value="application" {{ request('type') === 'application' ? 'selected' : '' }}>{{ __('Application') }}</option>
+          <option value="database" {{ request('type') === 'database' ? 'selected' : '' }}>{{ __('Database') }}</option>
          </select>
+        </div>
+        <div class="flex flex-col gap-1.5 audit-filter-field flex items-end">
+         <button type="submit" class="kt-btn kt-btn-primary">{{ __('Apply') }}</button>
         </div>
        </form>
       </div>
@@ -130,7 +118,12 @@
      <div class="kt-card">
       <div class="kt-card-header items-center justify-between gap-3">
        <h3 class="kt-card-title text-sm">
-        {{ __('Recent activity for this family') }}
+        @if(request('family_id') && isset($families))
+         @php $selectedFamily = $families->firstWhere('id', (int) request('family_id')); @endphp
+         {{ $selectedFamily ? __('Recent activity') . ' – ' . $selectedFamily->name : __('Recent activity (platform-wide)') }}
+        @else
+         {{ __('Recent activity (platform-wide)') }}
+        @endif
        </h3>
        <div class="flex items-center gap-2">
         <button type="button" class="kt-btn kt-btn-xs kt-btn-outline">
@@ -144,171 +137,62 @@
         <table class="kt-table align-middle text-xs text-secondary-foreground">
          <thead>
           <tr class="bg-accent/40">
-           <th class="px-4 py-2 text-start font-medium min-w-40">
-            {{ __('When') }}
-           </th>
-           <th class="px-4 py-2 text-start font-medium min-w-40">
-            {{ __('Who') }}
-           </th>
-           <th class="px-4 py-2 text-start font-medium min-w-44">
-            {{ __('Area') }}
-           </th>
-           <th class="px-4 py-2 text-start font-medium min-w-64">
-            {{ __('Action') }}
-           </th>
-           <th class="px-4 py-2 text-start font-medium min-w-40">
-            {{ __('Details') }}
-           </th>
-           <th class="px-4 py-2 text-end font-medium min-w-20">
-            {{ __('IP') }}
-           </th>
+           <th class="px-4 py-2 text-start font-medium min-w-40">{{ __('When') }}</th>
+           <th class="px-4 py-2 text-start font-medium min-w-40">{{ __('Who') }}</th>
+           <th class="px-4 py-2 text-start font-medium min-w-32">{{ __('Family') }}</th>
+           <th class="px-4 py-2 text-start font-medium min-w-32">{{ __('Type') }}</th>
+           <th class="px-4 py-2 text-start font-medium min-w-44">{{ __('Area') }}</th>
+           <th class="px-4 py-2 text-start font-medium min-w-64">{{ __('Action / Description') }}</th>
+           <th class="px-4 py-2 text-end font-medium min-w-20">{{ __('IP') }}</th>
           </tr>
          </thead>
          <tbody>
-          {{-- Example static rows for now --}}
-          <tr>
+          @forelse($logs as $log)
+          <tr class="border-b border-border last:border-0 hover:bg-accent/20">
            <td class="px-4 py-2 align-top">
             <div class="flex flex-col">
-             <span class="font-medium text-mono text-xs">
-              {{ __('Today · 09:14') }}
-             </span>
-             <span class="text-[11px] text-muted-foreground">
-              {{ __('2 minutes ago') }}
-             </span>
+             <span class="font-medium text-mono text-xs">{{ $log->created_at->format('Y-m-d · H:i') }}</span>
+             <span class="text-[11px] text-muted-foreground">{{ $log->created_at->diffForHumans() }}</span>
             </div>
            </td>
            <td class="px-4 py-2 align-top">
-            <div class="flex flex-col">
-             <span class="text-xs font-medium text-mono">
-              {{ __('You') }}
-             </span>
-             <span class="text-[11px] text-muted-foreground">
-              {{ auth()->user()->email ?? 'user@example.com' }}
-             </span>
-            </div>
+            @if($log->user)
+             <div class="flex flex-col">
+              <span class="text-xs font-medium text-mono">{{ $log->user->name }}</span>
+              <span class="text-[11px] text-muted-foreground">{{ $log->user->email }}</span>
+             </div>
+            @else
+             <span class="text-[11px] text-muted-foreground">—</span>
+            @endif
            </td>
            <td class="px-4 py-2 align-top">
-            <span class="kt-badge kt-badge-xs kt-badge-outline kt-badge-primary">
-             {{ __('Budgets') }}
+            @if($log->family)
+             <span class="text-xs text-muted-foreground">{{ $log->family->name }}</span>
+            @else
+             <span class="text-[11px] text-muted-foreground">—</span>
+            @endif
+           </td>
+           <td class="px-4 py-2 align-top">
+            <span class="kt-badge kt-badge-xs {{ $log->type === 'database' ? 'kt-badge-outline kt-badge-primary' : 'kt-badge-outline kt-badge-secondary' }}">
+             {{ $log->type === 'database' ? __('Database') : __('Application') }}
             </span>
            </td>
            <td class="px-4 py-2 align-top">
-            <div class="flex flex-col gap-0.5">
-             <span class="text-xs font-medium text-foreground">
-              {{ __('Updated monthly grocery budget') }}
-             </span>
-             <span class="text-[11px] text-muted-foreground">
-              {{ __('Limit changed from 450,000 to 500,000') }}
-             </span>
-            </div>
+            <span class="kt-badge kt-badge-xs kt-badge-outline kt-badge-primary">{{ $log->area }}</span>
            </td>
            <td class="px-4 py-2 align-top">
-            <span class="text-[11px] text-muted-foreground">
-             {{ __('Wallet: Household · Currency: TZS') }}
-            </span>
+            <span class="text-xs font-medium text-foreground">{{ $log->action }}</span>
+            <span class="text-[11px] text-muted-foreground block mt-0.5">{{ $log->description ?? '—' }}</span>
            </td>
            <td class="px-4 py-2 align-top text-end">
-            <span class="text-[11px] text-muted-foreground">
-             192.168.0.10
-            </span>
+            <span class="text-[11px] text-muted-foreground">{{ $log->ip ?? '—' }}</span>
            </td>
           </tr>
-
+          @empty
           <tr>
-           <td class="px-4 py-2 align-top">
-            <div class="flex flex-col">
-             <span class="font-medium text-mono text-xs">
-              {{ __('Yesterday · 21:03') }}
-             </span>
-             <span class="text-[11px] text-muted-foreground">
-              {{ __('1 day ago') }}
-             </span>
-            </div>
-           </td>
-           <td class="px-4 py-2 align-top">
-            <div class="flex flex-col">
-             <span class="text-xs font-medium text-mono">
-              {{ __('Family member') }}
-             </span>
-             <span class="text-[11px] text-muted-foreground">
-              {{ __('Invited user') }}
-             </span>
-            </div>
-           </td>
-           <td class="px-4 py-2 align-top">
-            <span class="kt-badge kt-badge-xs kt-badge-outline kt-badge-secondary">
-             {{ __('Members & roles') }}
-            </span>
-           </td>
-           <td class="px-4 py-2 align-top">
-            <div class="flex flex-col gap-0.5">
-             <span class="text-xs font-medium text-foreground">
-              {{ __('Changed role from Viewer to Owner') }}
-             </span>
-             <span class="text-[11px] text-muted-foreground">
-              {{ __('Ownership transferred') }}
-             </span>
-            </div>
-           </td>
-           <td class="px-4 py-2 align-top">
-            <span class="text-[11px] text-muted-foreground">
-             {{ __('Family: Main household') }}
-            </span>
-           </td>
-           <td class="px-4 py-2 align-top text-end">
-            <span class="text-[11px] text-muted-foreground">
-             102.89.14.23
-            </span>
-           </td>
+           <td colspan="7" class="px-4 py-8 text-center text-muted-foreground text-sm">{{ __('No audit entries yet.') }}</td>
           </tr>
-
-          <tr>
-           <td class="px-4 py-2 align-top">
-            <div class="flex flex-col">
-             <span class="font-medium text-mono text-xs">
-              {{ __('2 days ago · 08:27') }}
-             </span>
-             <span class="text-[11px] text-muted-foreground">
-              {{ __('2 days ago') }}
-             </span>
-            </div>
-           </td>
-           <td class="px-4 py-2 align-top">
-            <div class="flex flex-col">
-             <span class="text-xs font-medium text-mono">
-              {{ __('You') }}
-             </span>
-             <span class="text-[11px] text-muted-foreground">
-              {{ __('Login') }}
-             </span>
-            </div>
-           </td>
-           <td class="px-4 py-2 align-top">
-            <span class="kt-badge kt-badge-xs kt-badge-outline kt-badge-success">
-             {{ __('Security') }}
-            </span>
-           </td>
-           <td class="px-4 py-2 align-top">
-            <div class="flex flex-col gap-0.5">
-             <span class="text-xs font-medium text-foreground">
-              {{ __('Signed in to FamLedger') }}
-             </span>
-             <span class="text-[11px] text-muted-foreground">
-              {{ __('2FA verified via email code') }}
-             </span>
-            </div>
-           </td>
-           <td class="px-4 py-2 align-top">
-            <span class="text-[11px] text-muted-foreground">
-             {{ __('Device: Chrome · Windows') }}
-            </span>
-           </td>
-           <td class="px-4 py-2 align-top text-end">
-            <span class="text-[11px] text-muted-foreground">
-             41.59.192.5
-            </span>
-           </td>
-          </tr>
+          @endforelse
          </tbody>
         </table>
        </div>
@@ -415,19 +299,23 @@
         </div>
        </div>
       </div>
+      @if(isset($logs) && $logs->hasPages())
       <div class="kt-card-footer justify-between items-center flex-wrap gap-3">
-       <span class="text-xs text-muted-foreground">
-        {{ __('Showing a sample of recent events. This view will be wired to the database as the audit feature evolves.') }}
-       </span>
+       <span class="text-xs text-muted-foreground">{{ __('Showing') }} {{ $logs->firstItem() ?? 0 }}–{{ $logs->lastItem() ?? 0 }} {{ __('of') }} {{ $logs->total() }}</span>
        <div class="flex items-center gap-2">
-        <button type="button" class="kt-btn kt-btn-xs kt-btn-outline">
-         {{ __('Previous') }}
-        </button>
-        <button type="button" class="kt-btn kt-btn-xs kt-btn-outline">
-         {{ __('Next') }}
-        </button>
+        @if($logs->onFirstPage())
+         <span class="kt-btn kt-btn-xs kt-btn-ghost opacity-50">{{ __('Previous') }}</span>
+        @else
+         <a href="{{ $logs->previousPageUrl() }}" class="kt-btn kt-btn-xs kt-btn-outline">{{ __('Previous') }}</a>
+        @endif
+        @if($logs->hasMorePages())
+         <a href="{{ $logs->nextPageUrl() }}" class="kt-btn kt-btn-xs kt-btn-outline">{{ __('Next') }}</a>
+        @else
+         <span class="kt-btn kt-btn-xs kt-btn-ghost opacity-50">{{ __('Next') }}</span>
+        @endif
        </div>
       </div>
+      @endif
      </div>
     </div>
    </div>
@@ -441,38 +329,64 @@
         {{ __('Summary (last 30 days)') }}
        </h3>
       </div>
-      <div class="kt-card-content px-5 py-4 flex flex-col gap-4">
-       <div class="flex items-center justify-between">
-        <span class="text-xs text-secondary-foreground">
-         {{ __('Total events') }}
-        </span>
-        <span class="text-sm font-semibold text-mono">
-         128
-        </span>
-       </div>
-       <div class="flex items-center justify-between">
-        <span class="text-xs text-secondary-foreground">
-         {{ __('Critical changes') }}
-        </span>
-        <span class="text-sm font-semibold text-destructive">
-         4
-        </span>
-       </div>
-       <div class="flex items-center justify-between">
-        <span class="text-xs text-secondary-foreground">
-         {{ __('Member updates') }}
-        </span>
-        <span class="text-sm font-semibold text-mono">
-         9
-        </span>
-       </div>
-       <div class="flex items-center justify-between">
-        <span class="text-xs text-secondary-foreground">
-         {{ __('Budget & wallet changes') }}
-        </span>
-        <span class="text-sm font-semibold text-mono">
-         21
-        </span>
+      <div class="kt-card-content px-4 py-4">
+       <div class="audit-summary-grid grid gap-3">
+        <button
+         type="button"
+         class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
+         data-title="{{ __('Total events') }}"
+         data-value="128"
+         data-description="{{ __('Total number of audit events recorded across the selected scope in the last 30 days.') }}"
+        >
+         <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
+          {{ __('Total events') }}
+         </span>
+         <span class="text-sm font-semibold text-mono">
+          128
+         </span>
+        </button>
+        <button
+         type="button"
+         class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
+         data-title="{{ __('Critical changes') }}"
+         data-value="4"
+         data-description="{{ __('Important configuration and permission changes that may require review.') }}"
+        >
+         <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
+          {{ __('Critical changes') }}
+         </span>
+         <span class="text-sm font-semibold text-destructive">
+          4
+         </span>
+        </button>
+        <button
+         type="button"
+         class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
+         data-title="{{ __('Member updates') }}"
+         data-value="9"
+         data-description="{{ __('Invitations, role changes and member removals performed in the last 30 days.') }}"
+        >
+         <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
+          {{ __('Member updates') }}
+         </span>
+         <span class="text-sm font-semibold text-mono">
+          9
+         </span>
+        </button>
+        <button
+         type="button"
+         class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
+         data-title="{{ __('Budget & wallet changes') }}"
+         data-value="21"
+         data-description="{{ __('Budget adjustments, wallet openings and key balance changes over the last 30 days.') }}"
+        >
+         <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
+          {{ __('Budget & wallet changes') }}
+         </span>
+         <span class="text-sm font-semibold text-mono">
+          21
+         </span>
+        </button>
        </div>
       </div>
      </div>
@@ -513,4 +427,43 @@
   </div>
  </div>
 @endsection
+
+@push('scripts')
+<script>
+ document.addEventListener('DOMContentLoaded', function () {
+     if (typeof Swal === 'undefined') {
+         return;
+     }
+
+     var cards = document.querySelectorAll('.audit-summary-card');
+     cards.forEach(function (card) {
+         card.addEventListener('click', function () {
+             var title = card.getAttribute('data-title') || '';
+             var value = card.getAttribute('data-value') || '';
+             var description = card.getAttribute('data-description') || '';
+
+             var html =
+                 '<div style="text-align:left;font-size:13px;line-height:1.5;">' +
+                     '<p style="margin-bottom:6px;"><strong>Count:</strong> ' + value + '</p>' +
+                     (description
+                         ? '<p style="font-size:12px;color:#64748b;margin:0;">' + description + '</p>'
+                         : '') +
+                 '</div>';
+
+             Swal.fire({
+                 title: title,
+                 html: html,
+                 icon: 'info',
+                 confirmButtonText: '{{ __('Close') }}',
+                 customClass: {
+                     popup: 'swal2-rounded',
+                     title: 'text-sm font-semibold text-foreground',
+                     confirmButton: 'kt-btn kt-btn-sm kt-btn-primary'
+                 }
+             });
+         });
+     });
+ });
+</script>
+@endpush
 

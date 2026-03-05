@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\PropertyConfigController;
 use App\Http\Controllers\WealthController;
 use App\Http\Controllers\FamilyLiabilityController;
 use App\Http\Controllers\FamilyInvitationController;
+use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\InviteJoinController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\ContactController;
@@ -68,8 +69,6 @@ Route::middleware('auth')->group(function () {
         Route::patch('/settings/categories/roles/{familyRole}', [SettingsController::class, 'updateFamilyRole'])->name('settings.categories.roles.update');
         Route::delete('/settings/categories/roles/{familyRole}', [SettingsController::class, 'destroyFamilyRole'])->name('settings.categories.roles.destroy');
 
-        Route::get('/settings/audit-log', [SettingsController::class, 'auditLog'])->name('settings.audit-log');
-
         // Property configuration (categories & attributes)
         Route::get('/settings/property', [PropertyConfigController::class, 'index'])->name('settings.property.index');
         Route::post('/settings/property/categories', [PropertyConfigController::class, 'storeCategory'])->name('settings.property.categories.store');
@@ -85,6 +84,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/settings/notifications', [SettingsController::class, 'notifications'])->name('settings.notifications');
+
+    // Global audit log: Super Admin and Auditor only (all platform activity)
+    Route::middleware('role:Super Admin|Auditor')->group(function () {
+        Route::get('/settings/audit-log', [SettingsController::class, 'auditLog'])->name('settings.audit-log');
+    });
 
     // Family Management (CRUD)
     Route::resource('families', FamilyController::class);
@@ -195,6 +199,10 @@ Route::middleware('auth')->group(function () {
         Route::get('reports/savings', [ReportController::class, 'savings'])->name('reports.savings');
         Route::get('reports/project-summary', [ReportController::class, 'projectSummary'])->name('reports.project-summary');
         Route::get('reports/property', [ReportController::class, 'property'])->name('reports.property');
+
+        // Audit trail (application + database) for this family
+        Route::get('audit-trail', [AuditTrailController::class, 'index'])->name('audit-trail.index');
+        Route::get('audit-trail/export', [AuditTrailController::class, 'exportPdf'])->name('audit-trail.export');
     });
 
     // Platform Administration (Super Admin / Admin only)
