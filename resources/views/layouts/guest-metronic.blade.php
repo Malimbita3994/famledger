@@ -385,5 +385,6 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
 
     <script src="{{ asset('metronic/assets/js/core.bundle.js') }}"></script>
     <script src="{{ asset('metronic/assets/vendors/ktui/ktui.min.js') }}"></script>
+    @stack('scripts')
 </body>
 </html>

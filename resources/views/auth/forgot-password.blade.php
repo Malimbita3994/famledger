@@ -2,12 +2,6 @@
     <x-slot name="title">{{ __('Forgot Password') }} - {{ config('app.name') }}</x-slot>
     <x-slot name="brandedDescription">{{ __('We\'ll send you a link to reset your password.') }}</x-slot>
 
-    @if (session('status'))
-        <div class="text-sm text-muted-foreground mb-2 p-2 rounded bg-muted/50">
-            {{ session('status') }}
-        </div>
-    @endif
-
     <form x-data="{ loading: false }" x-on:submit="loading = true" method="POST" action="{{ route('password.email') }}" class="flex flex-col gap-5">
         @csrf
 
@@ -41,4 +35,38 @@
             {{ __('Back to sign in') }}
         </a>
     </form>
+
+    @push('scripts')
+        <script>
+            (function () {
+                var statusMessage = @json(session('status'));
+                var emailErrors = @json($errors->get('email') ?? []);
+
+                if (typeof Swal === 'undefined' || typeof Swal.fire !== 'function') {
+                    return;
+                }
+
+                if (statusMessage) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: statusMessage,
+                        showConfirmButton: true,
+                        confirmButtonText: 'Great, thanks',
+                        width: 420,
+                        padding: '1.75rem 2rem',
+                    });
+                } else if (emailErrors.length > 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Unable to send reset link',
+                        text: emailErrors[0],
+                        showConfirmButton: true,
+                        confirmButtonText: 'OK',
+                        width: 420,
+                        padding: '1.75rem 2rem',
+                    });
+                }
+            })();
+        </script>
+    @endpush
 </x-guest-metronic-layout>
