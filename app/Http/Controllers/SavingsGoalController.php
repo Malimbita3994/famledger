@@ -208,6 +208,22 @@ class SavingsGoalController extends Controller
             return back()->withInput()->withErrors(['from_wallet_id' => 'Source wallet currency must match the goal wallet currency.']);
         }
 
+        // Enforce that the source wallet has funds and contribution does not exceed balance
+        $currentBalance = $fromWallet->balance;
+        if ($currentBalance <= 0) {
+            return back()
+                ->withInput()
+                ->withErrors(['amount' => 'Source wallet has no available balance for this contribution.'])
+                ->with('error', 'Source wallet balance is zero. Choose another wallet or fund it first.');
+        }
+
+        if ($validated['amount'] > $currentBalance) {
+            return back()
+                ->withInput()
+                ->withErrors(['amount' => 'Contribution cannot be greater than the source wallet balance.'])
+                ->with('error', 'Contribution amount is greater than the available balance in the source wallet.');
+        }
+
         DB::beginTransaction();
         try {
             $transfer = $family->transfers()->create([

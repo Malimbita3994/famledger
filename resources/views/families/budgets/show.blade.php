@@ -10,20 +10,16 @@
         Back to budgets
     </a>
 
-    @if (session('success'))
-        <div class="mb-6 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 flex items-center gap-3 text-green-800 dark:text-green-200">
-            <i class="ki-filled ki-check-circle text-xl shrink-0"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
-
     <div class="grid gap-5 lg:gap-7.5 max-w-4xl">
         <div class="kt-card">
             <div class="kt-card-content flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <h1 class="text-xl font-semibold text-foreground">{{ $budget->name }}</h1>
                     <p class="text-sm text-muted-foreground mt-0.5">{{ \App\Models\Budget::types()[$budget->type] ?? $budget->type }} · {{ $budget->start_date->format('M j, Y') }} – {{ $budget->end_date->format('M j, Y') }}</p>
-                    @if ($budget->type === 'wallet' && $budget->wallets->isNotEmpty())
+                    @php $mainWallet = $family->mainWallet(); @endphp
+                    @if ($budget->type === \App\Models\Budget::TYPE_FAMILY && $mainWallet)
+                        <p class="text-xs text-muted-foreground mt-1">Wallet: {{ $mainWallet->name }} ({{ $mainWallet->currency_code }})</p>
+                    @elseif ($budget->type === 'wallet' && $budget->wallets->isNotEmpty())
                         <p class="text-xs text-muted-foreground mt-1">Wallets: {{ $budget->wallets->pluck('name')->join(', ') }}</p>
                     @endif
                     @if ($budget->type === 'category' && $budget->categories->isNotEmpty())
@@ -56,20 +52,35 @@
                 <div class="h-3 rounded-full bg-muted overflow-hidden">
                     <div class="h-full rounded-full {{ $barClass }} transition-all" style="width: {{ min(100, $pct) }}%"></div>
                 </div>
-                <dl class="grid gap-3 sm:grid-cols-3">
-                    <div>
-                        <dt class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Budget amount</dt>
-                        <dd class="mt-0.5 text-lg font-semibold tabular-nums">{{ number_format($budget->amount, 2) }} {{ $budget->currency_code }}</dd>
+
+                <style>
+                    .budget-progress-grid {
+                        display: grid;
+                        grid-template-columns: repeat(3, minmax(0, 1fr));
+                        gap: 0.75rem;
+                        width: 100%;
+                    }
+                </style>
+                <div class="budget-progress-grid">
+                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
+                        <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Budget amount</div>
+                        <div class="mt-1.5 text-lg font-semibold tabular-nums">
+                            {{ number_format($budget->amount, 2) }} {{ $budget->currency_code }}
+                        </div>
                     </div>
-                    <div>
-                        <dt class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Used</dt>
-                        <dd class="mt-0.5 text-lg font-semibold tabular-nums text-foreground">{{ number_format($used, 2) }} {{ $budget->currency_code }}</dd>
+                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
+                        <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Used</div>
+                        <div class="mt-1.5 text-lg font-semibold tabular-nums text-foreground">
+                            {{ number_format($used, 2) }} {{ $budget->currency_code }}
+                        </div>
                     </div>
-                    <div>
-                        <dt class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Remaining</dt>
-                        <dd class="mt-0.5 text-lg font-semibold tabular-nums {{ $remaining >= 0 ? 'text-success' : 'text-destructive' }}">{{ number_format($remaining, 2) }} {{ $budget->currency_code }}</dd>
+                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
+                        <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Remaining</div>
+                        <div class="mt-1.5 text-lg font-semibold tabular-nums {{ $remaining >= 0 ? 'text-success' : 'text-destructive' }}">
+                            {{ number_format($remaining, 2) }} {{ $budget->currency_code }}
+                        </div>
                     </div>
-                </dl>
+                </div>
             </div>
         </div>
 
@@ -78,18 +89,30 @@
                 <h3 class="kt-card-title text-sm">Details</h3>
             </div>
             <div class="kt-card-content">
-                <dl class="grid gap-3 sm:grid-cols-2">
-                    <div>
-                        <dt class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Recurrence</dt>
-                        <dd class="mt-0.5">{{ \App\Models\Budget::recurrences()[$budget->recurrence] ?? $budget->recurrence }}</dd>
+                <style>
+                    .budget-details-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        gap: 0.75rem;
+                        width: 100%;
+                    }
+                </style>
+                <div class="budget-details-grid">
+                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
+                        <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Recurrence</div>
+                        <div class="mt-1.5 text-sm font-semibold text-foreground">
+                            {{ \App\Models\Budget::recurrences()[$budget->recurrence] ?? $budget->recurrence }}
+                        </div>
                     </div>
-                    <div>
-                        <dt class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</dt>
-                        <dd class="mt-0.5">
-                            <span class="kt-badge kt-badge-sm {{ $budget->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline">{{ ucfirst($budget->status) }}</span>
-                        </dd>
+                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
+                        <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</div>
+                        <div class="mt-1.5">
+                            <span class="kt-badge kt-badge-sm {{ $budget->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline">
+                                {{ ucfirst($budget->status) }}
+                            </span>
+                        </div>
                     </div>
-                </dl>
+                </div>
             </div>
         </div>
     </div>

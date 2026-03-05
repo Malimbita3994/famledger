@@ -493,12 +493,13 @@
      <script src="{{ asset('metronic/assets/js/custom.js') }}"></script>
 
      <script>
-     const texts = [
-       "We help you manage your family assets with confidence.",
-       "Track property, projects and wallets in one secure system.",
-       "See real-time family reports in your own currency.",
-       "Protect documents and decisions for the next generation."
-     ];
+    const texts = [
+      "FamLedger is a modern family financial management platform that helps families track income, expenses, assets, and projects while providing insights into their overall wealth and financial growth.",
+      "Control your family finances before they control you.",
+      "Track everything your family owns in one place.",
+      "Understand your family's real net worth.",
+      "Most families know their expenses but not their wealth. FamLedger shows you the complete financial picture."
+    ];
 
      let speed = 60;
      let eraseSpeed = 40;

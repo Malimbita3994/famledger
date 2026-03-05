@@ -61,6 +61,7 @@
                             <tr>
                                 <th class="min-w-[100px]">Date</th>
                                 <th class="min-w-[140px]">Wallet</th>
+                                <th class="min-w-[120px]">Budget source</th>
                                 <th class="min-w-[100px]">Category</th>
                                 <th class="min-w-[120px]">Amount</th>
                                 <th class="min-w-[160px]">Description</th>
@@ -74,6 +75,13 @@
                                 <td>
                                     <a href="{{ route('families.wallets.show', [$family, $expense->wallet]) }}" class="text-primary hover:underline">{{ $expense->wallet->name }}</a>
                                     <span class="text-muted-foreground text-xs">({{ $expense->wallet->currency_code }})</span>
+                                </td>
+                                <td class="text-foreground">
+                                    @if($expense->budget)
+                                        {{ $expense->budget->name }}
+                                    @else
+                                        <span class="text-muted-foreground text-xs">— None —</span>
+                                    @endif
                                 </td>
                                 <td class="text-foreground">{{ $expense->category?->name ?? '—' }}</td>
                                 <td class="font-medium tabular-nums text-destructive">− {{ number_format($expense->amount, 2) }} {{ $expense->currency_code }}</td>

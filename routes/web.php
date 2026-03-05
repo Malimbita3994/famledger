@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\PropertyConfigController;
 use App\Http\Controllers\WealthController;
 use App\Http\Controllers\FamilyLiabilityController;
+use App\Http\Controllers\FamilyInvitationController;
+use App\Http\Controllers\InviteJoinController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\ContactController;
 
@@ -33,6 +35,10 @@ Route::get('/', function () {
 })->name('landing');
 
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+// Public invite join (by email token or family link token)
+Route::get('invite/join', [InviteJoinController::class, 'show'])->name('invite.join');
+Route::post('invite/join', [InviteJoinController::class, 'accept'])->name('invite.accept');
 
 Route::get('/dashboard', [MainDashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
@@ -90,6 +96,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('families/{family}')->name('families.')->group(function () {
         Route::get('members/create', [FamilyMemberController::class, 'create'])->name('members.create');
         Route::post('members', [FamilyMemberController::class, 'store'])->name('members.store');
+
+        // Invite members (owner/co-owner only; controller enforces)
+        Route::get('invites', [FamilyInvitationController::class, 'index'])->name('invites.index');
+        Route::post('invites', [FamilyInvitationController::class, 'store'])->name('invites.store');
+        Route::post('invites/reset-link', [FamilyInvitationController::class, 'resetLink'])->name('invites.reset-link');
+        Route::delete('invites/{invitation}', [FamilyInvitationController::class, 'destroy'])->name('invites.destroy');
         Route::get('members/{member}/edit', [FamilyMemberController::class, 'edit'])->name('members.edit');
         Route::put('members/{member}', [FamilyMemberController::class, 'update'])->name('members.update');
         Route::patch('members/{member}/deactivate', [FamilyMemberController::class, 'deactivate'])->name('members.deactivate');

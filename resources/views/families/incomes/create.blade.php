@@ -21,6 +21,42 @@
         Back to income
     </a>
 
+    @php
+        // Structured income categories and subcategories
+        $incomeGroupDefinitions = [
+            'Wages' => [
+                'Paycheck',
+                'Tips',
+                'Bonus',
+                'Commission',
+                'Other',
+            ],
+            'Other income' => [
+                'Transfer from savings',
+                'Interest income',
+                'Dividends',
+                'Gifts',
+                'Refunds',
+                'Other',
+            ],
+        ];
+
+        // Map: group -> sub -> income_category_id (based on names like "Wages - Paycheck")
+        $incomeGroupToSubIds = [];
+        $incomeCategoryIdToGroupSub = [];
+        foreach ($categories as $cat) {
+            foreach ($incomeGroupDefinitions as $group => $subs) {
+                foreach ($subs as $sub) {
+                    $expected = $group . ' - ' . $sub;
+                    if ($cat->name === $expected) {
+                        $incomeGroupToSubIds[$group][$sub] = $cat->id;
+                        $incomeCategoryIdToGroupSub[$cat->id] = ['group' => $group, 'sub' => $sub];
+                    }
+                }
+            }
+        }
+    @endphp
+
     <form action="{{ route('families.incomes.store', $family) }}" method="POST" id="income-form">
         @csrf
 
@@ -30,23 +66,23 @@
                     <h3 class="kt-card-title">Record income</h3>
                 </div>
                 <div class="kt-card-content grid gap-5">
-                    <p class="text-sm text-muted-foreground -mt-1">All income must go into a wallet. Select the wallet first, then enter amount and details.</p>
+                    <p class="text-sm text-muted-foreground -mt-1">
+                        All income is recorded into the main wallet:
+                        <span class="font-medium text-foreground">{{ $mainWallet->name }} ({{ $mainWallet->currency_code }})</span>.
+                    </p>
 
                     <div>
                         <h3 class="text-sm font-semibold text-foreground mb-3">
                             Basic Information
                         </h3>
                         <div class="income-main-row">
-                            {{-- Wallet --}}
+                            {{-- Wallet (main wallet, read-only) --}}
                             <div class="income-main-col grid gap-1.5">
-                                <label for="wallet_id" class="kt-form-label">Wallet <span class="text-destructive">*</span></label>
-                                <select name="wallet_id" id="wallet_id" required class="kt-select w-full" aria-invalid="{{ $errors->has('wallet_id') ? 'true' : 'false' }}">
-                                    <option value="">Select a wallet</option>
-                                    @foreach ($wallets as $w)
-                                        <option value="{{ $w->id }}" data-currency="{{ $w->currency_code }}" {{ old('wallet_id') == $w->id ? 'selected' : '' }}>{{ $w->name }} ({{ $w->currency_code }})</option>
-                                    @endforeach
-                                </select>
-                                @error('wallet_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                                <label class="kt-form-label">Wallet</label>
+                                <div class="kt-input flex items-center justify-between">
+                                    <span class="text-sm font-medium text-foreground">{{ $mainWallet->name }}</span>
+                                    <span class="text-xs text-muted-foreground uppercase tracking-wide">{{ $mainWallet->currency_code }}</span>
+                                </div>
                             </div>
 
                             {{-- Amount --}}
@@ -64,40 +100,51 @@
                                     class="kt-input"
                                     aria-invalid="{{ $errors->has('amount') ? 'true' : 'false' }}"
                                 />
-                                <p class="text-xs text-muted-foreground mt-1">Currency will match the selected wallet.</p>
                                 @error('amount')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- Category --}}
+                            {{-- Category group --}}
                             <div class="income-main-col grid gap-1.5">
-                                <label for="category_id" class="kt-form-label">Category</label>
-                                <select name="category_id" id="category_id" class="kt-select w-full" aria-invalid="{{ $errors->has('category_id') ? 'true' : 'false' }}">
-                                    <option value="">— Optional —</option>
-                                    @foreach ($categories as $cat)
-                                        <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                <label for="income_category_group" class="kt-form-label">Category <span class="text-destructive">*</span></label>
+                                <select name="income_category_group" id="income_category_group" class="kt-select w-full" required>
+                                    <option value="">Select category</option>
+                                    @foreach ($incomeGroupDefinitions as $groupLabel => $subs)
+                                        @if(isset($incomeGroupToSubIds[$groupLabel]))
+                                            <option value="{{ $groupLabel }}">{{ $groupLabel }}</option>
+                                        @endif
                                     @endforeach
                                 </select>
-                                @error('category_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- Received date --}}
+                            {{-- Income subcategory --}}
                             <div class="income-main-col grid gap-1.5">
-                                <label for="received_date" class="kt-form-label">Received date <span class="text-destructive">*</span></label>
-                                <input
-                                    type="date"
-                                    name="received_date"
-                                    id="received_date"
-                                    value="{{ old('received_date', now()->format('Y-m-d')) }}"
-                                    required
-                                    class="kt-input"
-                                    aria-invalid="{{ $errors->has('received_date') ? 'true' : 'false' }}"
-                                />
-                                @error('received_date')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                                <label for="category_id" class="kt-form-label">Subcategory <span class="text-destructive">*</span></label>
+                                <select name="category_id" id="category_id" class="kt-select w-full" aria-invalid="{{ $errors->has('category_id') ? 'true' : 'false' }}" required>
+                                    <option value="">Select subcategory</option>
+                                </select>
+                                @error('category_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
                     </div>
 
-                    <input type="hidden" name="currency_code" id="currency_code" value="{{ old('currency_code', $wallets->first()?->currency_code ?? '') }}" />
+                    <input type="hidden" name="currency_code" id="currency_code" value="{{ old('currency_code', $mainWallet->currency_code ?? '') }}" />
+
+                    {{-- Received date --}}
+                    <div class="income-main-row">
+                        <div class="income-main-col grid gap-1.5">
+                            <label for="received_date" class="kt-form-label">Received date <span class="text-destructive">*</span></label>
+                            <input
+                                type="date"
+                                name="received_date"
+                                id="received_date"
+                                value="{{ old('received_date', now()->format('Y-m-d')) }}"
+                                required
+                                class="kt-input"
+                                aria-invalid="{{ $errors->has('received_date') ? 'true' : 'false' }}"
+                            />
+                            @error('received_date')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
 
                     {{-- Liability linkage (optional) --}}
                     @php
@@ -160,17 +207,48 @@
 @push('scripts')
 <script>
 (function () {
-    var walletSelect = document.getElementById('wallet_id');
-    var currencyInput = document.getElementById('currency_code');
-    if (!walletSelect || !currencyInput) return;
-    function syncCurrency() {
-        var opt = walletSelect.options[walletSelect.selectedIndex];
-        if (opt && opt.value && opt.getAttribute('data-currency')) {
-            currencyInput.value = opt.getAttribute('data-currency');
+    // All income goes to main wallet: no wallet selector JS needed.
+
+    // Dynamic income category subcategories
+    var groupSelect = document.getElementById('income_category_group');
+    var incomeSubSelect = document.getElementById('category_id');
+    var incomeGroupMap = @json($incomeGroupToSubIds);
+    var incomeIdToGroupSub = @json($incomeCategoryIdToGroupSub);
+    var oldIncomeCategoryId = "{{ old('category_id') }}";
+
+    function populateIncomeSubcategories(group) {
+        if (!incomeSubSelect) return;
+        incomeSubSelect.innerHTML = '';
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '— Optional —';
+        incomeSubSelect.appendChild(placeholder);
+
+        var subs = incomeGroupMap[group] || {};
+        Object.keys(subs).forEach(function (subLabel) {
+            var opt = document.createElement('option');
+            opt.value = subs[subLabel];
+            opt.textContent = subLabel;
+            incomeSubSelect.appendChild(opt);
+        });
+    }
+
+    if (groupSelect) {
+        groupSelect.addEventListener('change', function () {
+            populateIncomeSubcategories(this.value);
+        });
+    }
+
+    if (oldIncomeCategoryId && incomeIdToGroupSub[oldIncomeCategoryId]) {
+        var info = incomeIdToGroupSub[oldIncomeCategoryId];
+        if (groupSelect) {
+            groupSelect.value = info.group;
+            populateIncomeSubcategories(info.group);
+        }
+        if (incomeSubSelect) {
+            incomeSubSelect.value = oldIncomeCategoryId;
         }
     }
-    walletSelect.addEventListener('change', syncCurrency);
-    syncCurrency();
 })();
 </script>
 @endpush

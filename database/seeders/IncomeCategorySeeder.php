@@ -13,6 +13,7 @@ class IncomeCategorySeeder extends Seeder
     public function run(): void
     {
         $defaults = [
+            // Core legacy categories
             'Salary',
             'Business',
             'Gift',
@@ -23,6 +24,22 @@ class IncomeCategorySeeder extends Seeder
             'Contribution',
             'Reconciliation Adjustment',
             'Other',
+
+            // Structured income categories
+            // Wages
+            'Wages - Paycheck',
+            'Wages - Tips',
+            'Wages - Bonus',
+            'Wages - Commission',
+            'Wages - Other',
+
+            // Other income
+            'Other income - Transfer from savings',
+            'Other income - Interest income',
+            'Other income - Dividends',
+            'Other income - Gifts',
+            'Other income - Refunds',
+            'Other income - Other',
         ];
 
         foreach ($defaults as $name) {

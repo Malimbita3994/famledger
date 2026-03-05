@@ -83,6 +83,19 @@ class TransferController extends Controller
             return back()->withInput()->withErrors(['to_wallet_id' => 'Both wallets must use the same currency. Multi-currency transfers are not supported yet.']);
         }
 
+        // Ensure source wallet has enough balance for this transfer
+        $available = $fromWallet->balance;
+        if ($validated['amount'] > $available) {
+            $message = 'Insufficient funds in the source wallet. Available balance is ' . number_format($available, 2) . ' ' . strtoupper($fromWallet->currency_code) . '.';
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'amount' => $message,
+                ])
+                ->with('error', $message);
+        }
+
         $family->transfers()->create([
             'from_wallet_id' => $validated['from_wallet_id'],
             'to_wallet_id' => $validated['to_wallet_id'],

@@ -141,6 +141,7 @@ class WalletController extends Controller
             'initial_balance' => ['nullable', 'numeric'],
             'is_shared' => ['nullable', 'boolean'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
+            'is_primary' => ['nullable', 'boolean'],
         ]);
 
         $wallet->update([
@@ -152,6 +153,18 @@ class WalletController extends Controller
             'is_shared' => (bool) ($validated['is_shared'] ?? true),
             'status' => $validated['status'],
         ]);
+
+        // If marked as primary, ensure it's the only primary wallet for this family
+        if ($request->boolean('is_primary')) {
+            $family->wallets()
+                ->where('id', '!=', $wallet->id)
+                ->where('is_primary', true)
+                ->update(['is_primary' => false]);
+
+            if (! $wallet->is_primary) {
+                $wallet->update(['is_primary' => true]);
+            }
+        }
 
         return redirect()
             ->route('families.wallets.index', $family)

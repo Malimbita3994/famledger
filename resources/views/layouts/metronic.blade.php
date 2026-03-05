@@ -1177,17 +1177,62 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           </a>
           @endcan
          </div>
-         <!-- Families -->
-         <div class="kt-menu-item {{ request()->routeIs('families.*') && !request()->routeIs('families.accounts.*') ? 'kt-menu-item-active' : '' }}">
-          <a href="{{ route('families.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 {{ request()->routeIs('families.index') ? 'bg-accent/60' : '' }}">
-           <span class="kt-menu-icon items-start text-lg text-secondary-foreground">
-            <i class="ki-filled ki-profile-circle"></i>
-           </span>
-           <span class="kt-menu-title text-sm font-medium kt-menu-item-active:text-foreground {{ request()->routeIs('families.index') ? 'text-foreground' : 'text-foreground kt-menu-link-hover:text-foreground' }}">Families</span>
-          </a>
+        <!-- Family: parent + children (Family overview, Members, Invitations) -->
+        @if(isset($currentFamily) && $currentFamily)
+        @php
+         $canManageInvites = false;
+         if (auth()->check()) {
+          $inviteMember = $currentFamily->familyMembers()->where('user_id', auth()->id())->with('role')->first();
+          $inviteRoleName = $inviteMember && $inviteMember->role ? mb_strtolower($inviteMember->role->name) : null;
+          $canManageInvites = in_array($inviteRoleName, ['owner', 'co-owner'], true);
+         }
+        @endphp
+        <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+         <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
+          <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
+           <i class="ki-filled ki-profile-circle"></i>
+          </span>
+          <span class="kt-menu-title text-sm text-foreground font-medium">Family</span>
+          <span class="kt-menu-arrow text-muted-foreground">
+           <span class="inline-flex kt-menu-item-show:hidden"><i class="ki-filled ki-down text-xs"></i></span>
+           <span class="hidden kt-menu-item-show:inline-flex"><i class="ki-filled ki-up text-xs"></i></span>
+          </span>
          </div>
-         <!-- Accounts (Family financial accounts) -->
-         @if(isset($currentFamily) && $currentFamily)
+         <div class="kt-menu-accordion gap-px ps-2.5">
+          <div class="kt-menu-item">
+           <a href="{{ route('families.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.index') ? 'bg-secondary' : '' }}">
+            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-home-3"></i></span>
+            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Overview</span>
+           </a>
+          </div>
+          <div class="kt-menu-item">
+           <a href="{{ route('families.show', $currentFamily) }}#family-members" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.members.*') ? 'bg-secondary' : '' }}">
+            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-people"></i></span>
+            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Members</span>
+           </a>
+          </div>
+          @if($canManageInvites)
+          <div class="kt-menu-item">
+           <a href="{{ route('families.invites.index', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.invites.*') ? 'bg-secondary' : '' }}">
+            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-message-text"></i></span>
+            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Invitations</span>
+           </a>
+          </div>
+          @endif
+         </div>
+        </div>
+        @else
+        <div class="kt-menu-item {{ request()->routeIs('families.*') && !request()->routeIs('families.accounts.*') ? 'kt-menu-item-active' : '' }}">
+         <a href="{{ route('families.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 {{ request()->routeIs('families.index') ? 'bg-accent/60' : '' }}">
+          <span class="kt-menu-icon items-start text-lg text-secondary-foreground">
+           <i class="ki-filled ki-profile-circle"></i>
+          </span>
+          <span class="kt-menu-title text-sm font-medium kt-menu-item-active:text-foreground {{ request()->routeIs('families.index') ? 'text-foreground' : 'text-foreground kt-menu-link-hover:text-foreground' }}">Families</span>
+         </a>
+        </div>
+        @endif
+        <!-- Accounts (Family financial accounts) -->
+        @if(isset($currentFamily) && $currentFamily)
          <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
@@ -4529,7 +4574,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   </div>
   <!-- End of Page -->
   <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.20/sweetalert2.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="{{ asset('metronic/assets/js/core.bundle.js') }}"></script>
   <script src="{{ asset('metronic/assets/vendors/ktui/ktui.min.js') }}"></script>
   <script src="{{ asset('metronic/assets/vendors/apexcharts/apexcharts.min.js') }}"></script>
@@ -4564,9 +4609,11 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    })();
   </script>
   @php
+    $sessionError = session('error');
+    $validationError = !$sessionError && isset($errors) && $errors->any() ? $errors->first() : null;
     $flashMessages = [
       'success' => session('success'),
-      'error'   => session('error'),
+      'error'   => $sessionError ?: $validationError,
       'warning' => session('warning'),
       'info'    => session('info'),
     ];
@@ -4610,12 +4657,12 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      text: isSuccess ? '' : msg,
      showConfirmButton: true,
      confirmButtonText: isSuccess ? 'Great, thanks' : 'OK',
-     width: 520,
-     padding: '2.5rem 2.75rem',
+     width: 420,
+     padding: '1.75rem 2rem',
      backdrop: true,
      customClass: {
       popup: 'rounded-2xl',
-      title: 'text-lg font-semibold',
+      title: 'text-base font-semibold',
      },
      didOpen: function () {
       if (isSuccess) {

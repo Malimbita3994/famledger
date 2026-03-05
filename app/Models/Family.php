@@ -17,7 +17,17 @@ class Family extends Model
         'country',
         'created_by',
         'status',
+        'invite_token',
     ];
+
+    public function getInviteLinkAttribute(): ?string
+    {
+        if (! $this->invite_token) {
+            return null;
+        }
+
+        return route('invite.join', ['token' => $this->invite_token]);
+    }
 
     public function creator(): BelongsTo
     {

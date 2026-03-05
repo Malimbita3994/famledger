@@ -72,6 +72,7 @@
                                 <th class="min-w-[100px]">Currency</th>
                                 <th class="min-w-[120px]">Balance</th>
                                 <th class="min-w-[80px]">Shared</th>
+                                <th class="min-w-[80px]">Main</th>
                                 <th class="min-w-[80px]">Status</th>
                                 <th class="w-[60px]">ACTIONS</th>
                             </tr>
@@ -100,6 +101,11 @@
                                         <span class="kt-badge kt-badge-sm kt-badge-success kt-badge-outline">Shared</span>
                                     @else
                                         <span class="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">Personal</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($wallet->is_primary)
+                                        <span class="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">Main wallet</span>
                                     @endif
                                 </td>
                                 <td>
@@ -166,9 +172,14 @@
                                         @endif
                                     </div>
                                 </div>
-                                <span class="kt-badge kt-badge-sm {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline shrink-0">
-                                    {{ ucfirst($wallet->status) }}
-                                </span>
+                                <div class="flex flex-col items-end gap-1 shrink-0">
+                                    <span class="kt-badge kt-badge-sm {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline">
+                                        {{ ucfirst($wallet->status) }}
+                                    </span>
+                                    @if ($wallet->is_primary)
+                                        <span class="kt-badge kt-badge-xs kt-badge-primary kt-badge-outline">Main wallet</span>
+                                    @endif
+                                </div>
                             </div>
 
                             {{-- Key numbers --}}

@@ -10,6 +10,169 @@
         Back to expenses
     </a>
 
+    <style>
+    .expense-main-row {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    .expense-main-row .expense-main-col {
+        width: 100%;
+    }
+    @media (min-width: 900px) {
+        .expense-main-row {
+            flex-direction: row;
+        }
+        .expense-main-row .expense-main-col {
+            flex: 1 1 0;
+        }
+    }
+    </style>
+
+    @php
+        // Map expense categories into logical groups + subcategories (based on seeded names)
+        $groupDefinitions = [
+            'Children' => [
+                'Activities',
+                'Allowance',
+                'Medical',
+                'Childcare',
+                'Clothing',
+                'School',
+                'Toys',
+                'Other',
+            ],
+            'Debt' => [
+                'Credit cards',
+                'Student loans',
+                'Other loans',
+                'Taxes (federal)',
+                'Taxes (state)',
+                'Other',
+            ],
+            'Education' => [
+                'Tuition',
+                'Books',
+                'Music lessons',
+                'Other',
+            ],
+            'Entertainment' => [
+                'Books',
+                'Concerts/shows',
+                'Games',
+                'Hobbies',
+                'Movies',
+                'Music',
+                'Outdoor activities',
+                'Photography',
+                'Sports',
+                'Theater/plays',
+                'TV',
+                'Other',
+            ],
+            'Everyday' => [
+                'Groceries',
+                'Restaurants',
+                'Personal supplies',
+                'Clothes',
+                'Laundry/dry cleaning',
+                'Hair/beauty',
+                'Subscriptions',
+                'Other',
+            ],
+            'Gifts' => [
+                'Gifts',
+                'Donations (charity)',
+                'Other',
+            ],
+            'Health/medical' => [
+                'Doctors/dental/vision',
+                'Specialty care',
+                'Pharmacy',
+                'Emergency',
+                'Other',
+            ],
+            'Home' => [
+                'Rent/mortgage',
+                'Property taxes',
+                'Furnishings',
+                'Lawn/garden',
+                'Supplies',
+                'Maintenance',
+                'Improvements',
+                'Moving',
+                'Other',
+            ],
+            'Insurance' => [
+                'Car',
+                'Health',
+                'Home',
+                'Life',
+                'Other',
+            ],
+            'Pets' => [
+                'Food',
+                'Vet/medical',
+                'Toys',
+                'Supplies',
+                'Other',
+            ],
+            'Technology' => [
+                'Domains & hosting',
+                'Online services',
+                'Hardware',
+                'Software',
+                'Other',
+            ],
+            'Transportation' => [
+                'Fuel',
+                'Car payments',
+                'Repairs',
+                'Registration/license',
+                'Supplies',
+                'Public transit',
+                'Other',
+            ],
+            'Travel' => [
+                'Airfare',
+                'Hotels',
+                'Food',
+                'Transportation',
+                'Entertainment',
+                'Other',
+            ],
+            'Utilities' => [
+                'Phone',
+                'TV',
+                'Internet',
+                'Electricity',
+                'Heat/gas',
+                'Water',
+                'Trash',
+                'Other',
+            ],
+            'Other' => [
+                'Category 1',
+                'Category 2',
+            ],
+        ];
+
+        // Build mapping: group -> sub -> expense_category_id based on seeded names "Group - Sub"
+        $groupToSubcategoryIds = [];
+        $categoryIdToGroupSub = [];
+        foreach ($categories as $cat) {
+            foreach ($groupDefinitions as $group => $subs) {
+                foreach ($subs as $sub) {
+                    $expected = $group . ' - ' . $sub;
+                    if ($cat->name === $expected) {
+                        $groupToSubcategoryIds[$group][$sub] = $cat->id;
+                        $categoryIdToGroupSub[$cat->id] = ['group' => $group, 'sub' => $sub];
+                    }
+                }
+            }
+        }
+    @endphp
+
     <form action="{{ route('families.expenses.store', $family) }}" method="POST" id="expense-form">
         @csrf
 
@@ -21,10 +184,10 @@
                 <div class="kt-card-content grid gap-5">
                     <p class="text-sm text-muted-foreground -mt-1">Every expense reduces a wallet. Select the wallet first, then enter amount and details.</p>
 
-                    {{-- 1. Wallet FIRST --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="wallet_id" class="kt-form-label max-w-56">Wallet <span class="text-destructive">*</span></label>
-                        <div class="grow">
+                    {{-- Row 1: Wallet, Amount, Category, Subcategory --}}
+                    <div class="expense-main-row">
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="wallet_id" class="kt-form-label">Wallet <span class="text-destructive">*</span></label>
                             <select name="wallet_id" id="wallet_id" required class="kt-select" aria-invalid="{{ $errors->has('wallet_id') ? 'true' : 'false' }}">
                                 <option value="">Select a wallet</option>
                                 @foreach ($wallets as $w)
@@ -33,45 +196,75 @@
                             </select>
                             @error('wallet_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                         </div>
-                    </div>
 
-                    {{-- 2. Amount --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="amount" class="kt-form-label max-w-56">Amount <span class="text-destructive">*</span></label>
-                        <div class="grow">
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="amount" class="kt-form-label">Amount <span class="text-destructive">*</span></label>
                             <input type="number" name="amount" id="amount" value="{{ old('amount') }}" required step="0.01" min="0.01" placeholder="0.00" class="kt-input" aria-invalid="{{ $errors->has('amount') ? 'true' : 'false' }}" />
-                            <p class="text-xs text-muted-foreground mt-1">Currency will match the selected wallet.</p>
                             @error('amount')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="category_group" class="kt-form-label">Category <span class="text-destructive">*</span></label>
+                            <select name="category_group" id="category_group" class="kt-select" required>
+                                <option value="">Select category</option>
+                                @foreach ($groupDefinitions as $groupLabel => $subs)
+                                    @if(isset($groupToSubcategoryIds[$groupLabel]))
+                                        <option value="{{ $groupLabel }}">{{ $groupLabel }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="category_id" class="kt-form-label">Subcategory <span class="text-destructive">*</span></label>
+                            <select name="category_id" id="category_id" class="kt-select" aria-invalid="{{ $errors->has('category_id') ? 'true' : 'false' }}" required>
+                                <option value="">Select subcategory</option>
+                            </select>
+                            @error('category_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="expense_date" class="kt-form-label">Expense date <span class="text-destructive">*</span></label>
+                            <input type="date" name="expense_date" id="expense_date" value="{{ old('expense_date', now()->format('Y-m-d')) }}" required class="kt-input" aria-invalid="{{ $errors->has('expense_date') ? 'true' : 'false' }}" />
+                            @error('expense_date')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
                     <input type="hidden" name="currency_code" id="currency_code" value="{{ old('currency_code', $wallets->first()?->currency_code ?? '') }}" />
 
-                    {{-- Project (optional) --}}
-                    @if(isset($projects) && $projects->isNotEmpty())
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="project_id" class="kt-form-label max-w-56">Project</label>
-                        <div class="grow">
-                            <select name="project_id" id="project_id" class="kt-select">
+                    {{-- Row 2: Budget source, Project, Liability, Paid by --}}
+                    <div class="expense-main-row">
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="budget_id" class="kt-form-label">Budget source</label>
+                            <select name="budget_id" id="budget_id" class="kt-select">
                                 <option value="">— None —</option>
-                                @foreach ($projects as $proj)
-                                    <option value="{{ $proj->id }}" {{ old('project_id') == $proj->id ? 'selected' : '' }}>{{ $proj->name }}</option>
+                                @foreach($budgets as $b)
+                                    <option value="{{ $b->id }}" {{ old('budget_id') == $b->id ? 'selected' : '' }}>
+                                        {{ $b->name }} ({{ \App\Models\Budget::types()[$b->type] ?? $b->type }}, {{ number_format($b->amount, 0) }} {{ $b->currency_code }})
+                                    </option>
                                 @endforeach
                             </select>
-                            <p class="text-xs text-muted-foreground mt-1">Link this expense to a family project for tracking.</p>
+                            @error('budget_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="project_id" class="kt-form-label">Project</label>
+                            <select name="project_id" id="project_id" class="kt-select">
+                                <option value="">— None —</option>
+                                @if(isset($projects) && $projects->isNotEmpty())
+                                    @foreach ($projects as $proj)
+                                        <option value="{{ $proj->id }}" {{ old('project_id') == $proj->id ? 'selected' : '' }}>{{ $proj->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
                             @error('project_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                         </div>
-                    </div>
-                    @endif
 
-                    {{-- Liability (optional) --}}
-                    @php
-                        $liabilities = $family->liabilities()->orderBy('name')->get();
-                    @endphp
-                    @if($liabilities->isNotEmpty())
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="family_liability_id" class="kt-form-label max-w-56">Linked liability</label>
-                        <div class="grow">
+                        @php
+                            $liabilities = $family->liabilities()->orderBy('name')->get();
+                        @endphp
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="family_liability_id" class="kt-form-label">Linked liability</label>
                             <select name="family_liability_id" id="family_liability_id" class="kt-select">
                                 <option value="">— None —</option>
                                 @foreach($liabilities as $liab)
@@ -80,72 +273,41 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <p class="text-xs text-muted-foreground mt-1">
-                                Use when this expense is a repayment of a loan or debt.
-                            </p>
+                            @if($liabilities->isNotEmpty())
+                                <p class="text-xs text-muted-foreground mt-1">
+                                    Use when this expense is a repayment of a loan or debt.
+                                </p>
+                            @endif
                             @error('family_liability_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                         </div>
-                    </div>
-                    @endif
 
-                    {{-- 3. Category --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="category_id" class="kt-form-label max-w-56">Category</label>
-                        <div class="grow">
-                            <select name="category_id" id="category_id" class="kt-select" aria-invalid="{{ $errors->has('category_id') ? 'true' : 'false' }}">
-                                <option value="">— Optional —</option>
-                                @foreach ($categories as $cat)
-                                    <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('category_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-
-                    {{-- 4. Date --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="expense_date" class="kt-form-label max-w-56">Expense date <span class="text-destructive">*</span></label>
-                        <div class="grow">
-                            <input type="date" name="expense_date" id="expense_date" value="{{ old('expense_date', now()->format('Y-m-d')) }}" required class="kt-input" aria-invalid="{{ $errors->has('expense_date') ? 'true' : 'false' }}" />
-                            @error('expense_date')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-
-                    {{-- 5. Description --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="description" class="kt-form-label max-w-56">Description</label>
-                        <div class="grow">
-                            <input type="text" name="description" id="description" value="{{ old('description') }}" placeholder="e.g. Groceries, Transport" class="kt-input" aria-invalid="{{ $errors->has('description') ? 'true' : 'false' }}" />
-                            @error('description')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-
-                    {{-- 6. Merchant --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="merchant" class="kt-form-label max-w-56">Merchant</label>
-                        <div class="grow">
-                            <input type="text" name="merchant" id="merchant" value="{{ old('merchant') }}" placeholder="e.g. Shop name, vendor" class="kt-input" aria-invalid="{{ $errors->has('merchant') ? 'true' : 'false' }}" />
-                            @error('merchant')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-
-                    {{-- 7. Paid by --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="paid_by" class="kt-form-label max-w-56">Paid by</label>
-                        <div class="grow">
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="paid_by" class="kt-form-label">Paid by</label>
                             <select name="paid_by" id="paid_by" class="kt-select" aria-invalid="{{ $errors->has('paid_by') ? 'true' : 'false' }}">
                                 @foreach ($members as $member)
-                                        <option value="{{ $member->id }}" {{ old('paid_by', auth()->id()) == $member->id ? 'selected' : '' }}>{{ $member->name }}</option>
-                                    @endforeach
+                                    <option value="{{ $member->id }}" {{ old('paid_by', auth()->id()) == $member->id ? 'selected' : '' }}>{{ $member->name }}</option>
+                                @endforeach
                             </select>
                             @error('paid_by')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
-                    {{-- 8. Payment method --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="payment_method" class="kt-form-label max-w-56">Payment method</label>
-                        <div class="grow">
+                    {{-- Row 3: Description, Merchant, Payment method, Reference / Recurring --}}
+                    <div class="expense-main-row">
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="description" class="kt-form-label">Description</label>
+                            <input type="text" name="description" id="description" value="{{ old('description') }}" placeholder="e.g. Groceries, Transport" class="kt-input" aria-invalid="{{ $errors->has('description') ? 'true' : 'false' }}" />
+                            @error('description')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="merchant" class="kt-form-label">Merchant</label>
+                            <input type="text" name="merchant" id="merchant" value="{{ old('merchant') }}" placeholder="e.g. Shop name, vendor" class="kt-input" aria-invalid="{{ $errors->has('merchant') ? 'true' : 'false' }}" />
+                            @error('merchant')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="payment_method" class="kt-form-label">Payment method</label>
                             <select name="payment_method" id="payment_method" class="kt-select" aria-invalid="{{ $errors->has('payment_method') ? 'true' : 'false' }}">
                                 <option value="">— Optional —</option>
                                 @foreach (App\Models\Expense::paymentMethods() as $value => $label)
@@ -154,23 +316,19 @@
                             </select>
                             @error('payment_method')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                         </div>
-                    </div>
 
-                    {{-- 9. Reference (receipt) --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="reference" class="kt-form-label max-w-56">Reference / Receipt no.</label>
-                        <div class="grow">
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="reference" class="kt-form-label">Reference / Receipt no.</label>
                             <input type="text" name="reference" id="reference" value="{{ old('reference') }}" placeholder="Optional" class="kt-input" aria-invalid="{{ $errors->has('reference') ? 'true' : 'false' }}" />
                             @error('reference')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                         </div>
-                    </div>
 
-                    {{-- Recurring --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="is_recurring" class="kt-form-label max-w-56">Recurring</label>
-                        <div class="grow flex items-center gap-2">
-                            <input type="checkbox" name="is_recurring" id="is_recurring" value="1" {{ old('is_recurring') ? 'checked' : '' }} class="kt-checkbox" />
-                            <span class="text-sm text-muted-foreground">This is a recurring expense (e.g. rent, subscription)</span>
+                        <div class="expense-main-col grid gap-1.5">
+                            <label for="is_recurring" class="kt-form-label">Recurring</label>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" name="is_recurring" id="is_recurring" value="1" {{ old('is_recurring') ? 'checked' : '' }} class="kt-checkbox" />
+                                <span class="text-sm text-muted-foreground">This is a recurring expense (e.g. rent, subscription)</span>
+                            </div>
                         </div>
                     </div>
 
@@ -192,15 +350,59 @@
 (function () {
     var walletSelect = document.getElementById('wallet_id');
     var currencyInput = document.getElementById('currency_code');
-    if (!walletSelect || !currencyInput) return;
     function syncCurrency() {
+        if (!walletSelect || !currencyInput) return;
         var opt = walletSelect.options[walletSelect.selectedIndex];
         if (opt && opt.value && opt.getAttribute('data-currency')) {
             currencyInput.value = opt.getAttribute('data-currency');
         }
     }
-    walletSelect.addEventListener('change', syncCurrency);
-    syncCurrency();
+    if (walletSelect) {
+        walletSelect.addEventListener('change', syncCurrency);
+        syncCurrency();
+    }
+
+    // Dynamic subcategory population based on selected category group
+    var groupSelect = document.getElementById('category_group');
+    var subcategorySelect = document.getElementById('category_id');
+    var groupMap = @json($groupToSubcategoryIds);
+    var idToGroupSub = @json($categoryIdToGroupSub);
+    var oldCategoryId = "{{ old('category_id') }}";
+
+    function populateSubcategories(group) {
+        if (!subcategorySelect) return;
+        subcategorySelect.innerHTML = '';
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select subcategory';
+        subcategorySelect.appendChild(placeholder);
+
+        var subs = groupMap[group] || {};
+        Object.keys(subs).forEach(function (subLabel) {
+            var opt = document.createElement('option');
+            opt.value = subs[subLabel];
+            opt.textContent = subLabel;
+            subcategorySelect.appendChild(opt);
+        });
+    }
+
+    if (groupSelect) {
+        groupSelect.addEventListener('change', function () {
+            populateSubcategories(this.value);
+        });
+    }
+
+    // Restore previous selection on validation error
+    if (oldCategoryId && idToGroupSub[oldCategoryId]) {
+        var info = idToGroupSub[oldCategoryId];
+        if (groupSelect) {
+            groupSelect.value = info.group;
+            populateSubcategories(info.group);
+        }
+        if (subcategorySelect) {
+            subcategorySelect.value = oldCategoryId;
+        }
+    }
 })();
 </script>
 @endpush

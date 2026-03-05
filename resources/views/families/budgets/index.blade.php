@@ -13,7 +13,7 @@
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="font-medium text-lg text-mono">Budgets</h1>
-            <p class="text-sm text-muted-foreground mt-0.5">Plan and monitor spending. Budgets guide decisions; they do not move money.</p>
+            <p class="text-sm text-muted-foreground mt-0.5 mb-2.5">Plan and monitor spending. Budgets guide decisions; they do not move money.</p>
         </div>
         <a href="{{ route('families.budgets.create', $family) }}" class="kt-btn kt-btn-primary">
             <i class="ki-filled ki-plus"></i>
@@ -21,10 +21,59 @@
         </a>
     </div>
 
-    @if (session('success'))
-        <div class="mb-6 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 flex items-center gap-3 text-green-800 dark:text-green-200">
-            <i class="ki-filled ki-check-circle text-xl shrink-0"></i>
-            <span>{{ session('success') }}</span>
+    @if($mainBudget)
+        @php
+            $currency = $mainBudget->currency_code;
+            $planned = (float) $mainBudget->amount;
+            $subBudgets = $family->budgets()->where('type', '!=', \App\Models\Budget::TYPE_FAMILY)->get();
+            $allocatedToSubBudgets = (float) $subBudgets->sum('amount');
+            // Used amount across all sub-budgets (out of the main budget)
+            $usedAlready = (float) $subBudgets->sum(function ($b) { return $b->used_amount; });
+            // Remaining unplanned capacity: main budget minus what is allocated to sub-budgets
+            $unplanned = max(0, $planned - $allocatedToSubBudgets);
+        @endphp
+        <style>
+            .budget-summary-grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 0.75rem;
+                width: 100%;
+                margin-bottom: 1.5rem;
+            }
+            .budget-summary-grid-card {
+                transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            }
+            .budget-summary-grid-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px -10px rgba(0,0,0,0.18);
+                border-color: rgba(59,130,246,0.6); /* primary-ish */
+            }
+        </style>
+        <div class="budget-summary-grid">
+            <div class="budget-summary-grid-card rounded-xl border border-border bg-card px-4 py-3">
+                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Main budget</div>
+                <div class="mt-1.5 text-lg font-semibold tabular-nums">
+                    {{ number_format($planned, 2) }} {{ $currency }}
+                </div>
+            </div>
+            <div class="budget-summary-grid-card rounded-xl border border-border bg-card px-4 py-3">
+                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Allocated to sub-budgets</div>
+                <div class="mt-1.5 text-lg font-semibold tabular-nums">
+                    {{ number_format($allocatedToSubBudgets, 2) }} {{ $currency }}
+                </div>
+            </div>
+            <div class="budget-summary-grid-card rounded-xl border border-border bg-card px-4 py-3">
+                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Unplanned amount</div>
+                <div class="mt-1.5 text-lg font-semibold tabular-nums {{ $unplanned > 0 ? 'text-success' : 'text-muted-foreground' }}">
+                    {{ number_format($unplanned, 2) }} {{ $currency }}
+                </div>
+            </div>
+            <div class="budget-summary-grid-card rounded-xl border border-border bg-card px-4 py-3">
+                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Used amount already</div>
+                <div class="mt-1.5 text-lg font-semibold tabular-nums text-foreground">
+                    {{ number_format($usedAlready, 2) }} {{ $currency }}
+                </div>
+            </div>
         </div>
     @endif
 
@@ -55,14 +104,27 @@
                         <tbody>
                             @foreach ($budgets as $budget)
                             @php
-                                $used = $budget->used_amount;
+                                // For the main budget, "Used" should reflect what sub-budgets have spent.
+                                if ($mainBudget && $budget->id === $mainBudget->id) {
+                                    $used = isset($subBudgets) ? (float) $subBudgets->sum(function ($b) { return $b->used_amount; }) : (float) $budget->used_amount;
+                                } else {
+                                    $used = (float) $budget->used_amount;
+                                }
+                                // Remaining and percent still use the budget's own helper properties
                                 $remaining = $budget->remaining_amount;
                                 $pct = $budget->utilization_percent;
                                 $barClass = $pct >= 100 ? 'bg-destructive' : ($pct >= 75 ? 'bg-amber-500' : 'bg-primary');
                             @endphp
                             <tr>
                                 <td>
-                                    <a href="{{ route('families.budgets.show', [$family, $budget]) }}" class="font-medium text-foreground hover:text-primary">{{ $budget->name }}</a>
+                                    <a href="{{ route('families.budgets.show', [$family, $budget]) }}" class="font-medium text-foreground hover:text-primary">
+                                        {{ $budget->name }}
+                                        @if ($budget->type === \App\Models\Budget::TYPE_FAMILY)
+                                            <span class="ml-1 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
+                                                Main
+                                            </span>
+                                        @endif
+                                    </a>
                                     @if ($budget->type === 'wallet' && $budget->wallets->isNotEmpty())
                                         <p class="text-xs text-muted-foreground mt-0.5">{{ $budget->wallets->pluck('name')->join(', ') }}</p>
                                     @endif

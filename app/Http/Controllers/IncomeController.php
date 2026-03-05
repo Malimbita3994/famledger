@@ -46,41 +46,45 @@ class IncomeController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
-        $wallets = $family->wallets()->where('status', 'active')->orderBy('name')->get();
-        if ($wallets->isEmpty()) {
+        $mainWallet = $family->mainWallet();
+        if (! $mainWallet || $mainWallet->status !== 'active') {
             return redirect()
                 ->route('families.wallets.index', $family)
-                ->with('error', 'Create at least one wallet before recording income. All income must go into a wallet.');
+                ->with('error', 'Set up an active main wallet before recording income. All income is recorded into the main wallet.');
         }
         $categories = IncomeCategory::defaults();
 
-        return view('families.incomes.create', compact('family', 'wallets', 'categories'));
+        return view('families.incomes.create', compact('family', 'mainWallet', 'categories'));
     }
 
     public function store(Request $request, Family $family)
     {
         $this->authorizeFamilyMember($family);
 
-        $wallet = $family->wallets()->findOrFail($request->input('wallet_id'));
+        $wallet = $family->mainWallet();
+        if (! $wallet || $wallet->status !== 'active') {
+            return redirect()
+                ->route('families.wallets.index', $family)
+                ->with('error', 'Main wallet is missing or inactive. Please fix it before recording income.');
+        }
 
         $validated = $request->validate([
-            'wallet_id' => ['required', Rule::exists('wallets', 'id')->where('family_id', $family->id)],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency_code' => ['required', 'string', 'size:3', Rule::in([strtoupper($wallet->currency_code)])],
-            'category_id' => ['nullable', Rule::exists('income_categories', 'id')],
+            'category_id' => ['required', Rule::exists('income_categories', 'id')],
             'family_liability_id' => ['nullable', Rule::exists('family_liabilities', 'id')->where('family_id', $family->id)],
             'source' => ['nullable', 'string', 'max:255'],
             'received_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ], [
-            'wallet_id.required' => 'Please select a wallet. All income must go into a wallet.',
             'amount.min' => 'Amount must be greater than zero.',
-            'currency_code.in' => 'Currency must match the selected wallet.',
+            'currency_code.in' => 'Currency must match the main wallet.',
+            'category_id.required' => 'Please choose a category for this income.',
         ]);
 
         $family->incomes()->create([
-            'wallet_id' => $validated['wallet_id'],
-            'category_id' => $validated['category_id'] ?? null,
+            'wallet_id' => $wallet->id,
+            'category_id' => $validated['category_id'],
             'family_liability_id' => $validated['family_liability_id'] ?? null,
             'amount' => $validated['amount'],
             'currency_code' => strtoupper($validated['currency_code']),

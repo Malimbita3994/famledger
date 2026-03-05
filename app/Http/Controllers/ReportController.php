@@ -338,14 +338,31 @@ class ReportController extends Controller
             ->with('category:id,name');
 
         $totalIncome = (clone $query)->sum('amount');
-        $bySource = (clone $query)->select('source', DB::raw('SUM(amount) as total'))
-            ->groupBy('source')
-            ->get()
-            ->map(function ($row) use ($totalIncome) {
-                $pct = $totalIncome > 0 ? round(($row->total / $totalIncome) * 100, 1) : 0;
+
+        // Group income by parent category (e.g. "Wages", "Other income")
+        $perCategory = (clone $query)->select('category_id', DB::raw('SUM(amount) as total'))
+            ->groupBy('category_id')
+            ->get();
+
+        $groupTotals = [];
+        foreach ($perCategory as $row) {
+            $categoryName = $row->category->name ?? 'Uncategorized';
+            // Use the prefix before " - " as the group, falling back to full name
+            $parts = explode(' - ', $categoryName, 2);
+            $group = trim($parts[0]) !== '' ? trim($parts[0]) : 'Uncategorized';
+
+            if (! isset($groupTotals[$group])) {
+                $groupTotals[$group] = 0.0;
+            }
+            $groupTotals[$group] += (float) $row->total;
+        }
+
+        $bySource = collect($groupTotals)
+            ->map(function ($total, $name) use ($totalIncome) {
+                $pct = $totalIncome > 0 ? round(($total / $totalIncome) * 100, 1) : 0;
                 return [
-                    'name' => $row->source ?: 'Other',
-                    'total' => (float) $row->total,
+                    'name' => $name,
+                    'total' => (float) $total,
                     'percent' => $pct,
                 ];
             })
@@ -462,12 +479,28 @@ class ReportController extends Controller
                 ->whereBetween('received_date', [$from, $to])
                 ->with('category:id,name');
             $totalIncome = (clone $query)->sum('amount');
-            $bySource = (clone $query)->select('source', DB::raw('SUM(amount) as total'))
-                ->groupBy('source')
-                ->get()
-                ->map(function ($row) use ($totalIncome) {
-                    $pct = $totalIncome > 0 ? round(($row->total / $totalIncome) * 100, 1) : 0;
-                    return ['name' => $row->source ?: 'Other', 'total' => (float) $row->total, 'percent' => $pct];
+
+            // Group income by parent category (e.g. "Wages", "Other income")
+            $perCategory = (clone $query)->select('category_id', DB::raw('SUM(amount) as total'))
+                ->groupBy('category_id')
+                ->get();
+
+            $groupTotals = [];
+            foreach ($perCategory as $row) {
+                $categoryName = $row->category->name ?? 'Uncategorized';
+                $parts = explode(' - ', $categoryName, 2);
+                $group = trim($parts[0]) !== '' ? trim($parts[0]) : 'Uncategorized';
+
+                if (! isset($groupTotals[$group])) {
+                    $groupTotals[$group] = 0.0;
+                }
+                $groupTotals[$group] += (float) $row->total;
+            }
+
+            $bySource = collect($groupTotals)
+                ->map(function ($total, $name) use ($totalIncome) {
+                    $pct = $totalIncome > 0 ? round(($total / $totalIncome) * 100, 1) : 0;
+                    return ['name' => $name, 'total' => (float) $total, 'percent' => $pct];
                 })
                 ->sortByDesc('total')
                 ->values();
@@ -666,6 +699,7 @@ class ReportController extends Controller
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
             'budgetTypes' => Budget::types(),
+            'budgetRecurrences' => Budget::recurrences(),
             'motherBudget' => $motherBudget,
             'primaryWallet' => $primaryWallet,
         ]);

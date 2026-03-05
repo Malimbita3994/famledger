@@ -12,6 +12,12 @@
         gap: 0.75rem !important;
         width: 100% !important;
     }
+    .wealth-allocation-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+    }
     </style>
     <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
@@ -67,9 +73,10 @@
         <div class="mb-6 lg:mb-0">
             <div class="kt-card rounded-2xl border border-border shadow-sm bg-card p-5 lg:p-6">
                 <h2 class="text-xs text-muted-foreground uppercase tracking-wide mb-3">Asset allocation</h2>
-                <div class="flex flex-col gap-3 text-xs text-muted-foreground">
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center justify-between gap-2">
+                <div class="wealth-allocation-grid text-xs text-muted-foreground">
+                    {{-- Wallets --}}
+                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
+                        <div class="flex items-center justify-between mb-1.5">
                             <span class="flex items-center gap-1.5">
                                 <span class="inline-block size-2 rounded-full bg-primary"></span>
                                 Wallets
@@ -80,8 +87,10 @@
                             <div class="h-full rounded-full bg-primary" style="width: {{ min(100, $allocation['wallet_pct']) }}%"></div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center justify-between gap-2">
+
+                    {{-- Properties --}}
+                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
+                        <div class="flex items-center justify-between mb-1.5">
                             <span class="flex items-center gap-1.5">
                                 <span class="inline-block size-2 rounded-full bg-success"></span>
                                 Properties
@@ -92,8 +101,10 @@
                             <div class="h-full rounded-full bg-success" style="width: {{ min(100, $allocation['property_pct']) }}%"></div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center justify-between gap-2">
+
+                    {{-- Projects --}}
+                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
+                        <div class="flex items-center justify-between mb-1.5">
                             <span class="flex items-center gap-1.5">
                                 <span class="inline-block size-2 rounded-full bg-warning-500"></span>
                                 Projects
@@ -162,7 +173,7 @@
                 if (document.visibilityState === 'visible') {
                     window.location.reload();
                 }
-            }, 15000); // 15 seconds
+            }, 300000); // 5 minutes
         });
     </script>
 @endpush

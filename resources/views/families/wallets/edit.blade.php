@@ -77,6 +77,16 @@
                     </div>
 
                     <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="is_primary" class="kt-form-label max-w-56">Main wallet</label>
+                        <div class="grow flex items-center gap-2">
+                            <input type="checkbox" name="is_primary" id="is_primary" value="1" {{ old('is_primary', $wallet->is_primary) ? 'checked' : '' }} class="kt-checkbox" />
+                            <span class="text-sm text-muted-foreground">
+                                Use this as the family's primary wallet (used for income defaults and summaries).
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
                         <label for="status" class="kt-form-label max-w-56">Status</label>
                         <div class="grow">
                             <select name="status" id="status" class="kt-select" aria-invalid="{{ $errors->has('status') ? 'true' : 'false' }}">

@@ -219,6 +219,12 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         $isLoginRoute = request()->routeIs('login');
         $loginHasErrors = $isLoginRoute && $errors->any();
         $loginErrorMessage = $isLoginRoute ? ($errors->first('email') ?: $errors->first('password') ?: null) : null;
+        $guestFlash = [
+            'success' => session('success'),
+            'error'   => session('error'),
+            'warning' => session('warning'),
+            'info'    => session('info'),
+        ];
     @endphp
 
     @if ($isLoginRoute && $loginErrorMessage)
@@ -233,6 +239,40 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                     text: @json($loginErrorMessage),
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#2563eb'
+                });
+            });
+        </script>
+    @endif
+
+    @if ($guestFlash['success'] || $guestFlash['error'] || $guestFlash['warning'] || $guestFlash['info'])
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof Swal === 'undefined' || typeof Swal.fire !== 'function') {
+                    return;
+                }
+
+                var flash = @json($guestFlash);
+                var type = flash.success ? 'success' : flash.error ? 'error' : flash.warning ? 'warning' : flash.info ? 'info' : null;
+                var msg = flash.success || flash.error || flash.warning || flash.info;
+                if (!type || !msg) {
+                    return;
+                }
+
+                var isSuccess = type === 'success';
+
+                Swal.fire({
+                    icon: type,
+                    title: isSuccess ? msg : (type.charAt(0).toUpperCase() + type.slice(1)),
+                    text: isSuccess ? '' : msg,
+                    showConfirmButton: true,
+                    confirmButtonText: isSuccess ? 'Great, thanks' : 'OK',
+                    width: 520,
+                    padding: '2.5rem 2.75rem',
+                    backdrop: true,
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        title: 'text-lg font-semibold',
+                    },
                 });
             });
         </script>

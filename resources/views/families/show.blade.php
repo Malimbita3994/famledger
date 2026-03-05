@@ -181,7 +181,7 @@
         </div>
 
         {{-- Members card --}}
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-2" id="family-members">
             <div class="kt-card kt-card-grid min-w-full h-full">
                 <div class="kt-card-header flex-wrap gap-2">
                     <h3 class="kt-card-title text-sm">Members ({{ $family->familyMembers->count() }})</h3>

@@ -13,7 +13,7 @@
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="font-medium text-lg text-mono">Income Report</h1>
-            <p class="text-sm text-muted-foreground mt-0.5">Where money comes from — by source and over time.</p>
+            <p class="text-sm text-muted-foreground mt-0.5">Where money comes from — by category group and over time.</p>
         </div>
     </div>
 
@@ -59,18 +59,18 @@
         </div>
         <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Sources</span>
+                <span class="text-muted-foreground text-sm font-medium">Category groups</span>
                 <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie-simple"></i></span>
             </div>
             <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $bySource->count() }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Income sources in period</div>
+            <div class="text-muted-foreground text-sm mt-2">Income category groups in period</div>
         </div>
     </div>
 
     {{-- Content card (same as cash flow summary card) --}}
     <div class="kt-card kt-card-grid min-w-full rounded-xl border border-border shadow-sm overflow-hidden bg-card">
         <div class="kt-card-header border-b border-border">
-            <h3 class="kt-card-title text-sm">Income by source (share)</h3>
+            <h3 class="kt-card-title text-sm">Income by category group (share)</h3>
         </div>
         <div class="kt-card-content p-5">
             <div class="space-y-3">

@@ -42,11 +42,11 @@ class Budget extends Model
 
     public static function types(): array
     {
+        // UI-facing labels. Internal type values stay the same.
         return [
-            self::TYPE_FAMILY => 'Family (all wallets)',
-            self::TYPE_CATEGORY => 'Category',
-            self::TYPE_WALLET => 'Wallet(s)',
+            self::TYPE_FAMILY => 'Main',
             self::TYPE_PROJECT => 'Project',
+            self::TYPE_CATEGORY => 'Expenses',
         ];
     }
 

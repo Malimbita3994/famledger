@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Budget;
 use App\Models\ExpenseCategory;
 use App\Models\Family;
 use App\Models\Wallet;
@@ -21,7 +22,7 @@ class ExpenseController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
-        $query = $family->expenses()->with(['wallet:id,family_id,name,currency_code', 'category:id,name', 'paidBy:id,name', 'createdBy:id,name']);
+        $query = $family->expenses()->with(['wallet:id,family_id,name,currency_code', 'category:id,name', 'paidBy:id,name', 'createdBy:id,name', 'budget:id,name,type']);
         if ($request->filled('wallet_id')) {
             $wallet = $family->wallets()->find($request->wallet_id);
             if ($wallet) {
@@ -47,8 +48,13 @@ class ExpenseController extends Controller
         $categories = ExpenseCategory::defaults();
         $members = $family->members()->orderBy('name')->get(['users.id', 'users.name']);
         $projects = $family->projects()->whereIn('status', ['planning', 'active'])->orderBy('name')->get(['id', 'name']);
+        $budgets = $family->budgets()
+            ->where('status', 'active')
+            ->where('type', '!=', Budget::TYPE_FAMILY)
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'amount', 'currency_code']);
 
-        return view('families.expenses.create', compact('family', 'wallets', 'categories', 'members', 'projects'));
+        return view('families.expenses.create', compact('family', 'wallets', 'categories', 'members', 'projects', 'budgets'));
     }
 
     public function store(Request $request, Family $family)
@@ -61,7 +67,8 @@ class ExpenseController extends Controller
             'wallet_id' => ['required', Rule::exists('wallets', 'id')->where('family_id', $family->id)],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency_code' => ['required', 'string', 'size:3', Rule::in([strtoupper($wallet->currency_code)])],
-            'category_id' => ['nullable', Rule::exists('expense_categories', 'id')],
+            'category_id' => ['required', Rule::exists('expense_categories', 'id')],
+            'subcategory' => ['nullable', 'string', 'max:100'],
             'expense_date' => ['required', 'date'],
             'description' => ['nullable', 'string', 'max:500'],
             'merchant' => ['nullable', 'string', 'max:255'],
@@ -75,17 +82,21 @@ class ExpenseController extends Controller
             'is_recurring' => ['nullable', 'boolean'],
             'project_id' => ['nullable', Rule::exists('projects', 'id')->where('family_id', $family->id)],
             'family_liability_id' => ['nullable', Rule::exists('family_liabilities', 'id')->where('family_id', $family->id)],
+            'budget_id' => ['nullable', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
         ], [
             'wallet_id.required' => 'Please select a wallet. Every expense must reduce a wallet.',
             'amount.min' => 'Amount must be greater than zero.',
             'currency_code.in' => 'Currency must match the selected wallet.',
+            'category_id.required' => 'Please choose a category for this expense.',
         ]);
 
         $family->expenses()->create([
             'wallet_id' => $validated['wallet_id'],
             'category_id' => $validated['category_id'] ?? null,
+            'subcategory' => $validated['subcategory'] ?? null,
             'project_id' => $validated['project_id'] ?? null,
             'family_liability_id' => $validated['family_liability_id'] ?? null,
+            'budget_id' => $validated['budget_id'] ?? null,
             'amount' => $validated['amount'],
             'currency_code' => strtoupper($validated['currency_code']),
             'description' => $validated['description'] ?? null,

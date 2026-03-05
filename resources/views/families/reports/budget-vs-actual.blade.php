@@ -23,16 +23,22 @@
                 <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
                     <div class="flex items-center justify-between gap-3 mb-2">
                         <div>
-                            <p class="text-xs text-muted-foreground uppercase tracking-wide">Family master budget</p>
+                            <p class="text-xs text-muted-foreground uppercase tracking-wide">Main family budget</p>
                             <p class="text-sm font-semibold text-foreground">{{ $motherBudget->name }}</p>
                         </div>
                         <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie-simple"></i></span>
                     </div>
                     <p class="text-xs text-muted-foreground mb-1">
-                        Umbrella budget for the whole family. All other budgets (wallet, category, project) should fit inside this plan.
+                        Aggregate budget for the whole family. All other budgets (wallet, category, project) should fit inside this plan.
+                    </p>
+                    <p class="text-xs text-muted-foreground">
+                        Period:
+                        <span class="font-medium text-foreground">
+                            {{ ($budgetRecurrences[$motherBudget->recurrence] ?? 'Single period') }}
+                        </span>
                     </p>
                     <div class="flex items-baseline justify-between mt-2 text-sm">
-                        <span class="text-muted-foreground">Allocated</span>
+                        <span class="text-muted-foreground">Allocated (main budget)</span>
                         <span class="font-semibold tabular-nums text-foreground">
                             {{ number_format($motherBudget->amount, 0) }} {{ $motherBudget->currency_code ?? $currency }}
                         </span>
@@ -41,6 +47,12 @@
                         <span class="text-muted-foreground">Spent</span>
                         <span class="font-semibold tabular-nums {{ $motherBudget->is_exceeded ? 'text-red-600' : 'text-foreground' }}">
                             {{ number_format($motherBudget->used_amount, 0) }} {{ $motherBudget->currency_code ?? $currency }}
+                        </span>
+                    </div>
+                    <div class="flex items-baseline justify-between mt-1 text-sm">
+                        <span class="text-muted-foreground">Remaining main budget</span>
+                        <span class="font-semibold tabular-nums {{ $motherBudget->is_exceeded ? 'text-red-600' : 'text-foreground' }}">
+                            {{ number_format($motherBudget->remaining_amount, 0) }} {{ $motherBudget->currency_code ?? $currency }}
                         </span>
                     </div>
                 </div>
@@ -63,6 +75,12 @@
                     <div class="flex items-baseline justify-between mt-2 text-sm">
                         <span class="text-muted-foreground">Currency</span>
                         <span class="font-semibold text-foreground">{{ $primaryWallet->currency_code }}</span>
+                    </div>
+                    <div class="flex items-baseline justify-between mt-1 text-sm">
+                        <span class="text-muted-foreground">Available balance</span>
+                        <span class="font-semibold text-foreground tabular-nums">
+                            {{ number_format($primaryWallet->balance, 0) }} {{ $primaryWallet->currency_code }}
+                        </span>
                     </div>
                 </div>
             @endif
@@ -145,6 +163,7 @@
                         <tr>
                             <th class="min-w-[60px]">S/N</th>
                             <th class="min-w-[200px]">Budget Name</th>
+                            <th class="min-w-[110px]">Period</th>
                             <th class="min-w-[140px] text-right">Allocated amount ({{ $currency }})</th>
                             <th class="min-w-[140px] text-right">Spent amount ({{ $currency }})</th>
                         </tr>
@@ -153,7 +172,17 @@
                         @forelse($rows as $sn => $row)
                             <tr>
                                 <td class="text-muted-foreground tabular-nums">{{ $sn + 1 }}</td>
-                                <td class="font-medium text-foreground">{{ $row['budget']->name }}</td>
+                                <td class="font-medium text-foreground">
+                                    {{ $row['budget']->name }}
+                                    @if($motherBudget && $row['budget']->id === $motherBudget->id)
+                                        <span class="ml-1 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
+                                            Main
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="text-sm text-muted-foreground">
+                                    {{ ($budgetRecurrences[$row['budget']->recurrence] ?? 'Single period') }}
+                                </td>
                                 <td class="text-right tabular-nums">{{ number_format($row['planned'], 0) }}</td>
                                 <td class="text-right tabular-nums {{ $row['over'] ? 'text-red-600 font-medium' : '' }}">{{ number_format($row['used'], 0) }}</td>
                             </tr>
