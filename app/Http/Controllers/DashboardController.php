@@ -60,9 +60,10 @@ class DashboardController extends Controller
         $budgetUsedLabel = '—';
         if ($currentFamily) {
             $budgets = $currentFamily->budgets()
+                ->with(['wallets', 'categories'])
                 ->where('start_date', '<=', $endOfMonth)
                 ->where('end_date', '>=', $startOfMonth)
-                ->get(['id', 'amount', 'used_amount']);
+                ->get();
             $totalBudget = $budgets->sum('amount');
             $totalBudgetUsed = $budgets->sum('used_amount');
             if ($totalBudget > 0) {

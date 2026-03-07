@@ -17,10 +17,16 @@
             </div>
         </div>
         <div class="flex items-center flex-wrap gap-1.5 lg:gap-3.5">
-            <a href="{{ route('families.incomes.create', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-primary">
+            @if($wallet->is_primary)
+            <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-primary">
                 <i class="ki-filled ki-arrow-down"></i>
                 Record income
             </a>
+            @else
+            <span class="text-xs text-muted-foreground self-center max-w-[200px]">
+                Income is recorded to the main wallet only. Use <a href="{{ route('families.transfers.create', $family) }}" class="text-primary hover:underline">Transfer</a> to move money here.
+            </span>
+            @endif
             <a href="{{ route('families.expenses.create', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-outline">
                 <i class="ki-filled ki-arrow-up"></i>
                 Record expense
