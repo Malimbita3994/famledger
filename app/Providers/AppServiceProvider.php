@@ -37,21 +37,60 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::composer('layouts.metronic', function ($view) {
+            $key = 'metronic_layout_data';
+            $data = request()->attributes->get($key);
+            if ($data !== null) {
+                $view->with($data);
+                return;
+            }
+
             $currentFamily = null;
             $canViewFamilyAuditTrail = false;
+            $currentFamilyMembership = null;
+            $canManageInvites = false;
+            $canManageProperty = false;
+            $roleLabelForTopbar = '';
+
             if (auth()->check()) {
                 $user = auth()->user();
                 $currentFamily = $user->families()->first();
                 if ($currentFamily) {
-                    $membership = FamilyMember::where('family_id', $currentFamily->id)
+                    $currentFamilyMembership = FamilyMember::where('family_id', $currentFamily->id)
                         ->where('user_id', $user->id)
                         ->with('role')
                         ->first();
-                    $isOwnerOrCoOwner = $membership && in_array($membership->role->name ?? '', ['Owner', 'Co-owner', 'Co-Owner'], true);
+                    $roleName = $currentFamilyMembership && $currentFamilyMembership->role
+                        ? mb_strtolower($currentFamilyMembership->role->name)
+                        : null;
+                    $isOwnerOrCoOwner = in_array($roleName, ['owner', 'co-owner'], true);
                     $canViewFamilyAuditTrail = $user->hasRole('Super Admin') || $user->hasRole('Auditor') || $isOwnerOrCoOwner;
+                    $canManageInvites = $isOwnerOrCoOwner;
+                    $canManageProperty = $isOwnerOrCoOwner;
+                    $roleLabelForTopbar = $currentFamilyMembership && $currentFamilyMembership->role
+                        ? $currentFamilyMembership->role->name
+                        : '';
+                }
+                if ($roleLabelForTopbar === '') {
+                    $user->load('roles');
+                    $userRole = $user->roles->first();
+                    $roleLabelForTopbar = $userRole ? ($userRole->display_name ?? $userRole->name) : '';
+                }
+                if ($roleLabelForTopbar === '' && $user->familyMemberships()->exists()) {
+                    $fallback = $user->familyMemberships()->with('role')->first();
+                    $roleLabelForTopbar = $fallback && $fallback->role ? $fallback->role->name : '';
                 }
             }
-            $view->with('currentFamily', $currentFamily)->with('canViewFamilyAuditTrail', $canViewFamilyAuditTrail);
+
+            $data = [
+                'currentFamily' => $currentFamily,
+                'canViewFamilyAuditTrail' => $canViewFamilyAuditTrail,
+                'currentFamilyMembership' => $currentFamilyMembership,
+                'canManageInvites' => $canManageInvites,
+                'canManageProperty' => $canManageProperty,
+                'roleLabelForTopbar' => $roleLabelForTopbar,
+            ];
+            request()->attributes->set($key, $data);
+            $view->with($data);
         });
 
         // Database audit trail: log model changes

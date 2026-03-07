@@ -69,9 +69,6 @@
 
                     <div class="kt-card-content grid grid-cols-1 lg:grid-cols-2 gap-5 py-5 lg:py-7.5">
                         @foreach ($permissions as $group => $perms)
-                            @if ($group === 'other')
-                                @continue
-                            @endif
                             <div class="rounded-xl border border-border p-4 flex flex-col gap-4 bg-card">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="flex flex-col gap-0.5">
@@ -100,6 +97,7 @@
                                                 @checked($allChecked)
                                             >
                                         </label>
+                                        @if ($group !== 'other')
                                         <button
                                             type="submit"
                                             form="delete-module-{{ $group }}"
@@ -107,6 +105,7 @@
                                         >
                                             <i class="ki-filled ki-trash"></i>
                                         </button>
+                                        @endif
                                         <span class="text-primary text-lg shrink-0">
                                             <i class="ki-filled ki-shield-tick"></i>
                                         </span>
@@ -223,9 +222,7 @@
 
                 {{-- Hidden forms for deleting individual permissions --}}
                 @foreach ($permissions as $group => $perms)
-                    @if ($group === 'other')
-                        @continue
-                    @endif
+                    @if ($group !== 'other')
                     <form
                         id="delete-module-{{ $group }}"
                         method="POST"
@@ -237,6 +234,7 @@
                         @csrf
                         @method('DELETE')
                     </form>
+                    @endif
                     @foreach ($perms as $permission)
                         <form
                             id="delete-permission-{{ $permission->id }}"

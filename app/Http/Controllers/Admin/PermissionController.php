@@ -41,6 +41,13 @@ class PermissionController extends Controller
             'savings',
             'reconciliation',
             'global',
+            'audit_trail',
+            'contact_messages',
+            'liabilities',
+            'invitations',
+            'access',
+            'manage',
+            'view',
         ];
 
         $search = trim((string) $request->query('search', ''));
@@ -66,10 +73,8 @@ class PermissionController extends Controller
                 return 'other';
             });
 
-        // Paginate by module group to avoid very long pages
-        $allGroups = $permissions->filter(function ($perms, $group) {
-            return $group !== 'other';
-        });
+        // Paginate by module group (include 'other' so legacy/unmatched permissions are visible)
+        $allGroups = $permissions;
 
         $perPage = 6;
         $page = max(1, (int) $request->query('page', 1));

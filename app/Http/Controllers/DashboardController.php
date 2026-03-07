@@ -60,10 +60,9 @@ class DashboardController extends Controller
         $budgetUsedLabel = '—';
         if ($currentFamily) {
             $budgets = $currentFamily->budgets()
-                ->with(['wallets', 'categories'])
                 ->where('start_date', '<=', $endOfMonth)
                 ->where('end_date', '>=', $startOfMonth)
-                ->get();
+                ->get(['id', 'amount', 'used_amount']);
             $totalBudget = $budgets->sum('amount');
             $totalBudgetUsed = $budgets->sum('used_amount');
             if ($totalBudget > 0) {
@@ -72,18 +71,31 @@ class DashboardController extends Controller
             }
         }
 
-        // Last 6 months for income vs expense chart
+        // Last 6 months for income vs expense chart (2 queries instead of 12)
         $months = [];
-        $incomeByMonth = [];
-        $expenseByMonth = [];
+        $chartMonthKeys = [];
         for ($i = 5; $i >= 0; $i--) {
-            $d = $now->copy()->subMonths($i);
+            $d = $now->copy()->subMonths($i)->startOfMonth();
             $months[] = $d->format('M');
-            $start = $d->copy()->startOfMonth();
-            $end = $d->copy()->endOfMonth();
-            $incomeByMonth[] = (float) Income::whereIn('family_id', $familyIds)->whereBetween('received_date', [$start, $end])->sum('amount');
-            $expenseByMonth[] = (float) Expense::whereIn('family_id', $familyIds)->whereBetween('expense_date', [$start, $end])->sum('amount');
+            $chartMonthKeys[] = $d->format('Y-m-01');
         }
+        $firstChartMonth = $chartMonthKeys[0];
+        $incomeByMonthRaw = Income::whereIn('family_id', $familyIds)
+            ->where('received_date', '>=', $firstChartMonth)
+            ->where('received_date', '<=', $endOfMonth)
+            ->selectRaw('DATE_FORMAT(received_date, "%Y-%m-01") as month, SUM(amount) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->all();
+        $expenseByMonthRaw = Expense::whereIn('family_id', $familyIds)
+            ->where('expense_date', '>=', $firstChartMonth)
+            ->where('expense_date', '<=', $endOfMonth)
+            ->selectRaw('DATE_FORMAT(expense_date, "%Y-%m-01") as month, SUM(amount) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->all();
+        $incomeByMonth = array_map(fn ($m) => (float) ($incomeByMonthRaw[$m] ?? 0), $chartMonthKeys);
+        $expenseByMonth = array_map(fn ($m) => (float) ($expenseByMonthRaw[$m] ?? 0), $chartMonthKeys);
 
         // Expenses by category (current month)
         $expensesByCategory = Expense::whereIn('expenses.family_id', $familyIds)
@@ -131,16 +143,16 @@ class DashboardController extends Controller
         $propertyTotalValue = 0.0;
 
         if ($currentFamily) {
-            $projectCount = Project::where('family_id', $currentFamily->id)->count();
-            $activeProjectCount = Project::where('family_id', $currentFamily->id)
-                ->where('status', 'active')
-                ->count();
+            $projectCounts = Project::where('family_id', $currentFamily->id)
+                ->selectRaw('COUNT(*) as total, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as active', ['active'])
+                ->first();
+            $projectCount = (int) ($projectCounts->total ?? 0);
+            $activeProjectCount = (int) ($projectCounts->active ?? 0);
 
-            $properties = Property::where('family_id', $currentFamily->id)->get();
-            $propertyCount = $properties->count();
-            $propertyTotalValue = (float) $properties->sum(function (Property $p) {
-                return (float) ($p->current_estimated_value ?? $p->purchase_price ?? 0);
-            });
+            $propertyTotalValue = (float) Property::where('family_id', $currentFamily->id)
+                ->selectRaw('COALESCE(SUM(COALESCE(current_estimated_value, purchase_price, 0)), 0) as total')
+                ->value('total');
+            $propertyCount = Property::where('family_id', $currentFamily->id)->count();
         }
 
         return view('dashboard', [

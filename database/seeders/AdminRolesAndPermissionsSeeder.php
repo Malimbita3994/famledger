@@ -406,6 +406,30 @@ class AdminRolesAndPermissionsSeeder extends Seeder
             'global_manage_categories',
             'global_manage_tags',
             'global_system_settings_access',
+
+            // Audit trail (platform & family audit logs)
+            'audit_trail_view',
+            'audit_trail_view_platform',
+            'audit_trail_view_family',
+            'audit_trail_export',
+            'audit_trail_filter',
+
+            // Contact messages (admin – landing page messages)
+            'contact_messages_view',
+            'contact_messages_delete',
+            'contact_messages_mark_read',
+
+            // Liabilities (family liabilities)
+            'liabilities_view',
+            'liabilities_create',
+            'liabilities_update',
+            'liabilities_delete',
+
+            // Invitations (family invites)
+            'invitations_view',
+            'invitations_create',
+            'invitations_delete',
+            'invitations_resend',
         ];
 
         foreach ($permissions as $name) {
@@ -416,13 +440,29 @@ class AdminRolesAndPermissionsSeeder extends Seeder
         $superAdmin->givePermissionTo(Permission::all());
 
         $admin = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => $guard]);
-        $admin->givePermissionTo(['access_admin_panel', 'manage_users', 'manage_roles', 'view_audit_logs']);
+        $admin->givePermissionTo([
+            'access_admin_panel',
+            'manage_users',
+            'manage_roles',
+            'view_audit_logs',
+            'contact_messages_view',
+            'contact_messages_delete',
+            'contact_messages_mark_read',
+        ]);
 
         Role::firstOrCreate(['name' => 'Support', 'guard_name' => $guard])
-            ->givePermissionTo(['access_admin_panel', 'manage_users', 'view_audit_logs']);
+            ->givePermissionTo(['access_admin_panel', 'manage_users', 'view_audit_logs', 'contact_messages_view', 'contact_messages_mark_read']);
 
         Role::firstOrCreate(['name' => 'Auditor', 'guard_name' => $guard])
-            ->givePermissionTo(['access_admin_panel', 'view_audit_logs']);
+            ->givePermissionTo([
+                'access_admin_panel',
+                'view_audit_logs',
+                'audit_trail_view',
+                'audit_trail_view_platform',
+                'audit_trail_view_family',
+                'audit_trail_export',
+                'audit_trail_filter',
+            ]);
 
         // Family/tenant-style roles (assign permissions in admin as needed)
         Role::firstOrCreate(['name' => 'Owner', 'guard_name' => $guard]);

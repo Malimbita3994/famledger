@@ -94,6 +94,13 @@ class RoleController extends Controller
             'savings',
             'reconciliation',
             'global',
+            'audit_trail',
+            'contact_messages',
+            'liabilities',
+            'invitations',
+            'access',
+            'manage',
+            'view',
         ];
 
         $permissions = Permission::where('guard_name', $role->guard_name)
@@ -131,6 +138,8 @@ class RoleController extends Controller
             ->all();
 
         $role->permissions()->sync($permissions);
+
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()
             ->route('admin.roles.permissions.edit', $role)

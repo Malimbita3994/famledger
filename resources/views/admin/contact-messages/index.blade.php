@@ -46,7 +46,11 @@
                     @forelse ($messages as $msg)
                     <tr class="{{ $msg->read_at ? '' : 'bg-muted/40' }}">
                         <td class="font-medium flex items-center gap-1.5">
-                            @if (! $msg->read_at)
+                            @if ($msg->read_at)
+                                <span class="inline-flex items-center justify-center size-4 rounded-full bg-emerald-50 text-emerald-600">
+                                    <i class="ki-filled ki-check text-[11px]"></i>
+                                </span>
+                            @else
                                 <span class="inline-block size-1.5 rounded-full bg-warning-500"></span>
                             @endif
                             <span>{{ $msg->name }}</span>

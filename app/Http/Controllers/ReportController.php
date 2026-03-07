@@ -92,9 +92,8 @@ class ReportController extends Controller
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
         $formatAmount = fn ($n) => number_format((float) $n, 0) . ' ' . $currency;
 
-        // Liabilities snapshot for the family (computed outstanding)
-        $liabilities = FamilyLiability::where('family_id', $family->id)->get();
-        $totalLiabilities = $liabilities->sum->outstanding_balance;
+        // Liabilities snapshot for the family (single query)
+        $totalLiabilities = (float) FamilyLiability::where('family_id', $family->id)->sum('outstanding_balance');
 
         return view('families.reports.index', [
             'family' => $family,
@@ -226,13 +225,7 @@ class ReportController extends Controller
             ->groupBy('property_id')
             ->map->first();
 
-        $categories = $family->properties()
-            ->with('category')
-            ->get()
-            ->pluck('category')
-            ->filter()
-            ->unique('id')
-            ->values();
+        $categories = $properties->pluck('category')->filter()->unique('id')->values();
 
         return view('families.reports.property', [
             'family' => $family,
@@ -285,19 +278,25 @@ class ReportController extends Controller
             ->sortByDesc('total')
             ->values();
 
-        // Monthly trend (last 6 months)
+        // Monthly trend (last 6 months) — single aggregated query
         $months = [];
-        $trend = [];
+        $chartMonthKeys = [];
         for ($i = 5; $i >= 0; $i--) {
-            $d = now()->subMonths($i);
-            $start = $d->copy()->startOfMonth();
-            $end = $d->copy()->endOfMonth();
+            $d = now()->subMonths($i)->startOfMonth();
             $months[] = $d->format('M Y');
-            $trend[] = (float) Expense::where('family_id', $family->id)
-                ->whereIn('wallet_id', $walletIds)
-                ->whereBetween('expense_date', [$start, $end])
-                ->sum('amount');
+            $chartMonthKeys[] = $d->format('Y-m-01');
         }
+        $firstMonth = $chartMonthKeys[0];
+        $lastMonth = now()->endOfMonth()->format('Y-m-t');
+        $trendRaw = Expense::where('family_id', $family->id)
+            ->whereIn('wallet_id', $walletIds)
+            ->where('expense_date', '>=', $firstMonth)
+            ->where('expense_date', '<=', $lastMonth)
+            ->selectRaw('DATE_FORMAT(expense_date, "%Y-%m-01") as month, SUM(amount) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->all();
+        $trend = array_map(fn ($m) => (float) ($trendRaw[$m] ?? 0), $chartMonthKeys);
 
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
 
@@ -369,18 +368,25 @@ class ReportController extends Controller
             ->sortByDesc('total')
             ->values();
 
+        // Monthly trend (last 6 months) — single aggregated query
         $months = [];
-        $trend = [];
+        $chartMonthKeys = [];
         for ($i = 5; $i >= 0; $i--) {
-            $d = now()->subMonths($i);
-            $start = $d->copy()->startOfMonth();
-            $end = $d->copy()->endOfMonth();
+            $d = now()->subMonths($i)->startOfMonth();
             $months[] = $d->format('M Y');
-            $trend[] = (float) Income::where('family_id', $family->id)
-                ->whereIn('wallet_id', $walletIds)
-                ->whereBetween('received_date', [$start, $end])
-                ->sum('amount');
+            $chartMonthKeys[] = $d->format('Y-m-01');
         }
+        $firstMonth = $chartMonthKeys[0];
+        $lastMonth = now()->endOfMonth()->format('Y-m-t');
+        $trendRaw = Income::where('family_id', $family->id)
+            ->whereIn('wallet_id', $walletIds)
+            ->where('received_date', '>=', $firstMonth)
+            ->where('received_date', '<=', $lastMonth)
+            ->selectRaw('DATE_FORMAT(received_date, "%Y-%m-01") as month, SUM(amount) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->all();
+        $trend = array_map(fn ($m) => (float) ($trendRaw[$m] ?? 0), $chartMonthKeys);
 
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
 
@@ -470,7 +476,7 @@ class ReportController extends Controller
                 ->whereNotNull('family_liability_id')
                 ->sum('amount');
             $liabilityChange = $liabilityIn - $liabilityOut;
-            $periodLiabilityTotal = FamilyLiability::where('family_id', $family->id)->get()->sum->outstanding_balance;
+            $periodLiabilityTotal = (float) FamilyLiability::where('family_id', $family->id)->sum('outstanding_balance');
         }
 
         if ($report === 'income') {
@@ -504,14 +510,21 @@ class ReportController extends Controller
                 })
                 ->sortByDesc('total')
                 ->values();
+            $incomeMonthKeys = [];
             for ($i = 5; $i >= 0; $i--) {
-                $d = now()->subMonths($i);
+                $d = now()->subMonths($i)->startOfMonth();
                 $months[] = $d->format('M Y');
-                $trend[] = (float) Income::where('family_id', $family->id)
-                    ->whereIn('wallet_id', $walletIds)
-                    ->whereBetween('received_date', [$d->copy()->startOfMonth(), $d->copy()->endOfMonth()])
-                    ->sum('amount');
+                $incomeMonthKeys[] = $d->format('Y-m-01');
             }
+            $incomeTrendRaw = Income::where('family_id', $family->id)
+                ->whereIn('wallet_id', $walletIds)
+                ->where('received_date', '>=', $incomeMonthKeys[0])
+                ->where('received_date', '<=', now()->endOfMonth()->format('Y-m-t'))
+                ->selectRaw('DATE_FORMAT(received_date, "%Y-%m-01") as month, SUM(amount) as total')
+                ->groupBy('month')
+                ->pluck('total', 'month')
+                ->all();
+            $trend = array_map(fn ($m) => (float) ($incomeTrendRaw[$m] ?? 0), $incomeMonthKeys);
         }
 
         if ($report === 'expense') {
@@ -529,14 +542,21 @@ class ReportController extends Controller
                 })
                 ->sortByDesc('total')
                 ->values();
+            $expenseMonthKeys = [];
             for ($i = 5; $i >= 0; $i--) {
-                $d = now()->subMonths($i);
+                $d = now()->subMonths($i)->startOfMonth();
                 $months[] = $d->format('M Y');
-                $trend[] = (float) Expense::where('family_id', $family->id)
-                    ->whereIn('wallet_id', $walletIds)
-                    ->whereBetween('expense_date', [$d->copy()->startOfMonth(), $d->copy()->endOfMonth()])
-                    ->sum('amount');
+                $expenseMonthKeys[] = $d->format('Y-m-01');
             }
+            $expenseTrendRaw = Expense::where('family_id', $family->id)
+                ->whereIn('wallet_id', $walletIds)
+                ->where('expense_date', '>=', $expenseMonthKeys[0])
+                ->where('expense_date', '<=', now()->endOfMonth()->format('Y-m-t'))
+                ->selectRaw('DATE_FORMAT(expense_date, "%Y-%m-01") as month, SUM(amount) as total')
+                ->groupBy('month')
+                ->pluck('total', 'month')
+                ->all();
+            $trend = array_map(fn ($m) => (float) ($expenseTrendRaw[$m] ?? 0), $expenseMonthKeys);
         }
 
         if ($report === 'transfer') {
@@ -680,6 +700,7 @@ class ReportController extends Controller
 
         // "Mother" family budget (umbrella plan for the family)
         $motherBudget = $family->budgets()
+            ->with(['wallets', 'categories'])
             ->where('type', Budget::TYPE_FAMILY)
             ->orderBy('start_date')
             ->first();
@@ -771,9 +792,13 @@ class ReportController extends Controller
         $projects = $query->get();
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
 
-        $totalProjects = $family->projects()->count();
-        $activeCount = $family->projects()->where('status', 'active')->count();
-        $completedCount = $family->projects()->where('status', 'completed')->count();
+        // Project counts in one query
+        $counts = $family->projects()
+            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as active, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed', ['active', 'completed'])
+            ->first();
+        $totalProjects = (int) ($counts->total ?? 0);
+        $activeCount = (int) ($counts->active ?? 0);
+        $completedCount = (int) ($counts->completed ?? 0);
         $fundedCount = $family->projects()->whereHas('fundings')->count();
 
         return view('families.reports.project-summary', [

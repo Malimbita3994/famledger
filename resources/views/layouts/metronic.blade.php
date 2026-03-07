@@ -50,8 +50,44 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     }
    }
   </style>
+  <style>
+   /* Global page loader – shown until window load */
+   #global-page-loader {
+     position: fixed;
+     inset: 0;
+     z-index: 99999;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     background: rgba(15, 23, 42, 0.92);
+     transition: opacity 0.4s ease, visibility 0.4s ease;
+   }
+   #global-page-loader.loaded {
+     opacity: 0;
+     visibility: hidden;
+     pointer-events: none;
+   }
+   #global-page-loader .global-loader-spinner {
+     width: 48px;
+     height: 48px;
+     border: 3px solid rgba(148, 163, 184, 0.3);
+     border-top-color: #38bdf8;
+     border-radius: 50%;
+     animation: global-loader-spin 0.85s linear infinite;
+   }
+   @keyframes global-loader-spin {
+     to { transform: rotate(360deg); }
+   }
+  </style>
  </head>
  <body class="antialiased flex h-full min-h-screen text-base text-foreground bg-background [--header-height:60px] [--sidebar-width:270px] overflow-x-hidden lg:overflow-hidden bg-zinc-950 dark:bg-background!" id="app-body" data-sidebar-collapsed="false">
+  <!-- Global page loader (hidden on window load) -->
+  <div id="global-page-loader" aria-hidden="true">
+   <div class="global-loader-spinner" role="presentation"></div>
+  </div>
+  <script>
+   (function(){var el=document.getElementById('global-page-loader');if(!el)return;var done=false;function hide(){if(done)return;done=true;el.classList.add('loaded');}window.addEventListener('load',hide);setTimeout(hide,2200);})();
+  </script>
   <!-- Sidebar collapse: icons only, no text -->
   <style>
    /* Profile dropdown above dashboard cards */
@@ -1178,14 +1214,6 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          </div>
         <!-- Family: parent + children (Family overview, Members, Invitations) -->
         @if(isset($currentFamily) && $currentFamily)
-        @php
-         $canManageInvites = false;
-         if (auth()->check()) {
-          $inviteMember = $currentFamily->familyMembers()->where('user_id', auth()->id())->with('role')->first();
-          $inviteRoleName = $inviteMember && $inviteMember->role ? mb_strtolower($inviteMember->role->name) : null;
-          $canManageInvites = in_array($inviteRoleName, ['owner', 'co-owner'], true);
-         }
-        @endphp
         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
          <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
           <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
@@ -1478,15 +1506,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          @endif
          @if(isset($currentFamily) && $currentFamily)
          <!-- Property -->
-         @php
-          $canManageProperty = false;
-          if (auth()->check()) {
-           $member = $currentFamily->familyMembers()->where('user_id', auth()->id())->with('role')->first();
-           $roleName = $member && $member->role ? mb_strtolower($member->role->name) : null;
-           $canManageProperty = in_array($roleName, ['owner', 'co-owner'], true);
-          }
-         @endphp
-         @if($canManageProperty)
+         @if(!empty($canManageProperty))
          <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
@@ -3166,27 +3186,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         @yield('page_actions')
        @endif
        @auth
-       @php
-         $authUser = auth()->user();
-         $roleLabel = '';
-         if (isset($currentFamily) && $currentFamily) {
-           $membership = $authUser->familyMemberships()->where('family_id', $currentFamily->id)->with('role')->first();
-           if ($membership && $membership->role) {
-             $roleLabel = $membership->role->name;
-           }
-         }
-         if ($roleLabel === '') {
-           $authUser->load('roles');
-           $userRole = $authUser->roles->first();
-           $roleLabel = $userRole ? ($userRole->display_name ?? $userRole->name) : '';
-         }
-         if ($roleLabel === '') {
-           $membership = $authUser->familyMemberships()->with('role')->first();
-           if ($membership && $membership->role) {
-             $roleLabel = $membership->role->name;
-           }
-         }
-       @endphp
+       @php $roleLabel = $roleLabelForTopbar ?? ''; @endphp
        <div class="relative z-50 ml-auto" data-kt-dropdown="true" data-kt-dropdown-offset="10px, 10px" data-kt-dropdown-placement="bottom-end" data-kt-dropdown-trigger="click" id="topbar_user_menu">
         <div class="cursor-pointer shrink-0 flex items-center gap-2.5 py-1.5 pl-2.5 pr-1 rounded-lg hover:bg-accent/60" data-kt-dropdown-toggle="true">
          <div class="text-right min-w-0 max-w-[140px] sm:max-w-[180px]">

@@ -45,9 +45,6 @@
 
                 <div class="kt-card-content grid grid-cols-1 lg:grid-cols-2 gap-5 py-5 lg:py-7.5">
                     @foreach ($permissions as $group => $perms)
-                        @if ($group === 'other')
-                            @continue
-                        @endif
                         <div class="rounded-xl border border-border p-4 flex flex-col gap-4 bg-card">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex flex-col gap-0.5">
@@ -215,7 +212,7 @@
             var container = document.querySelector('[data-module-container="' + moduleKey + '"]');
             if (!container) return;
             var checked = this.checked;
-            container.querySelectorAll('input[type="checkbox"][name="permissions[]\"]').forEach(function (cb) {
+            container.querySelectorAll('input[type="checkbox"][name="permissions[]"]').forEach(function (cb) {
                 cb.checked = checked;
             });
         });

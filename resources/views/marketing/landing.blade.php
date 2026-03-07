@@ -15,6 +15,10 @@
      <meta name="author" content="FamLedger">
      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
+     <link rel="preload" href="{{ asset('metronic/assets/css/tooplate-style.css') }}" as="style">
+     <link rel="preload" href="{{ asset('images/background.png') }}" as="image">
+     <link rel="preload" href="{{ asset('images/logo.png') }}" as="image">
+
      <link rel="stylesheet" href="{{ asset('metronic/assets/css/bootstrap.min.css') }}">
      <link rel="stylesheet" href="{{ asset('metronic/assets/css/owl.carousel.css') }}">
      <link rel="stylesheet" href="{{ asset('metronic/assets/css/owl.theme.default.min.css') }}">
@@ -234,7 +238,7 @@
 
                     <div class="col-md-6 col-sm-6 scroll-reveal scroll-reveal-delay-2">
                          <div class="feature-image">
-                              <img src="{{ asset('images/feature-mockup.png') }}" class="img-responsive" alt="Thin Laptop">                             
+                              <img src="{{ asset('images/feature-mockup.png') }}" class="img-responsive" alt="Thin Laptop" loading="lazy" decoding="async">                             
                          </div>
                     </div>
 
@@ -256,7 +260,7 @@
 
                     <div class="col-md-4 col-sm-4 scroll-reveal scroll-reveal-delay-1">
                          <div class="team-thumb">
-                              <img src="{{ asset('images/founder.jpg') }}" class="img-responsive" alt="Japhet Malimbita">
+                              <img src="{{ asset('images/founder.jpg') }}" class="img-responsive" alt="Japhet Malimbita" loading="lazy" decoding="async">
                               <div class="team-info team-thumb-up">
                                    <h2>Elias Family</h2>
                                    <small>First FamLedger family</small>
@@ -272,13 +276,13 @@
                                    <small>Early supporters</small>
                                    <p>Accountants and advisors helped us shape clear reports that busy family owners can actually use.</p>
                               </div>
-                              <img src="{{ asset('images/testimonial-image.jpg') }}" class="img-responsive" alt="Catherine Soft">
+                              <img src="{{ asset('images/testimonial-image.jpg') }}" class="img-responsive" alt="Catherine Soft" loading="lazy" decoding="async">
                          </div>
                     </div>
 
                     <div class="col-md-4 col-sm-4 scroll-reveal scroll-reveal-delay-3">
                          <div class="team-thumb">
-                              <img src="{{ asset('images/team-image3.jpg') }}" class="img-responsive" alt="Jack Wilson">
+                              <img src="{{ asset('images/team-image3.jpg') }}" class="img-responsive" alt="Jack Wilson" loading="lazy" decoding="async">
                               <div class="team-info team-thumb-up">
                                    <h2>FamLedger Team</h2>
                                    <small>Product & Engineering</small>
@@ -312,7 +316,7 @@
                                    <div class="item">
                                         <h3>FamLedger helps our family see wallets, projects and properties in one view. Meetings are shorter and decisions are clearer.</h3>
                                         <div class="testimonial-item">
-                                             <img src="{{ asset('images/tst-image1.jpg') }}" class="img-responsive" alt="Michael">
+                                             <img src="{{ asset('images/tst-image1.jpg') }}" class="img-responsive" alt="Michael" loading="lazy" decoding="async">
                                              <h4>Family owner – Dar es Salaam</h4>
                                         </div>
                                    </div>
@@ -320,7 +324,7 @@
                                    <div class="item">
                                         <h3>We finally have a simple record of who contributed what to each project and how much value we have built as a family.</h3>
                                         <div class="testimonial-item">
-                                             <img src="{{ asset('images/tst-image2.jpg') }}" class="img-responsive" alt="Sofia">
+                                             <img src="{{ asset('images/tst-image2.jpg') }}" class="img-responsive" alt="Sofia" loading="lazy" decoding="async">
                                              <h4>Co‑owner – Arusha</h4>
                                         </div>
                                    </div>
@@ -328,7 +332,7 @@
                                    <div class="item">
                                         <h3>Before FamLedger, property documents and numbers lived in WhatsApp and email. Now everything sits in one secure system.</h3>
                                         <div class="testimonial-item">
-                                             <img src="{{ asset('images/tst-image3.jpg') }}" class="img-responsive" alt="Monica">
+                                             <img src="{{ asset('images/tst-image3.jpg') }}" class="img-responsive" alt="Monica" loading="lazy" decoding="async">
                                              <h4>Family office advisor</h4>
                                         </div>
                                    </div>
@@ -484,13 +488,13 @@
      </footer>
 
 
-     <!-- SCRIPTS -->
-     <script src="{{ asset('metronic/assets/js/jquery.js') }}"></script>
-     <script src="{{ asset('metronic/assets/js/bootstrap.min.js') }}"></script>
-     <script src="{{ asset('metronic/assets/js/jquery.stellar.min.js') }}"></script>
-     <script src="{{ asset('metronic/assets/js/owl.carousel.min.js') }}"></script>
-     <script src="{{ asset('metronic/assets/js/smoothscroll.js') }}"></script>
-     <script src="{{ asset('metronic/assets/js/custom.js') }}"></script>
+     <!-- SCRIPTS (defer = non-blocking load, execution order preserved) -->
+     <script src="{{ asset('metronic/assets/js/jquery.js') }}" defer></script>
+     <script src="{{ asset('metronic/assets/js/bootstrap.min.js') }}" defer></script>
+     <script src="{{ asset('metronic/assets/js/jquery.stellar.min.js') }}" defer></script>
+     <script src="{{ asset('metronic/assets/js/owl.carousel.min.js') }}" defer></script>
+     <script src="{{ asset('metronic/assets/js/smoothscroll.js') }}" defer></script>
+     <script src="{{ asset('metronic/assets/js/custom.js') }}" defer></script>
 
      <script>
     const texts = [

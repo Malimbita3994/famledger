@@ -29,19 +29,17 @@ class WealthController extends Controller
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
 
         // Wallet totals (real cash only, split between general wallets and project wallets)
-        $wallets = Wallet::where('family_id', $family->id)->get();
+        $wallets = Wallet::where('family_id', $family->id)->get(['id', 'balance', 'type']);
 
         // Project wallets hold funds reserved for projects (type = project_fund).
         $projectWallets = $wallets->where('type', 'project_fund');
         $otherWallets = $wallets->where('type', '!=', 'project_fund');
 
         // Real cash in normal family wallets
-        $walletTotal = (float) $otherWallets->sum(function (Wallet $w) {
-            return $w->balance;
-        });
+        $walletTotal = (float) $otherWallets->sum('balance');
 
         // Property total (latest valuation or estimated value or purchase price)
-        $properties = Property::where('family_id', $family->id)->get();
+        $properties = Property::where('family_id', $family->id)->get(['id', 'purchase_price', 'current_estimated_value']);
         $propertyIds = $properties->pluck('id')->all();
 
         $latestValuations = PropertyValuation::whereIn('property_id', $propertyIds)
@@ -105,7 +103,7 @@ class WealthController extends Controller
 
         $trend = FamilyWealthTrend::where('family_id', $family->id)
             ->orderBy('snapshot_date')
-            ->get();
+            ->get(['snapshot_date', 'wallet_total', 'property_total', 'project_total', 'liability_total', 'net_wealth']);
 
         return view('families.wealth.index', [
             'family' => $family,

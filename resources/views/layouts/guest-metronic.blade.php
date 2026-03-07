@@ -14,12 +14,53 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
 
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Flavicon.png') }}"/>
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Flavicon.png') }}"/>
+
+    <link rel="preload" href="{{ asset('metronic/assets/css/styles.css') }}" as="style"/>
+    <link rel="preload" href="{{ asset('images/logo.png') }}" as="image"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="{{ asset('metronic/assets/vendors/keenicons/styles.bundle.css') }}" rel="stylesheet"/>
     <link href="{{ asset('metronic/assets/css/styles.css') }}" rel="stylesheet"/>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <style>
+        #global-page-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.92);
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        #global-page-loader.loaded {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #global-page-loader .global-loader-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(148, 163, 184, 0.3);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: global-loader-spin 0.85s linear infinite;
+        }
+        @keyframes global-loader-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body class="antialiased flex h-full text-base text-foreground bg-background">
+    <!-- Global page loader -->
+    <div id="global-page-loader" aria-hidden="true">
+        <div class="global-loader-spinner" role="presentation"></div>
+    </div>
+    <script>
+        (function(){var el=document.getElementById('global-page-loader');if(!el)return;var done=false;function hide(){if(done)return;done=true;el.classList.add('loaded');}window.addEventListener('load',hide);setTimeout(hide,2200);})();
+    </script>
     <!-- Theme Mode -->
     <script>
         const defaultThemeMode = 'light';
@@ -314,7 +355,7 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                     {{-- TOP: Logo --}}
                     <div class="w-full flex flex-col items-center mb-6">
                         <a href="{{ url('/') }}" class="inline-flex items-center">
-                            <img class="auth-branded-logo auth-logo-animate" src="{{ asset('images/logo.png') }}" alt="FamLedger logo"/>
+                            <img class="auth-branded-logo auth-logo-animate" src="{{ asset('images/logo.png') }}" alt="FamLedger logo" decoding="async"/>
                         </a>
                     </div>
 
@@ -403,8 +444,8 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         </div>
     </div>
 
-    <script src="{{ asset('metronic/assets/js/core.bundle.js') }}"></script>
-    <script src="{{ asset('metronic/assets/vendors/ktui/ktui.min.js') }}"></script>
+    <script src="{{ asset('metronic/assets/js/core.bundle.js') }}" defer></script>
+    <script src="{{ asset('metronic/assets/vendors/ktui/ktui.min.js') }}" defer></script>
     @stack('scripts')
 </body>
 </html>
