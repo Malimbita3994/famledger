@@ -10,6 +10,32 @@
         Back to assets list
     </a>
 
+    {{-- Education: Understanding depreciation --}}
+    <div class="kt-card p-5 mb-5 border border-primary/20 bg-primary/5">
+        <button type="button" class="depr-education-toggle w-full flex items-center justify-between gap-2 text-left" aria-expanded="false" aria-controls="depr-education-body">
+            <span class="text-sm font-semibold text-foreground">
+                <i class="ki-filled ki-information-2 me-2 text-primary"></i>
+                Understanding depreciation
+            </span>
+            <i class="ki-filled ki-down transition-transform depr-education-chevron"></i>
+        </button>
+        <div id="depr-education-body" class="depr-education-body overflow-hidden" hidden>
+            <div class="mt-4 pt-4 border-t border-border space-y-4 text-sm text-muted-foreground">
+                <p><strong class="text-foreground">Depreciation</strong> is the reduction in an asset’s value over time. FamLedger uses it so family wealth reflects realistic asset values (e.g. a car worth 10M after 5 years, not its 25M purchase price).</p>
+                <div>
+                    <p class="text-foreground font-medium mb-1">Common methods</p>
+                    <ul class="list-disc list-inside space-y-0.5">
+                        <li><strong>Straight line:</strong> Same amount each year → (Purchase − Salvage) ÷ Useful life.</li>
+                        <li><strong>Declining balance:</strong> Higher loss in early years (e.g. vehicles, electronics).</li>
+                        <li><strong>Manual entry:</strong> You enter the amount and book value yourself.</li>
+                    </ul>
+                </div>
+                <p><strong class="text-foreground">Book value after depreciation</strong> = Asset value − Depreciation for that year. FamLedger uses current asset value (purchase − total depreciation) in wealth calculations.</p>
+                <p><strong class="text-foreground">Best for:</strong> Vehicles, electronics, furniture, machinery, buildings. <strong>Not for:</strong> Land (usually appreciates), gold, stocks.</p>
+            </div>
+        </div>
+    </div>
+
     <style>
     .depr-main-row {
         display: flex;
@@ -85,6 +111,11 @@
             </form>
         </div>
 
+        <div id="depr-land-warning" class="mb-4 p-3 rounded-lg border border-amber-500/50 bg-amber-500/10 text-amber-800 dark:text-amber-200 text-sm hidden" role="alert">
+            <i class="ki-filled ki-information-2 me-2 align-middle"></i>
+            Land normally does not depreciate. Consider using appreciation instead.
+        </div>
+
         <form method="POST" action="{{ route('families.properties.depreciation.store', $family) }}" class="grid gap-4 lg:gap-5">
             @csrf
             <div class="depr-main-row">
@@ -93,7 +124,7 @@
                     <select id="depr_property_id" name="property_id" class="kt-select">
                         <option value="">Select property</option>
                         @foreach ($properties as $prop)
-                            <option value="{{ $prop->id }}" @selected(old('property_id') == $prop->id)>
+                            <option value="{{ $prop->id }}" data-land="{{ in_array($prop->id, $propertyIdsLand ?? []) ? '1' : '0' }}" @selected(old('property_id') == $prop->id)>
                                 {{ $prop->property_code }} · {{ $prop->name }}
                             </option>
                         @endforeach
@@ -195,5 +226,35 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+(function () {
+    var toggle = document.querySelector('.depr-education-toggle');
+    var body = document.getElementById('depr-education-body');
+    var chevron = document.querySelector('.depr-education-chevron');
+    if (toggle && body) {
+        toggle.addEventListener('click', function () {
+            var open = body.hidden;
+            body.hidden = !open;
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+        });
+    }
+
+    var propertySelect = document.getElementById('depr_property_id');
+    var landWarning = document.getElementById('depr-land-warning');
+    if (propertySelect && landWarning) {
+        function updateLandWarning() {
+            var opt = propertySelect.options[propertySelect.selectedIndex];
+            var isLand = opt && opt.getAttribute('data-land') === '1';
+            landWarning.classList.toggle('hidden', !isLand);
+        }
+        propertySelect.addEventListener('change', updateLandWarning);
+        updateLandWarning();
+    }
+})();
+</script>
+@endpush
 @endsection
 

@@ -33,6 +33,12 @@
                     Allocate accumulated savings from <strong>{{ $savingsGoal->name }}</strong> to a budget.
                     The allocated amount will count toward the budget's used total and help track spending against the limit.
                 </p>
+                @if ($savingsGoal->wallet)
+                    <p class="text-sm text-muted-foreground">
+                        Funds are taken from wallet: <a href="{{ route('families.wallets.show', [$family, $savingsGoal->wallet]) }}" class="text-primary hover:underline font-medium">{{ $savingsGoal->wallet->name }}</a>.
+                        <a href="{{ route('families.savings-goals.edit', [$family, $savingsGoal]) }}" class="text-muted-foreground hover:text-foreground text-xs ml-1">Change wallet</a>
+                    </p>
+                @endif
 
                 <form action="{{ route('families.savings-goals.allocate.store', [$family, $savingsGoal]) }}" method="POST">
                     @csrf

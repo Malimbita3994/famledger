@@ -61,80 +61,122 @@
     @endif
 
     <div class="dashboard-kpi-grid">
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="income" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer js-dashboard-card" data-card-type="income" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Income</span>
+                <span class="text-muted-foreground text-sm font-medium">Total Income</span>
                 <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-arrow-up"></i></span>
             </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $formatAmount($totalIncome, $currency) }}</div>
+            <div class="text-xl font-bold mt-3 text-foreground">{{ $formatAmount($totalIncome, $currency) }}</div>
             <div class="text-muted-foreground text-sm mt-2">This month</div>
         </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="expenses" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer js-dashboard-card" data-card-type="expenses" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Expenses</span>
+                <span class="text-muted-foreground text-sm font-medium">Total Expenses</span>
                 <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-arrow-down"></i></span>
             </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $formatAmount($totalExpenses, $currency) }}</div>
+            <div class="text-xl font-bold mt-3 text-foreground">{{ $formatAmount($totalExpenses, $currency) }}</div>
             <div class="text-muted-foreground text-sm mt-2">This month</div>
         </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="budget" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer js-dashboard-card" data-card-type="budget" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Budget Used</span>
+                <span class="text-muted-foreground text-sm font-medium">Budget Used</span>
                 <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie"></i></span>
             </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $budgetUsedPercent }}%</div>
-            <div class="text-gray-600 dark:text-gray-300 text-sm mt-2">{{ $budgetUsedLabel }}</div>
+            <div class="text-xl font-bold mt-3 text-foreground">{{ $budgetUsedPercent }}%</div>
+            <div class="text-muted-foreground text-sm mt-2">{{ $budgetUsedLabel }}</div>
         </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="wallets" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer js-dashboard-card" data-card-type="wallets" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Balance</span>
+                <span class="text-muted-foreground text-sm font-medium">Total Balance</span>
                 <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-safe"></i></span>
             </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $formatAmount($totalSavings, $currency) }}</div>
+            <div class="text-xl font-bold mt-3 text-foreground">{{ $formatAmount($totalSavings, $currency) }}</div>
             <div class="text-muted-foreground text-sm mt-2">All wallets</div>
         </div>
+        @if(isset($currentFamily) && $currentFamily && isset($alerts))
+            @if($alerts['mainWalletLow']['active'] ?? false)
+                <a href="{{ route('families.wallets.show', [$currentFamily, $alerts['mainWalletLow']['wallet']]) }}" class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer block js-dashboard-card" data-card-type="wallet-low" style="padding: 1.25rem 1.5rem;">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-muted-foreground text-sm font-medium">Main wallet low</span>
+                        <span class="text-amber-500 text-lg shrink-0"><i class="ki-filled ki-wallet"></i></span>
+                    </div>
+                    <div class="text-xl font-bold mt-3 text-foreground">{{ $formatAmount($alerts['mainWalletLow']['balance'] ?? 0, $currency) }}</div>
+                    <div class="text-muted-foreground text-sm mt-2">View wallet</div>
+                </a>
+            @endif
+            @if($alerts['overExpenses']['active'] ?? false)
+                <a href="{{ route('families.reports.budget-vs-actual', $currentFamily) }}" class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer block js-dashboard-card" data-card-type="over-expenses" style="padding: 1.25rem 1.5rem;">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-muted-foreground text-sm font-medium">Over expenses</span>
+                        <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-chart-pie"></i></span>
+                    </div>
+                    <div class="text-xl font-bold mt-3 text-foreground">{{ count($alerts['overExpenses']['budgets'] ?? []) }}</div>
+                    <div class="text-muted-foreground text-sm mt-2">budget(s) exceeded</div>
+                </a>
+            @endif
+            @if($alerts['projectDelays']['active'] ?? false)
+                <a href="{{ route('families.projects.index', $currentFamily) }}" class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer block js-dashboard-card" data-card-type="project-delays" style="padding: 1.25rem 1.5rem;">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-muted-foreground text-sm font-medium">Project delays</span>
+                        <span class="text-orange-500 text-lg shrink-0"><i class="ki-filled ki-calendar-tick"></i></span>
+                    </div>
+                    <div class="text-xl font-bold mt-3 text-foreground">{{ count($alerts['projectDelays']['projects'] ?? []) }}</div>
+                    <div class="text-muted-foreground text-sm mt-2">past target end</div>
+                </a>
+            @endif
+            @if($alerts['propertyDepreciation']['active'] ?? false)
+                <a href="{{ route('families.properties.assets', $currentFamily) }}" class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer block js-dashboard-card" data-card-type="property-depreciation" style="padding: 1.25rem 1.5rem;">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-muted-foreground text-sm font-medium">Property depreciation</span>
+                        <span class="text-slate-500 text-lg shrink-0"><i class="ki-filled ki-chart-line-down"></i></span>
+                    </div>
+                    <div class="text-xl font-bold mt-3 text-foreground">{{ count($alerts['propertyDepreciation']['properties'] ?? []) }}</div>
+                    <div class="text-muted-foreground text-sm mt-2">below purchase value</div>
+                </a>
+            @endif
+        @endif
         @if(isset($currentFamily) && $currentFamily)
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="projects" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer js-dashboard-card" data-card-type="projects" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Projects</span>
+                <span class="text-muted-foreground text-sm font-medium">Projects</span>
                 <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-briefcase"></i></span>
             </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white tabular-nums">{{ $projectCount ?? 0 }}</div>
+            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $projectCount ?? 0 }}</div>
             <div class="text-muted-foreground text-sm mt-2">{{ $activeProjectCount ?? 0 }} active</div>
         </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="properties" style="padding: 1.25rem 1.5rem;">
+        <div class="dashboard-kpi-card kt-card bg-card shadow rounded-xl border border-border cursor-pointer js-dashboard-card" data-card-type="properties" style="padding: 1.25rem 1.5rem;">
             <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Properties</span>
+                <span class="text-muted-foreground text-sm font-medium">Properties</span>
                 <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-home-3"></i></span>
             </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white tabular-nums">{{ $propertyCount ?? 0 }}</div>
+            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $propertyCount ?? 0 }}</div>
             <div class="text-muted-foreground text-sm mt-2">Value: {{ number_format($propertyTotalValue ?? 0, 0) }} {{ $currency }}</div>
         </div>
         @endif
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-5 mb-6">
-        <div class="xl:col-span-2 kt-card flex flex-col rounded-xl border border-border shadow-sm overflow-hidden">
+        <div class="xl:col-span-2 kt-card bg-card flex flex-col rounded-xl border border-border shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-border">
                 <h3 class="text-base font-semibold text-foreground">Income vs Expenses</h3>
                 <p class="text-sm text-muted-foreground mt-0.5">Monthly comparison (last 6 months) — {{ $currency }}</p>
             </div>
-            <div class="p-4 min-h-[280px]">
+            <div class="p-4 min-h-[280px] bg-card">
                 <div id="famledger_income_expense_chart" class="w-full" style="min-height: 260px;"></div>
             </div>
         </div>
-        <div class="kt-card flex flex-col rounded-xl border border-border shadow-sm overflow-hidden">
+        <div class="kt-card bg-card flex flex-col rounded-xl border border-border shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-border">
                 <h3 class="text-base font-semibold text-foreground">Expenses by Category</h3>
                 <p class="text-sm text-muted-foreground mt-0.5">This month</p>
             </div>
-            <div class="p-4 flex items-center justify-center min-h-[280px]">
+            <div class="p-4 flex items-center justify-center min-h-[280px] bg-card">
                 <div id="famledger_category_chart" class="w-full max-w-[260px] mx-auto" style="min-height: 260px;"></div>
             </div>
         </div>
     </div>
 
-    <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden">
+    <div class="kt-card bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="px-5 py-4 border-b border-border flex items-center justify-between flex-wrap gap-2">
             <div>
                 <h3 class="text-base font-semibold text-foreground">Recent Activity</h3>
@@ -160,7 +202,7 @@
                     <tr class="hover:bg-muted/30">
                         <td class="px-5 py-3 text-foreground">{{ $item->description }}</td>
                         <td class="px-5 py-3 text-muted-foreground">{{ $item->category }}</td>
-                        <td class="px-5 py-3 text-end font-medium {{ $item->type === 'income' ? 'text-green-600' : 'text-destructive' }}">
+                        <td class="px-5 py-3 text-end font-medium {{ $item->type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-destructive' }}">
                             {{ $item->type === 'income' ? '+' : '-' }}{{ $formatAmount($item->amount, $item->currency_code) }}
                         </td>
                         <td class="px-5 py-3 text-end text-muted-foreground">{{ $item->date?->format('M j, Y') }}</td>
@@ -349,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ],
                 dataLabels: {
                     enabled: true,
-                    style: { colors: ['#374151'], fontSize: '11px' },
+                    style: { colors: ['var(--color-foreground)'], fontSize: '11px' },
                     formatter: function (val) {
                         return (val || 0).toLocaleString() + ' ' + currency;
                     },

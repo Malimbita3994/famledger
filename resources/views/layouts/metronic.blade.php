@@ -11,7 +11,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
 <!DOCTYPE html>
 <html class="h-full overflow-x-hidden" data-kt-theme="true" data-kt-theme-mode="light" dir="ltr" lang="en">
  <head><base href="../../">
-  <title>@yield('title', 'FamLedger')</title>
+  <title>FamLedger</title>
   <meta charset="utf-8"/>
   <meta content="follow, index" name="robots"/>
   <link href="https://127.0.0.1:8001/metronic-html-starter-kit/layout-10/index.html" rel="canonical"/>
@@ -30,8 +30,10 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <meta content="FamLedger" property="og:title"/>
   <meta content="" property="og:description"/>
   <meta content="{{ asset('metronic/assets/media/app/og-image.png') }}" property="og:image"/>
-  <link href="{{ asset('metronic/assets/media/app/apple-touch-icon.png') }}" rel="apple-touch-icon" sizes="180x180"/>
-  <link rel="icon" type="image/svg+xml" href="{{ asset('metronic/assets/media/brand-logos/logo.svg') }}"/>
+  <link href="{{ asset('images/Flavicon.png') }}" rel="apple-touch-icon" sizes="180x180"/>
+  <link rel="icon" type="image/png" href="{{ asset('images/Flavicon.png') }}"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Flavicon.png') }}"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Flavicon.png') }}"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/vendors/apexcharts/apexcharts.css') }}" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/vendors/keenicons/styles.bundle.css') }}" rel="stylesheet"/>
@@ -255,7 +257,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
       @auth
       <div data-kt-dropdown="true" data-kt-dropdown-offset="10px, 10px" data-kt-dropdown-placement="bottom-end" data-kt-dropdown-trigger="click">
        <div class="cursor-pointer shrink-0 flex items-center gap-2" data-kt-dropdown-toggle="true">
-        <img alt="{{ auth()->user()->name }}" class="size-8 rounded-full border-2 border-white/30 shrink-0" src="{{ asset('metronic/assets/media/avatars/300-2.png') }}"/>
+        <img alt="{{ auth()->user()->name }}" class="size-8 rounded-full border-2 border-white/30 shrink-0 object-cover" src="{{ auth()->user()->avatar_url ?? asset('metronic/assets/media/avatars/300-2.png') }}"/>
         <span class="text-sm font-medium text-white max-w-[120px] truncate">{{ auth()->user()->name }}</span>
         <i class="ki-filled ki-down text-white text-xs"></i>
        </div>
@@ -1214,7 +1216,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          </div>
         <!-- Family: parent + children (Family overview, Members, Invitations) -->
         @if(isset($currentFamily) && $currentFamily)
-        <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        @php $familyMenuOpen = request()->routeIs('families.index') || request()->routeIs('families.show') || request()->routeIs('families.edit') || request()->routeIs('families.invites.*'); @endphp
+        <div class="kt-menu-item {{ $familyMenuOpen ? 'kt-menu-item-show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
          <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
           <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
            <i class="ki-filled ki-profile-circle"></i>
@@ -1228,21 +1231,21 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          <div class="kt-menu-accordion gap-px ps-2.5">
           <div class="kt-menu-item">
            <a href="{{ route('families.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.index') ? 'bg-secondary' : '' }}">
-            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-home-3"></i></span>
-            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Overview</span>
+            <span class="kt-menu-icon items-start text-lg shrink-0 {{ request()->routeIs('families.index') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-home-3"></i></span>
+            <span class="kt-menu-title text-sm {{ request()->routeIs('families.index') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Overview</span>
            </a>
           </div>
           <div class="kt-menu-item">
-           <a href="{{ route('families.show', $currentFamily) }}#family-members" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.members.*') ? 'bg-secondary' : '' }}">
-            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-people"></i></span>
-            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Members</span>
+           <a href="{{ route('families.show', $currentFamily) }}#family-members" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.show') ? 'bg-secondary' : '' }}">
+            <span class="kt-menu-icon items-start text-lg shrink-0 {{ request()->routeIs('families.show') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-people"></i></span>
+            <span class="kt-menu-title text-sm {{ request()->routeIs('families.show') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Members</span>
            </a>
           </div>
           @if($canManageInvites)
           <div class="kt-menu-item">
            <a href="{{ route('families.invites.index', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.invites.*') ? 'bg-secondary' : '' }}">
-            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-message-text"></i></span>
-            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Invitations</span>
+            <span class="kt-menu-icon items-start text-lg shrink-0 {{ request()->routeIs('families.invites.*') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-message-text"></i></span>
+            <span class="kt-menu-title text-sm {{ request()->routeIs('families.invites.*') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Invitations</span>
            </a>
           </div>
           @endif
@@ -1260,7 +1263,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         @endif
         <!-- Accounts (Family financial accounts) -->
         @if(isset($currentFamily) && $currentFamily)
-         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+         @php $accountsMenuOpen = request()->routeIs('families.wallets.*') || request()->routeIs('families.accounts.*') || request()->routeIs('families.budgets.*') || request()->routeIs('families.liabilities.*'); @endphp
+         <div class="kt-menu-item {{ $accountsMenuOpen ? 'kt-menu-item-show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-wallet"></i>
@@ -1273,51 +1277,51 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           </div>
           <div class="kt-menu-accordion gap-px ps-2.5">
            <div class="kt-menu-item">
-            <a href="{{ route('families.wallets.index', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
-             <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-wallet"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Wallets</span>
+            <a href="{{ route('families.wallets.index', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.wallets.*') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon text-lg shrink-0 {{ request()->routeIs('families.wallets.*') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-wallet"></i></span>
+             <span class="kt-menu-title text-sm {{ request()->routeIs('families.wallets.*') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Wallets</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.accounts.income', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
-             <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-arrow-up"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Income</span>
+            <a href="{{ route('families.accounts.income', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.accounts.income') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon text-lg shrink-0 {{ request()->routeIs('families.accounts.income') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-arrow-up"></i></span>
+             <span class="kt-menu-title text-sm {{ request()->routeIs('families.accounts.income') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Income</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.accounts.expenses', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
-             <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-arrow-down"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Expenses</span>
+            <a href="{{ route('families.accounts.expenses', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.accounts.expenses') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon text-lg shrink-0 {{ request()->routeIs('families.accounts.expenses') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-arrow-down"></i></span>
+             <span class="kt-menu-title text-sm {{ request()->routeIs('families.accounts.expenses') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Expenses</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.accounts.transfers', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
-             <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-arrow-right-left"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Transfers</span>
+            <a href="{{ route('families.accounts.transfers', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.accounts.transfers') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon text-lg shrink-0 {{ request()->routeIs('families.accounts.transfers') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-arrow-right-left"></i></span>
+             <span class="kt-menu-title text-sm {{ request()->routeIs('families.accounts.transfers') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Transfers</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.budgets.index', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
-             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-chart-line"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Budgets</span>
+            <a href="{{ route('families.budgets.index', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.budgets.*') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg shrink-0 {{ request()->routeIs('families.budgets.*') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-chart-line"></i></span>
+             <span class="kt-menu-title text-sm {{ request()->routeIs('families.budgets.*') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Budgets</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.accounts.savings', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
-             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-dollar"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Savings</span>
+            <a href="{{ route('families.accounts.savings', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.accounts.savings') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg shrink-0 {{ request()->routeIs('families.accounts.savings') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-dollar"></i></span>
+             <span class="kt-menu-title text-sm {{ request()->routeIs('families.accounts.savings') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Savings</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.liabilities.index', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
-             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-bank"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Liabilities</span>
+            <a href="{{ route('families.liabilities.index', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.liabilities.*') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg shrink-0 {{ request()->routeIs('families.liabilities.*') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-bank"></i></span>
+             <span class="kt-menu-title text-sm {{ request()->routeIs('families.liabilities.*') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Liabilities</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.accounts.reconciliation', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
-             <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-check-circle"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Reconciliation</span>
+            <a href="{{ route('families.accounts.reconciliation', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.accounts.reconciliation') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon text-lg shrink-0 {{ request()->routeIs('families.accounts.reconciliation') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}"><i class="ki-filled ki-check-circle"></i></span>
+             <span class="kt-menu-title text-sm {{ request()->routeIs('families.accounts.reconciliation') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">Reconciliation</span>
             </a>
            </div>
           </div>
@@ -1325,7 +1329,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          @endif
          @if(isset($currentFamily) && $currentFamily)
          <!-- Projects -->
-         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+         @php $projectsMenuOpen = request()->routeIs('families.projects.*') || request()->routeIs('families.accounts.projects-funding'); @endphp
+         <div class="kt-menu-item {{ $projectsMenuOpen ? 'kt-menu-item-show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-briefcase"></i>
@@ -1415,7 +1420,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         @endcan
          <!-- Reports -->
          @if(isset($currentFamily) && $currentFamily)
-         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+         @php $reportsMenuOpen = request()->routeIs('families.reports.*') || request()->routeIs('families.wealth.*') || request()->routeIs('admin.reports.*'); @endphp
+         <div class="kt-menu-item {{ $reportsMenuOpen ? 'kt-menu-item-show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-chart-line"></i></span>
            <span class="kt-menu-title text-sm text-foreground font-medium">Reports</span>
@@ -1507,7 +1513,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          @if(isset($currentFamily) && $currentFamily)
          <!-- Property -->
          @if(!empty($canManageProperty))
-         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+         @php $propertyMenuOpen = request()->routeIs('families.properties.*'); @endphp
+         <div class="kt-menu-item {{ $propertyMenuOpen ? 'kt-menu-item-show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-home-3"></i>
@@ -1567,11 +1574,11 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          @endif
          <!-- Settings (single entry that opens settings overview) -->
          <div class="kt-menu-item">
-          <a href="{{ route('settings.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent kt-menu-link-hover:bg-secondary {{ request()->routeIs('settings.index') ? 'bg-secondary' : '' }}">
-           <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
+          <a href="{{ route('settings.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent kt-menu-link-hover:bg-secondary {{ request()->routeIs('settings.*') ? 'bg-secondary' : '' }}">
+           <span class="kt-menu-icon items-start text-lg shrink-0 {{ request()->routeIs('settings.*') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}">
             <i class="ki-filled ki-setting-2"></i>
            </span>
-           <span class="kt-menu-title text-sm text-foreground font-medium">
+           <span class="kt-menu-title text-sm font-medium {{ request()->routeIs('settings.*') ? 'text-foreground' : 'text-foreground kt-menu-link-hover:text-foreground' }}">
             Settings
            </span>
           </a>
@@ -1580,10 +1587,10 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          <!-- Audit trail (bottom of sidebar; Owner & Co-owner only) -->
          <div class="kt-menu-item">
           <a href="{{ route('families.audit-trail.index', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.audit-trail.*') ? 'bg-secondary' : '' }}">
-           <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
+           <span class="kt-menu-icon items-start text-lg shrink-0 {{ request()->routeIs('families.audit-trail.*') ? 'text-foreground' : 'text-muted-foreground kt-menu-link-hover:text-foreground' }}">
             <i class="ki-filled ki-notification-status"></i>
            </span>
-           <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">
+           <span class="kt-menu-title text-sm {{ request()->routeIs('families.audit-trail.*') ? 'text-foreground font-medium' : 'text-secondary-foreground kt-menu-link-hover:text-foreground' }}">
             Audit trail
            </span>
           </a>
@@ -1636,228 +1643,56 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      <!-- End of Sidebar kt-menu-->
      <!-- Footer -->
      <div class="flex flex-center justify-between shrink-0 ps-4 pe-3.5 mb-3.5" id="sidebar_footer">
+      @auth
       <!-- User -->
       <div data-kt-dropdown="true" data-kt-dropdown-offset="10px, 10px" data-kt-dropdown-offset-rtl="-20px, 10px" data-kt-dropdown-placement="bottom-start" data-kt-dropdown-placement-rtl="bottom-end" data-kt-dropdown-trigger="click">
        <div class="cursor-pointer shrink-0" data-kt-dropdown-toggle="true">
-        <img alt="" class="size-9 rounded-full border-2 border-mono/25 shrink-0 cursor-pointer" src="{{ asset('metronic/assets/media/avatars/gray/5.png') }}"/>
+        <img alt="{{ auth()->user()->name }}" class="size-9 rounded-full border-2 border-mono/25 shrink-0 cursor-pointer object-cover" src="{{ auth()->user()->avatar_url ?? asset('metronic/assets/media/avatars/300-2.png') }}"/>
        </div>
        <div class="kt-dropdown-menu w-[250px]" data-kt-dropdown-menu="true">
-        <div class="flex items-center justify-between px-2.5 py-1.5 gap-1.5">
-         <div class="flex items-center gap-2">
-          <img alt="" class="size-9 shrink-0 rounded-full border-2 border-green-500" src="{{ asset('metronic/assets/media/avatars/300-2.png') }}"/>
-          <div class="flex flex-col gap-1.5">
-           <span class="text-sm text-foreground font-semibold leading-none">
-            Cody Fisher
-           </span>
-           <a class="text-xs text-secondary-foreground hover:text-primary font-medium leading-none" href="#">
-            c.fisher@gmail.com
-           </a>
-          </div>
+        <div class="flex items-center gap-2 px-2.5 py-1.5">
+         <img alt="{{ auth()->user()->name }}" class="size-9 shrink-0 rounded-full border-2 border-primary/50 object-cover" src="{{ auth()->user()->avatar_url ?? asset('metronic/assets/media/avatars/300-2.png') }}"/>
+         <div class="min-w-0 flex flex-col gap-0.5">
+          <span class="text-sm text-foreground font-semibold leading-none truncate">{{ auth()->user()->name }}</span>
+          <span class="text-xs text-muted-foreground leading-none truncate">{{ auth()->user()->email }}</span>
          </div>
-         <span class="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">
-          Pro
-         </span>
         </div>
         <ul class="kt-dropdown-menu-sub">
+         <li><div class="kt-dropdown-menu-separator"></div></li>
          <li>
-          <div class="kt-dropdown-menu-separator">
-          </div>
-         </li>
-         <li>
-          <a class="kt-dropdown-menu-link" href="#">
-           <i class="ki-filled ki-badge">
-           </i>
-           Public Profile
+          <a class="kt-dropdown-menu-link" href="{{ route('profile.edit') }}">
+           <i class="ki-filled ki-profile-circle"></i>
+           {{ __('My Profile') }}
           </a>
          </li>
          <li>
-          <a class="kt-dropdown-menu-link" href="#">
-           <i class="ki-filled ki-profile-circle">
-           </i>
-           My Profile
+          <a class="kt-dropdown-menu-link" href="{{ route('settings.index') }}">
+           <i class="ki-filled ki-setting-2"></i>
+           {{ __('Settings') }}
           </a>
          </li>
-         <li data-kt-dropdown="true" data-kt-dropdown-placement="right-start" data-kt-dropdown-trigger="hover">
-          <button class="kt-dropdown-menu-toggle" data-kt-dropdown-toggle="true">
-           <i class="ki-filled ki-setting-2">
-           </i>
-           My Account
-           <span class="kt-dropdown-menu-indicator">
-            <i class="ki-filled ki-right text-xs">
-            </i>
-           </span>
-          </button>
-          <div class="kt-dropdown-menu w-[220px]" data-kt-dropdown-menu="true">
-           <ul class="kt-dropdown-menu-sub">
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-coffee">
-              </i>
-              Get Started
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-some-files">
-              </i>
-              My Profile
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <i class="ki-filled ki-icon">
-               </i>
-               Billing
-              </span>
-              <span class="ms-auto inline-flex items-center" data-kt-tooltip="true" data-kt-tooltip-placement="top">
-               <i class="ki-filled ki-information-2 text-base text-muted-foreground">
-               </i>
-               <span class="kt-tooltip" data-kt-tooltip-content="true">
-                Payment and subscription info
-               </span>
-              </span>
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-medal-star">
-              </i>
-              Security
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-setting">
-              </i>
-              Members & Roles
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-switch">
-              </i>
-              Integrations
-             </a>
-            </li>
-            <li>
-             <div class="kt-dropdown-menu-separator">
-             </div>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <i class="ki-filled ki-shield-tick">
-               </i>
-               Notifications
-              </span>
-              <input checked="" class="ms-auto kt-switch" name="check" type="checkbox" value="1"/>
-             </a>
-            </li>
-           </ul>
-          </div>
-         </li>
-         <li>
-          <a class="kt-dropdown-menu-link" href="https://devs.keenthemes.com">
-           <i class="ki-filled ki-message-programming">
-           </i>
-           Dev Forum
-          </a>
-         </li>
-         <li data-kt-dropdown="true" data-kt-dropdown-placement="right-start" data-kt-dropdown-trigger="hover">
-          <button class="kt-dropdown-menu-toggle py-1" data-kt-dropdown-toggle="true">
-           <span class="flex items-center gap-2">
-            <i class="ki-filled ki-icon">
-            </i>
-            Language
-           </span>
-           <span class="ms-auto kt-badge kt-badge-stroke shrink-0">
-            English
-            <img alt="" class="inline-block size-3.5 rounded-full" src="{{ asset('metronic/assets/media/flags/united-states.svg') }}"/>
-           </span>
-          </button>
-          <div class="kt-dropdown-menu w-[180px]" data-kt-dropdown-menu="true">
-           <ul class="kt-dropdown-menu-sub">
-            <li class="active">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/united-states.svg') }}"/>
-               <span class="kt-menu-title">
-                English
-               </span>
-              </span>
-              <i class="ki-solid ki-check-circle ms-auto text-green-500 text-base">
-              </i>
-             </a>
-            </li>
-            <li class="">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/saudi-arabia.svg') }}"/>
-               <span class="kt-menu-title">
-                Arabic(Saudi)
-               </span>
-              </span>
-             </a>
-            </li>
-            <li class="">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/spain.svg') }}"/>
-               <span class="kt-menu-title">
-                Spanish
-               </span>
-              </span>
-             </a>
-            </li>
-            <li class="">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/germany.svg') }}"/>
-               <span class="kt-menu-title">
-                German
-               </span>
-              </span>
-             </a>
-            </li>
-            <li class="">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/japan.svg') }}"/>
-               <span class="kt-menu-title">
-                Japanese
-               </span>
-              </span>
-             </a>
-            </li>
-           </ul>
-          </div>
-         </li>
-         <li>
-          <div class="kt-dropdown-menu-separator">
-          </div>
-         </li>
+         <li><div class="kt-dropdown-menu-separator"></div></li>
         </ul>
         <div class="px-2.5 pt-1.5 mb-2.5 flex flex-col gap-3.5">
          <div class="flex items-center gap-2 justify-between">
           <span class="flex items-center gap-2">
-           <i class="ki-filled ki-moon text-base text-muted-foreground">
-           </i>
-           <span class="font-medium text-2sm">
-            Dark Mode
-           </span>
+           <i class="ki-filled ki-moon text-base text-muted-foreground"></i>
+           <span class="font-medium text-2sm">{{ __('Dark Mode') }}</span>
           </span>
           <input class="kt-switch" data-kt-theme-switch-state="dark" data-kt-theme-switch-toggle="true" name="check" type="checkbox" value="1"/>
          </div>
          <form method="POST" action="{{ route('logout') }}">
           @csrf
           <button type="submit" class="kt-btn kt-btn-outline justify-center w-full">
-           Log out
+           {{ __('Log out') }}
           </button>
          </form>
         </div>
        </div>
       </div>
+      @else
+      <a class="kt-btn kt-btn-sm kt-btn-outline" href="{{ route('login') }}">{{ __('Log in') }}</a>
+      @endauth
       <!-- End of User -->
       <div class="flex items-center gap-1.5">
        <!-- Notifications -->
@@ -3194,11 +3029,11 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           <span class="text-xs text-muted-foreground block leading-tight truncate">{{ $roleLabel }}</span>
          </div>
          <i class="ki-filled ki-down text-muted-foreground text-xs shrink-0"></i>
-         <img alt="{{ auth()->user()->name }}" class="size-9 rounded-full border-2 border-border shrink-0 order-last" src="{{ asset('metronic/assets/media/avatars/300-2.png') }}"/>
+         <img alt="{{ auth()->user()->name }}" class="size-9 rounded-full border-2 border-border shrink-0 order-last object-cover" src="{{ auth()->user()->avatar_url ?? asset('metronic/assets/media/avatars/300-2.png') }}"/>
         </div>
         <div class="kt-dropdown-menu w-[250px] z-50" data-kt-dropdown-menu="true">
          <div class="flex items-center gap-3 px-2.5 py-2 border-b border-border">
-          <img alt="" class="size-11 rounded-full border-2 border-border shrink-0" src="{{ asset('metronic/assets/media/avatars/300-2.png') }}"/>
+          <img alt="{{ auth()->user()->name }}" class="size-11 rounded-full border-2 border-border shrink-0 object-cover" src="{{ auth()->user()->avatar_url ?? asset('metronic/assets/media/avatars/300-2.png') }}"/>
           <div class="min-w-0">
            <span class="text-sm font-semibold text-foreground block truncate">{{ auth()->user()->name }}</span>
            <span class="text-xs text-muted-foreground block truncate">{{ $roleLabel }}</span>
@@ -3215,6 +3050,15 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            <a class="kt-dropdown-menu-link" href="{{ route('settings.index') }}">
             <i class="ki-filled ki-setting-2"></i> {{ __('Settings') }}
            </a>
+          </li>
+          <li>
+           <div class="flex items-center justify-between gap-2 px-2.5 py-2">
+            <span class="flex items-center gap-2">
+             <i class="ki-filled ki-moon text-base text-muted-foreground"></i>
+             <span class="font-medium text-2sm text-foreground">{{ __('Dark Mode') }}</span>
+            </span>
+            <input class="kt-switch" data-kt-theme-switch-state="dark" data-kt-theme-switch-toggle="true" name="dark_mode" type="checkbox" value="1"/>
+           </div>
           </li>
           <li><div class="kt-dropdown-menu-separator"></div></li>
           <li>

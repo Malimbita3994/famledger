@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Stand-alone family wallet (internal ledger).
  * Money lives here; no bank/external integration.
+ *
+ * Relationships (aligns with schema):
+ *   Family (1) ──< Wallet (many)  via wallets.family_id
+ *   Wallet (1) ──< wallet_transactions (many)  via wallet_transactions.wallet_id
+ *   Wallet (1) ──< transfers (many) as from_wallet_id (outgoingTransfers) and to_wallet_id (incomingTransfers)
  */
 class Wallet extends Model
 {

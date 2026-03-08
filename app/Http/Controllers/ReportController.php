@@ -14,6 +14,7 @@ use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\Wallet;
 use App\Models\FamilyLiability;
+use App\Support\FinancialYear;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,8 +36,8 @@ class ReportController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
-        $dateFrom = $request->input('from', now()->subDays(30)->format('Y-m-d'));
-        $dateTo = $request->input('to', now()->format('Y-m-d'));
+        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
+        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
         $walletId = $request->input('wallet_id');
 
         $from = Carbon::parse($dateFrom)->startOfDay();
@@ -123,8 +124,8 @@ class ReportController extends Controller
         $this->authorizeFamilyMember($family);
 
         $walletId = $request->input('wallet_id');
-        $dateFrom = $request->input('from', now()->subDays(30)->format('Y-m-d'));
-        $dateTo = $request->input('to', now()->format('Y-m-d'));
+        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
+        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
 
         $wallets = $family->wallets()->orderBy('name')->get();
         $wallet = $wallets->firstWhere('id', (int) $walletId) ?? $wallets->first();
@@ -248,8 +249,8 @@ class ReportController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
-        $dateFrom = $request->input('from', now()->subDays(30)->format('Y-m-d'));
-        $dateTo = $request->input('to', now()->format('Y-m-d'));
+        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
+        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
         $walletId = $request->input('wallet_id');
 
         $from = Carbon::parse($dateFrom)->startOfDay();
@@ -321,8 +322,8 @@ class ReportController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
-        $dateFrom = $request->input('from', now()->subDays(30)->format('Y-m-d'));
-        $dateTo = $request->input('to', now()->format('Y-m-d'));
+        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
+        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
         $walletId = $request->input('wallet_id');
 
         $from = Carbon::parse($dateFrom)->startOfDay();
@@ -417,8 +418,8 @@ class ReportController extends Controller
             $report = 'cash-flow';
         }
 
-        $dateFrom = $request->input('from', now()->subMonth()->format('Y-m-d'));
-        $dateTo = $request->input('to', now()->format('Y-m-d'));
+        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
+        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
         $walletId = $request->input('wallet_id');
 
         $from = Carbon::parse($dateFrom)->startOfDay();
@@ -575,8 +576,8 @@ class ReportController extends Controller
         if ($report === 'budget') {
             $filterType = $request->input('type');
             $filterStatus = $request->input('status');
-            $dateFrom = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
-            $dateTo = $request->input('to', now()->endOfMonth()->format('Y-m-d'));
+            $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
+            $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
             $from = Carbon::parse($dateFrom)->startOfDay();
             $to = Carbon::parse($dateTo)->endOfDay();
             $budgetTypes = Budget::types();
@@ -661,8 +662,8 @@ class ReportController extends Controller
 
         $type = $request->input('type');
         $status = $request->input('status');
-        $dateFrom = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
-        $dateTo = $request->input('to', now()->endOfMonth()->format('Y-m-d'));
+        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
+        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
         $from = Carbon::parse($dateFrom)->startOfDay();
         $to = Carbon::parse($dateTo)->endOfDay();
 

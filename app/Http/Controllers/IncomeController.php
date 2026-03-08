@@ -29,6 +29,7 @@ class IncomeController extends Controller
                 $query->where('wallet_id', $wallet->id);
             }
         }
+        $totalIncome = (float) (clone $query)->sum('amount');
         $incomes = $query->orderByDesc('received_date')->orderByDesc('id')->paginate(20);
         $wallets = $family->wallets()
             ->where('status', 'active')
@@ -39,7 +40,9 @@ class IncomeController extends Controller
             ->withSum('outgoingTransfers', 'amount')
             ->get(['id', 'name', 'currency_code', 'initial_balance']);
 
-        return view('families.incomes.index', compact('family', 'incomes', 'wallets'));
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+
+        return view('families.incomes.index', compact('family', 'incomes', 'wallets', 'totalIncome', 'currency'));
     }
 
     public function create(Family $family)
@@ -76,6 +79,7 @@ class IncomeController extends Controller
             'source' => ['nullable', 'string', 'max:255'],
             'received_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'is_recurring' => ['nullable', 'boolean'],
         ], [
             'amount.min' => 'Amount must be greater than zero.',
             'currency_code.in' => 'Currency must match the main wallet.',
@@ -91,6 +95,7 @@ class IncomeController extends Controller
             'source' => $validated['source'] ?? null,
             'received_date' => $validated['received_date'],
             'notes' => $validated['notes'] ?? null,
+            'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
             'received_by' => auth()->id(),
             'created_by' => auth()->id(),
         ]);

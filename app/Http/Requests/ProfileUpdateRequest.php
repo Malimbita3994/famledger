@@ -25,6 +25,21 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'avatar' => [
+                'nullable',
+                'image', // must be a real image (validates content, not just extension)
+                'mimes:jpeg,png,jpg,gif',
+                'mimetypes:image/jpeg,image/png,image/gif', // MIME from file content, blocks scripts
+                'max:2048',
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'avatar.image' => __('The avatar must be a valid image file (JPEG, PNG or GIF).'),
+            'avatar.mimetypes' => __('The avatar must be a real image file. Scripts and other file types are not allowed.'),
         ];
     }
 }

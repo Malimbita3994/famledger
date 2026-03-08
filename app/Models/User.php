@@ -61,6 +61,19 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Public URL for the user's avatar image, or null if none set.
+     * Uses root-relative path so the image works regardless of APP_URL or request origin.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (empty($this->avatar)) {
+            return null;
+        }
+
+        return '/storage/' . ltrim($this->avatar, '/');
+    }
+
     public static function statuses(): array
     {
         return [

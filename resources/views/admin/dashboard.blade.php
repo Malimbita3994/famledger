@@ -14,12 +14,12 @@
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-foreground">Platform Owner Dashboard</h1>
-        <p class="text-muted-foreground mt-1">System health, families, users, and financial ecosystem overview. Default currency: {{ $currency }}.</p>
+        <p class="text-muted-foreground mt-1">Real data and formulas: families, users, wallet balances (initial + transactions), and financial year ({{ $financialYearLabel ?? 'Jan–Dec' }}). Currency: {{ $currency }}.</p>
     </div>
 
     {{-- Top summary cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <a href="{{ route('admin.users.index') }}" class="kt-card p-5 hover:border-primary transition-colors">
+        <a href="{{ route('families.index') }}" class="kt-card p-5 hover:border-primary transition-colors">
             <div class="flex items-center justify-between gap-3">
                 <div>
                     <p class="text-sm font-medium text-muted-foreground">Total Families</p>
@@ -101,12 +101,15 @@
         <div class="kt-card rounded-xl border border-border overflow-hidden">
             <div class="px-5 py-4 border-b border-border">
                 <h2 class="text-base font-semibold text-foreground">Financial Activity (Aggregated)</h2>
-                <p class="text-sm text-muted-foreground mt-0.5">Platform totals — no per-family detail</p>
+                <p class="text-sm text-muted-foreground mt-0.5">Platform totals — real formulas (income − expenses = net flow)</p>
             </div>
             <div class="p-5 space-y-3">
                 <div class="flex justify-between"><span class="text-muted-foreground">Total income (all time)</span><span class="font-medium text-green-600">{{ $fmt($totalIncomePlatform ?? 0) }}</span></div>
                 <div class="flex justify-between"><span class="text-muted-foreground">Total expenses (all time)</span><span class="font-medium text-destructive">{{ $fmt($totalExpensesPlatform ?? 0) }}</span></div>
-                <div class="flex justify-between"><span class="text-muted-foreground">Net flow</span><span class="font-medium">{{ $fmt($netFlow ?? 0) }}</span></div>
+                <div class="flex justify-between"><span class="text-muted-foreground">Net flow (all time)</span><span class="font-medium">{{ $fmt($netFlow ?? 0) }}</span></div>
+                <div class="flex justify-between pt-2 border-t border-border"><span class="text-muted-foreground">Income this financial year ({{ $financialYearLabel ?? 'YTD' }})</span><span class="font-medium text-green-600">{{ $fmt($incomeThisFY ?? 0) }}</span></div>
+                <div class="flex justify-between"><span class="text-muted-foreground">Expenses this financial year</span><span class="font-medium text-destructive">{{ $fmt($expensesThisFY ?? 0) }}</span></div>
+                <div class="flex justify-between"><span class="text-muted-foreground">Net flow this financial year</span><span class="font-medium">{{ $fmt($netFlowThisFY ?? 0) }}</span></div>
                 <div class="flex justify-between pt-2 border-t border-border"><span class="text-muted-foreground">Income this month</span><span class="font-medium">{{ $fmt($incomeThisMonth ?? 0) }}</span></div>
                 <div class="flex justify-between"><span class="text-muted-foreground">Expenses this month</span><span class="font-medium">{{ $fmt($expensesThisMonth ?? 0) }}</span></div>
             </div>
@@ -153,7 +156,8 @@
             </div>
             <div class="p-5 space-y-2">
                 <p class="text-2xl font-bold">{{ $totalWallets ?? 0 }}</p>
-                <p class="text-sm text-muted-foreground">Total wallets · Avg {{ $avgWalletsPerFamily ?? 0 }} per family</p>
+                <p class="text-sm text-muted-foreground">{{ $activeWallets ?? 0 }} active · {{ $dormantWallets ?? 0 }} dormant (no txn in 90d)</p>
+                <p class="text-xs text-muted-foreground">Avg {{ $avgWalletsPerFamily ?? 0 }} per family</p>
             </div>
         </div>
         <div class="kt-card admin-stats-card rounded-xl border border-border overflow-hidden">
@@ -162,9 +166,9 @@
             </div>
             <div class="p-5 space-y-2">
                 <p class="text-2xl font-bold">{{ $activeBudgets ?? 0 }}</p>
-                <p class="text-sm text-muted-foreground">Active budgets · <span class="text-destructive">{{ $overBudgetCount ?? 0 }}</span> over budget</p>
+                <p class="text-sm text-muted-foreground">Active in current month · <span class="text-destructive">{{ $overBudgetCount ?? 0 }}</span> over budget (used ≥ planned)</p>
                 @if (isset($avgBudgetAmount) && $avgBudgetAmount > 0)
-                    <p class="text-xs text-muted-foreground">Avg budget: {{ $fmt($avgBudgetAmount) }}</p>
+                    <p class="text-xs text-muted-foreground">Avg budget amount: {{ $fmt($avgBudgetAmount) }}</p>
                 @endif
             </div>
         </div>
@@ -175,7 +179,7 @@
             <div class="p-5 space-y-2">
                 <p class="text-2xl font-bold">{{ $totalSavingsGoals ?? 0 }}</p>
                 <p class="text-sm text-muted-foreground">{{ $completedGoals ?? 0 }} completed · {{ $overdueGoals ?? 0 }} overdue</p>
-                <p class="text-sm font-medium">Accumulated: {{ $fmt($totalSavingsAccumulated ?? 0) }}</p>
+                <p class="text-sm font-medium">Accumulated (sum of contributions): {{ $fmt($totalSavingsAccumulated ?? 0) }}</p>
             </div>
         </div>
     </div>
@@ -184,7 +188,7 @@
     <div class="kt-card rounded-xl border border-border overflow-hidden mb-8">
         <div class="px-5 py-4 border-b border-border">
             <h2 class="text-base font-semibold text-foreground">Growth Trends</h2>
-            <p class="text-sm text-muted-foreground mt-0.5">Cumulative users, families, and transaction volume (last 6 months)</p>
+            <p class="text-sm text-muted-foreground mt-0.5">Real data: cumulative users and families; monthly transaction count (last 6 months)</p>
         </div>
         <div class="p-4 min-h-[300px]">
             <div id="admin_growth_chart" class="w-full" style="min-height: 280px;"></div>

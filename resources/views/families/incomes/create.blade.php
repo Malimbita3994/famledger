@@ -189,6 +189,14 @@
                                 @error('notes')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
+
+                        <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                            <label for="is_recurring" class="kt-form-label max-w-56">Recurring</label>
+                            <div class="grow flex items-center gap-2">
+                                <input type="checkbox" name="is_recurring" id="is_recurring" value="1" {{ old('is_recurring') ? 'checked' : '' }} class="kt-checkbox" />
+                                <span class="text-sm text-muted-foreground">This is recurring income (e.g. salary, rent received, dividends)</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex justify-end pt-2 gap-2">

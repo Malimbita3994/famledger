@@ -4,106 +4,70 @@
 @section('page_title', $wallet->name)
 
 @section('content')
-<div class="pb-5">
-    <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
-        <div class="flex items-center flex-wrap gap-1 lg:gap-5">
-            <h1 class="font-medium text-lg text-mono">{{ $wallet->name }}</h1>
-            <div class="flex items-center gap-1 text-sm font-normal">
-                <a class="text-secondary-foreground hover:text-primary" href="{{ route('dashboard') }}">Home</a>
-                <span class="text-muted-foreground text-sm">/</span>
-                <a class="text-secondary-foreground hover:text-primary" href="{{ route('families.wallets.index', $family) }}">Wallets</a>
-                <span class="text-muted-foreground text-sm">/</span>
-                <span class="text-mono">{{ $wallet->name }}</span>
-            </div>
+<div class="kt-container-fixed pb-6">
+    {{-- Breadcrumbs --}}
+    <nav class="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+        <a class="hover:text-foreground transition-colors" href="{{ route('dashboard') }}">Home</a>
+        <i class="ki-filled ki-right text-[10px] opacity-60"></i>
+        <a class="hover:text-foreground transition-colors" href="{{ route('families.wallets.index', $family) }}">Wallets</a>
+        <i class="ki-filled ki-right text-[10px] opacity-60"></i>
+        <span class="text-foreground truncate max-w-[180px] sm:max-w-none">{{ $wallet->name }}</span>
+    </nav>
+
+    {{-- Title + actions row --}}
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-5">
+        <div class="min-w-0 flex-1 sm:flex-initial">
+            <h1 class="text-xl sm:text-2xl font-semibold text-foreground truncate">{{ $wallet->name }}</h1>
+            @if(!$wallet->is_primary)
+            <p class="mt-1.5 text-sm text-muted-foreground">
+                Income is recorded to the main wallet only. Use <a href="{{ route('families.transfers.create', $family) }}" class="text-primary hover:underline font-medium">Transfer</a> to move money here.
+            </p>
+            @endif
         </div>
-        <div class="flex items-center flex-wrap gap-1.5 lg:gap-3.5">
+        <div class="flex flex-wrap items-center justify-end sm:justify-end gap-2 shrink-0 sm:ml-auto">
             @if($wallet->is_primary)
-            <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-primary">
-                <i class="ki-filled ki-arrow-down"></i>
+            <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-primary kt-btn-sm">
+                <i class="ki-filled ki-arrow-down text-base"></i>
                 Record income
             </a>
-            @else
-            <span class="text-xs text-muted-foreground self-center max-w-[200px]">
-                Income is recorded to the main wallet only. Use <a href="{{ route('families.transfers.create', $family) }}" class="text-primary hover:underline">Transfer</a> to move money here.
-            </span>
             @endif
-            <a href="{{ route('families.expenses.create', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-outline">
-                <i class="ki-filled ki-arrow-up"></i>
+            <a href="{{ route('families.expenses.create', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-primary kt-btn-sm">
+                <i class="ki-filled ki-arrow-up text-base"></i>
                 Record expense
             </a>
-            <a href="{{ route('families.wallets.edit', [$family, $wallet]) }}" class="kt-btn kt-btn-outline">
-                <i class="ki-filled ki-pencil"></i>
+            <a href="{{ route('families.wallets.edit', [$family, $wallet]) }}" class="kt-btn kt-btn-outline kt-btn-sm">
+                <i class="ki-filled ki-pencil text-base"></i>
                 Edit
             </a>
         </div>
     </div>
-</div>
 
-<div class="kt-container-fixed">
-    <style>
-    @media (min-width: 1024px) {
-        .wallet-details-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 1.25rem;
-            width: 100%;
-        }
-    }
-    @media (min-width: 768px) and (max-width: 1023px) {
-        .wallet-details-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1.25rem;
-            width: 100%;
-        }
-    }
-    @media (max-width: 767px) {
-        .wallet-details-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr);
-            gap: 1rem;
-            width: 100%;
-        }
-    }
-    .wallet-details-item {
-        min-width: 0;
-        box-sizing: border-box;
-    }
-    </style>
-
-    {{-- Summary / hero --}}
-    <div class="kt-card mb-5 lg:mb-7.5">
-        <div class="kt-card-content py-6 lg:py-8">
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2 mb-1">
-                        <h2 class="text-xl lg:text-2xl font-semibold text-foreground truncate">{{ $wallet->name }}</h2>
-                        <span class="kt-badge {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-[30px] shrink-0">
-                            <span class="kt-badge-dot size-1.5"></span>
-                            {{ ucfirst($wallet->status) }}
-                        </span>
-                    </div>
-                    <p class="text-sm text-muted-foreground">
-                        {{ $walletTypes[$wallet->type] ?? $wallet->type }} · {{ $wallet->currency_code }}
-                        @if($wallet->is_shared)
-                            · Shared with family
-                        @else
-                            · Personal wallet
-                        @endif
-                    </p>
-                    @if ($wallet->description)
-                        <p class="text-secondary-foreground text-sm leading-relaxed max-w-2xl mt-2">{{ Str::limit($wallet->description, 160) }}</p>
+    {{-- Balance card (hero) --}}
+    <div class="kt-card bg-card border border-border rounded-xl mb-6 overflow-hidden">
+        <div class="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <span class="kt-badge {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-full text-xs shrink-0">
+                        <span class="kt-badge-dot size-1.5"></span>
+                        {{ ucfirst($wallet->status) }}
+                    </span>
+                    <span class="text-sm text-muted-foreground">{{ $walletTypes[$wallet->type] ?? $wallet->type }} · {{ $wallet->currency_code }}</span>
+                    @if($wallet->is_shared)
+                    <span class="text-xs text-muted-foreground">· Shared with family</span>
                     @endif
                 </div>
-                <div class="text-right">
-                    <p class="text-sm text-muted-foreground">Current balance</p>
-                    <p class="text-2xl lg:text-3xl font-semibold tabular-nums">{{ number_format($wallet->balance, 2) }} {{ $wallet->currency_code }}</p>
-                </div>
+                @if ($wallet->description)
+                <p class="text-sm text-muted-foreground mt-1.5 line-clamp-2">{{ $wallet->description }}</p>
+                @endif
+            </div>
+            <div class="sm:text-right border-t border-border pt-4 sm:pt-0 sm:border-t-0 sm:pl-6 shrink-0">
+                <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Current balance</p>
+                <p class="text-2xl sm:text-3xl font-bold tabular-nums text-foreground mt-0.5">{{ number_format($wallet->balance, 2) }} {{ $wallet->currency_code }}</p>
             </div>
         </div>
     </div>
 
-    <div class="grid gap-5 lg:gap-7.5 lg:grid-cols-3">
+    <div class="grid gap-5 lg:gap-6 lg:grid-cols-3">
         {{-- Details card --}}
         <div class="lg:col-span-1">
             <div class="kt-card h-full">
@@ -111,63 +75,46 @@
                     <h3 class="kt-card-title text-sm">Details</h3>
                 </div>
                 <div class="kt-card-content">
-                    <div class="flex items-center gap-3 mb-5">
-                        <span class="flex items-center justify-center size-10 rounded-full bg-muted text-muted-foreground shrink-0">
-                            <i class="ki-filled ki-wallet text-lg"></i>
-                        </span>
-                        <div class="min-w-0">
-                            <div class="text-sm font-semibold text-foreground truncate">
-                                {{ $wallet->name }}
-                            </div>
-                            <div class="text-xs text-muted-foreground mt-0.5 truncate">
-                                {{ $walletTypes[$wallet->type] ?? $wallet->type }} · {{ $wallet->currency_code }}
-                            </div>
+                    <dl class="space-y-3 text-sm">
+                        <div class="flex justify-between gap-3 py-2 border-b border-border">
+                            <dt class="text-muted-foreground shrink-0">Type</dt>
+                            <dd class="text-foreground font-medium text-right">{{ $walletTypes[$wallet->type] ?? $wallet->type }}</dd>
                         </div>
-                    </div>
-
-                    <dl class="wallet-details-grid text-sm">
-                        <div class="wallet-details-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40">
-                            <dt class="text-xs text-muted-foreground uppercase tracking-wide">Type</dt>
-                            <dd class="text-foreground font-medium">{{ $walletTypes[$wallet->type] ?? $wallet->type }}</dd>
+                        <div class="flex justify-between gap-3 py-2 border-b border-border">
+                            <dt class="text-muted-foreground shrink-0">Currency</dt>
+                            <dd class="text-foreground text-right">{{ $wallet->currency_code }}</dd>
                         </div>
-                        <div class="wallet-details-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40">
-                            <dt class="text-xs text-muted-foreground uppercase tracking-wide">Currency</dt>
-                            <dd class="text-foreground">{{ $wallet->currency_code }}</dd>
+                        <div class="flex justify-between gap-3 py-2 border-b border-border">
+                            <dt class="text-muted-foreground shrink-0">Shared</dt>
+                            <dd class="text-foreground text-right">{{ $wallet->is_shared ? 'Yes — all members' : 'No — personal' }}</dd>
                         </div>
-                        <div class="wallet-details-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40">
-                            <dt class="text-xs text-muted-foreground uppercase tracking-wide">Shared</dt>
-                            <dd class="text-foreground">{{ $wallet->is_shared ? 'Yes — all members can use' : 'No — personal wallet' }}</dd>
-                        </div>
-                        <div class="wallet-details-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40">
-                            <dt class="text-xs text-muted-foreground uppercase tracking-wide">Status</dt>
-                            <dd>
-                                <span class="kt-badge kt-badge-sm {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-[30px]">
+                        <div class="flex justify-between gap-3 py-2 border-b border-border">
+                            <dt class="text-muted-foreground shrink-0">Status</dt>
+                            <dd class="text-right">
+                                <span class="kt-badge kt-badge-sm {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-full">
                                     <span class="kt-badge-dot size-1.5"></span>
                                     {{ ucfirst($wallet->status) }}
                                 </span>
                             </dd>
                         </div>
                         @if ($wallet->creator)
-                        <div class="wallet-details-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40">
-                            <dt class="text-xs text-muted-foreground uppercase tracking-wide">Created by</dt>
-                            <dd class="text-foreground">{{ $wallet->creator->name }}</dd>
+                        <div class="flex justify-between gap-3 py-2 border-b border-border">
+                            <dt class="text-muted-foreground shrink-0">Created by</dt>
+                            <dd class="text-foreground text-right">{{ $wallet->creator->name }}</dd>
                         </div>
                         @endif
                         @if ($wallet->created_at)
-                        <div class="wallet-details-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40">
-                            <dt class="text-xs text-muted-foreground uppercase tracking-wide">Created</dt>
-                            <dd class="text-foreground">{{ $wallet->created_at->format('M j, Y') }}</dd>
+                        <div class="flex justify-between gap-3 py-2 border-b border-border">
+                            <dt class="text-muted-foreground shrink-0">Created</dt>
+                            <dd class="text-foreground text-right">{{ $wallet->created_at->format('M j, Y') }}</dd>
                         </div>
                         @endif
                     </dl>
-
                     @if ($wallet->description)
-                        <div class="mt-5 pt-4 border-t border-border">
-                            <h4 class="text-xs text-muted-foreground uppercase tracking-wide mb-1.5">Description</h4>
-                            <p class="text-sm text-foreground leading-relaxed">
-                                {{ $wallet->description }}
-                            </p>
-                        </div>
+                    <div class="mt-4 pt-3 border-t border-border">
+                        <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Description</h4>
+                        <p class="text-sm text-foreground leading-relaxed">{{ $wallet->description }}</p>
+                    </div>
                     @endif
                 </div>
             </div>
@@ -178,9 +125,9 @@
             <div class="kt-card">
                 <div class="kt-card-header flex-wrap gap-2">
                     <h3 class="kt-card-title text-sm">Recent activity</h3>
-                    <div class="flex items-center gap-2 ml-auto text-xs">
-                        <a href="{{ route('families.incomes.index', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-xs kt-btn-ghost">All income</a>
-                        <a href="{{ route('families.expenses.index', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-xs kt-btn-ghost">All expenses</a>
+                    <div class="flex items-center gap-1.5 ml-auto">
+                        <a href="{{ route('families.incomes.index', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-xs kt-btn-ghost text-muted-foreground hover:text-foreground">All income</a>
+                        <a href="{{ route('families.expenses.index', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-xs kt-btn-ghost text-muted-foreground hover:text-foreground">All expenses</a>
                     </div>
                 </div>
                 <div class="kt-card-content grid gap-6 md:grid-cols-2">

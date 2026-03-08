@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Budget;
 use App\Models\Expense;
 use App\Models\Income;
-use App\Models\Wallet;
 use App\Models\Project;
 use App\Models\Property;
+use App\Models\PropertyDepreciation;
+use App\Models\Wallet;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -147,6 +149,86 @@ class DashboardController extends Controller
             $propertyCount = Property::where('family_id', $currentFamily->id)->count();
         }
 
+        // Alerts (for current family only)
+        $alerts = [
+            'mainWalletLow' => ['active' => false, 'message' => null, 'balance' => null, 'wallet' => null],
+            'overExpenses' => ['active' => false, 'budgets' => []],
+            'projectDelays' => ['active' => false, 'projects' => []],
+            'propertyDepreciation' => ['active' => false, 'properties' => []],
+        ];
+        $lowBalanceThreshold = (float) config('famledger.low_balance_threshold', 100000);
+
+        if ($currentFamily) {
+            $mainWallet = $currentFamily->wallets()->where('is_primary', true)->first();
+            if ($mainWallet) {
+                $mainBalance = (float) $mainWallet->balance;
+                if ($mainBalance < $lowBalanceThreshold) {
+                    $alerts['mainWalletLow'] = [
+                        'active' => true,
+                        'message' => 'Main wallet balance is low.',
+                        'balance' => $mainBalance,
+                        'wallet' => $mainWallet,
+                    ];
+                }
+            }
+
+            $overBudgetBudgets = $currentFamily->budgets()
+                ->with(['wallets', 'categories'])
+                ->where('start_date', '<=', $endOfMonth)
+                ->where('end_date', '>=', $startOfMonth)
+                ->get()
+                ->filter(fn ($b) => $b->is_exceeded);
+            if ($overBudgetBudgets->isNotEmpty()) {
+                $alerts['overExpenses'] = [
+                    'active' => true,
+                    'budgets' => $overBudgetBudgets->values()->all(),
+                ];
+            }
+
+            $delayedProjects = Project::where('family_id', $currentFamily->id)
+                ->where('status', Project::STATUS_ACTIVE)
+                ->whereNotNull('target_end_date')
+                ->where('target_end_date', '<', $now->toDateString())
+                ->orderBy('target_end_date')
+                ->get(['id', 'name', 'target_end_date', 'status']);
+            if ($delayedProjects->isNotEmpty()) {
+                $alerts['projectDelays'] = [
+                    'active' => true,
+                    'projects' => $delayedProjects->all(),
+                ];
+            }
+
+            $propertyIds = Property::where('family_id', $currentFamily->id)->pluck('id')->toArray();
+            $depreciatedProperties = collect();
+            if (! empty($propertyIds)) {
+                $latestDepreciation = PropertyDepreciation::whereIn('property_id', $propertyIds)
+                    ->orderBy('year', 'desc')
+                    ->get()
+                    ->groupBy('property_id')
+                    ->map->first();
+                foreach (Property::where('family_id', $currentFamily->id)->get() as $prop) {
+                    $purchase = (float) ($prop->purchase_price ?? 0);
+                    $currentVal = (float) ($prop->current_estimated_value ?? 0);
+                    $latestDep = $latestDepreciation[$prop->id] ?? null;
+                    $bookVal = $latestDep ? (float) $latestDep->book_value : ($currentVal ?: $purchase);
+                    if ($purchase > 0 && $bookVal < $purchase) {
+                        $depreciatedProperties->push((object) [
+                            'id' => $prop->id,
+                            'name' => $prop->name,
+                            'purchase_price' => $purchase,
+                            'book_value' => $bookVal,
+                        ]);
+                    }
+                }
+            }
+            if ($depreciatedProperties->isNotEmpty()) {
+                $alerts['propertyDepreciation'] = [
+                    'active' => true,
+                    'properties' => $depreciatedProperties->all(),
+                ];
+            }
+        }
+
         return view('dashboard', [
             'families' => $families,
             'currentFamily' => $currentFamily,
@@ -165,6 +247,7 @@ class DashboardController extends Controller
             'activeProjectCount' => $activeProjectCount,
             'propertyCount' => $propertyCount,
             'propertyTotalValue' => $propertyTotalValue,
+            'alerts' => $alerts,
         ]);
     }
 }

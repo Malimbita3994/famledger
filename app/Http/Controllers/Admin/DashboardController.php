@@ -11,6 +11,7 @@ use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Support\FinancialYear;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,19 +24,21 @@ class DashboardController extends Controller
         $now = Carbon::now();
         $startOfMonth = $now->copy()->startOfMonth();
         $endOfMonth = $now->copy()->endOfMonth();
-        $startOfDay = $now->copy()->startOfDay();
         $thirtyDaysAgo = $now->copy()->subDays(30);
+        $ninetyDaysAgo = $now->copy()->subDays(90);
 
-        // ---- 1) Families overview ----
+        [$fyStart, $fyEnd] = FinancialYear::range();
+        $financialYearLabel = FinancialYear::label();
+
+        // ---- 1) Families overview (real counts) ----
         $totalFamilies = Family::count();
         $activeFamilies = Family::where('status', 'active')->count();
         $newFamiliesThisMonth = Family::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
-        $familyIds = Family::pluck('id')->toArray();
         $inactiveFamilies = Family::whereDoesntHave('incomes', fn ($q) => $q->where('received_date', '>=', $thirtyDaysAgo))
             ->whereDoesntHave('expenses', fn ($q) => $q->where('expense_date', '>=', $thirtyDaysAgo))
             ->count();
 
-        // ---- 2) Users overview ----
+        // ---- 2) Users overview (real counts) ----
         $totalUsers = User::count();
         $activeUsers = (int) User::where('status', 'active')->count();
         $newUsersThisMonth = User::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
@@ -43,21 +46,33 @@ class DashboardController extends Controller
         $totalMemberships = (int) DB::table('family_user')->count();
         $usersPerFamily = $totalFamilies > 0 ? round($totalMemberships / $totalFamilies, 1) : 0;
 
-        // ---- 3) Financial activity (aggregated) ----
+        // ---- 3) Financial activity: real formulas ----
+        // All-time: sum of all income/expense records
         $totalIncomePlatform = (float) Income::sum('amount');
         $totalExpensesPlatform = (float) Expense::sum('amount');
         $netFlow = $totalIncomePlatform - $totalExpensesPlatform;
+
+        // Current financial year (e.g. Jan 1 – Dec 31)
+        $incomeThisFY = (float) Income::whereBetween('received_date', [$fyStart->toDateString(), $fyEnd->toDateString()])->sum('amount');
+        $expensesThisFY = (float) Expense::whereBetween('expense_date', [$fyStart->toDateString(), $fyEnd->toDateString()])->sum('amount');
+        $netFlowThisFY = $incomeThisFY - $expensesThisFY;
+
         $incomeThisMonth = (float) Income::whereBetween('received_date', [$startOfMonth, $endOfMonth])->sum('amount');
         $expensesThisMonth = (float) Expense::whereBetween('expense_date', [$startOfMonth, $endOfMonth])->sum('amount');
 
+        // Total wallet balance = sum of each wallet's computed balance (initial_balance + transactions)
         $wallets = Wallet::all();
         $totalWalletBalance = $wallets->sum(fn ($w) => $w->balance);
 
-        // ---- 4) Wallet statistics ----
+        // ---- 4) Wallet statistics (real: active = status active, dormant = no txn in 90d) ----
         $totalWallets = Wallet::count();
+        $activeWallets = (int) Wallet::where('status', 'active')->count();
         $avgWalletsPerFamily = $totalFamilies > 0 ? round($totalWallets / $totalFamilies, 1) : 0;
-        $activeWallets = $totalWallets; // consider active if exists; could refine by recent activity
-        $dormantWallets = 0; // placeholder: wallets with no transaction in 90 days
+        $dormantWallets = (int) Wallet::whereDoesntHave('incomes', fn ($q) => $q->where('received_date', '>=', $ninetyDaysAgo))
+            ->whereDoesntHave('expenses', fn ($q) => $q->where('expense_date', '>=', $ninetyDaysAgo))
+            ->whereDoesntHave('outgoingTransfers', fn ($q) => $q->where('transfer_date', '>=', $ninetyDaysAgo))
+            ->whereDoesntHave('incomingTransfers', fn ($q) => $q->where('transfer_date', '>=', $ninetyDaysAgo))
+            ->count();
 
         // ---- 5) Transaction activity ----
         $totalIncomeTransactions = Income::count();
@@ -104,6 +119,7 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', [
             'currency' => $currency,
+            'financialYearLabel' => $financialYearLabel,
             'totalFamilies' => $totalFamilies,
             'activeFamilies' => $activeFamilies,
             'newFamiliesThisMonth' => $newFamiliesThisMonth,
@@ -116,12 +132,16 @@ class DashboardController extends Controller
             'totalIncomePlatform' => $totalIncomePlatform,
             'totalExpensesPlatform' => $totalExpensesPlatform,
             'netFlow' => $netFlow,
+            'incomeThisFY' => $incomeThisFY,
+            'expensesThisFY' => $expensesThisFY,
+            'netFlowThisFY' => $netFlowThisFY,
             'incomeThisMonth' => $incomeThisMonth,
             'expensesThisMonth' => $expensesThisMonth,
             'totalWalletBalance' => $totalWalletBalance,
             'totalWallets' => $totalWallets,
             'avgWalletsPerFamily' => $avgWalletsPerFamily,
             'activeWallets' => $activeWallets,
+            'dormantWallets' => $dormantWallets,
             'totalIncomeTransactions' => $totalIncomeTransactions,
             'totalExpenseTransactions' => $totalExpenseTransactions,
             'totalTransfers' => $totalTransfers,

@@ -10,7 +10,7 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
     <meta name="robots" content="follow, index"/>
 
-    <title>{{ $title ?? config('app.name', 'FamLedger') }}</title>
+    <title>FamLedger</title>
 
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Flavicon.png') }}"/>
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Flavicon.png') }}"/>

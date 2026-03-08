@@ -328,7 +328,10 @@ class SavingsGoalController extends Controller
             ->get();
 
         $totalAllocated = $savingsGoal->budgetAllocations()->sum('amount');
-        $availableToAllocate = max(0, $savingsGoal->saved_amount - $totalAllocated);
+        // Use goal wallet's actual balance so funds in that wallet (e.g. "Allocated fund for specific purpose") can be allocated
+        $savingsGoal->load('wallet');
+        $walletBalance = $savingsGoal->wallet ? (float) $savingsGoal->wallet->balance : 0;
+        $availableToAllocate = max(0, $walletBalance - $totalAllocated);
 
         return view('families.savings-goals.allocate', compact('family', 'savingsGoal', 'budgets', 'allocations', 'availableToAllocate'));
     }
@@ -347,7 +350,9 @@ class SavingsGoalController extends Controller
         ]);
 
         $totalAllocated = $savingsGoal->budgetAllocations()->sum('amount');
-        $availableToAllocate = max(0, $savingsGoal->saved_amount - $totalAllocated);
+        $savingsGoal->load('wallet');
+        $walletBalance = $savingsGoal->wallet ? (float) $savingsGoal->wallet->balance : 0;
+        $availableToAllocate = max(0, $walletBalance - $totalAllocated);
 
         if ((float) $validated['amount'] > $availableToAllocate) {
             return back()

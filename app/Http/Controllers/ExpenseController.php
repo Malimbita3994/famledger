@@ -29,10 +29,20 @@ class ExpenseController extends Controller
                 $query->where('wallet_id', $wallet->id);
             }
         }
+        $totalExpenses = (float) (clone $query)->sum('amount');
         $expenses = $query->orderByDesc('expense_date')->orderByDesc('id')->paginate(20);
-        $wallets = $family->wallets()->where('status', 'active')->orderBy('name')->get(['id', 'name', 'currency_code']);
+        $wallets = $family->wallets()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->withSum('incomes', 'amount')
+            ->withSum('expenses', 'amount')
+            ->withSum('incomingTransfers', 'amount')
+            ->withSum('outgoingTransfers', 'amount')
+            ->get(['id', 'name', 'currency_code', 'initial_balance']);
 
-        return view('families.expenses.index', compact('family', 'expenses', 'wallets'));
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+
+        return view('families.expenses.index', compact('family', 'expenses', 'wallets', 'totalExpenses', 'currency'));
     }
 
     public function create(Family $family)

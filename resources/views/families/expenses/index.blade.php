@@ -34,6 +34,35 @@
         </div>
     @endif
 
+    @if ($wallets->isNotEmpty())
+        <div class="kt-card mb-4">
+            <div class="kt-card-header">
+                <h3 class="kt-card-title text-sm">Wallet current balance</h3>
+            </div>
+            <div class="kt-card-content">
+                <div class="flex flex-wrap gap-4">
+                    <div class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5">
+                        <i class="ki-filled ki-arrow-down text-muted-foreground"></i>
+                        <span class="font-medium text-sm">Total expenses</span>
+                        <span class="tabular-nums text-sm text-destructive">{{ number_format($totalExpenses ?? 0, 2) }} {{ $currency ?? config('currencies.default', 'TZS') }}</span>
+                    </div>
+                    @foreach ($wallets as $w)
+                        <a href="{{ route('families.wallets.show', [$family, $w]) }}" class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 hover:bg-muted/50 transition-colors">
+                            <i class="ki-filled ki-wallet text-muted-foreground"></i>
+                            <span class="font-medium text-sm">{{ $w->name }}</span>
+                            <span class="tabular-nums text-sm {{ $w->balance >= 0 ? 'text-success' : 'text-destructive' }}">{{ number_format($w->balance, 2) }} {{ $w->currency_code }}</span>
+                        </a>
+                    @endforeach
+                </div>
+                @if(request('wallet_id'))
+                    <p class="text-xs text-muted-foreground mt-3">Total expenses filtered by selected wallet</p>
+                @else
+                    <p class="text-xs text-muted-foreground mt-3">Total expenses: all wallets · all time</p>
+                @endif
+            </div>
+        </div>
+    @endif
+
     <div class="kt-card kt-card-grid min-w-full">
         <div class="kt-card-header flex-wrap gap-2">
             <h3 class="kt-card-title text-sm">Expense records</h3>

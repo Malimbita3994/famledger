@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 
-	<title>FamLedger – Private Family System</title>
+	<title>FamLedger</title>
 	<!--
 
     FamLedger marketing landing page
@@ -14,6 +14,11 @@
      <meta name="keywords" content="FamLedger, family finance, family office, property management, projects, assets">
      <meta name="author" content="FamLedger">
      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+     <link rel="icon" type="image/png" href="{{ asset('images/Flavicon.png') }}">
+     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Flavicon.png') }}">
+     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Flavicon.png') }}">
+     <link rel="apple-touch-icon" href="{{ asset('images/Flavicon.png') }}">
 
      <link rel="preload" href="{{ asset('metronic/assets/css/tooplate-style.css') }}" as="style">
      <link rel="preload" href="{{ asset('images/background.png') }}" as="image">

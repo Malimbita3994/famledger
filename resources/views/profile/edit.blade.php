@@ -4,6 +4,27 @@
 @section('page_title', __('Profile'))
 
 @section('content')
+<style>
+  /* Ensure profile avatar never overflows */
+  .profile-avatar-wrap {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    min-height: 80px;
+    max-height: 80px;
+    overflow: hidden;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .profile-avatar-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+</style>
  <div class="pb-5">
   <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
    <div class="flex flex-col gap-1">
@@ -38,26 +59,45 @@
       </span>
      </div>
      <div class="kt-card-content px-5 pb-5">
-      <form method="post" action="{{ route('profile.update') }}" class="grid gap-4 lg:gap-5 max-w-xl">
+      <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="grid gap-4 lg:gap-5 max-w-xl">
        @csrf
        @method('patch')
 
-       {{-- Avatar placeholder --}}
-       <div class="flex items-center gap-4">
-        <div class="relative inline-flex items-center justify-center rounded-full bg-primary/10 text-primary font-semibold size-12">
-         <span class="text-sm">
-          {{ strtoupper(mb_substr($user->name, 0, 2)) }}
-         </span>
+       {{-- Profile picture --}}
+       <div class="flex items-center gap-4 flex-wrap">
+        <div class="profile-avatar-wrap relative border-2 border-border bg-muted/30" style="width:80px;height:80px;min-width:80px;max-width:80px;min-height:80px;max-height:80px;overflow:hidden;border-radius:50%;">
+         @if($user->avatar_url)
+          <img src="{{ $user->avatar_url }}" alt="" id="profile-avatar-preview"/>
+         @else
+          <div class="absolute inset-0 flex items-center justify-center rounded-full bg-primary/10 text-primary font-semibold" id="profile-avatar-initials">
+           <span class="text-lg">{{ strtoupper(mb_substr($user->name, 0, 2)) }}</span>
+          </div>
+         @endif
         </div>
-        <div class="flex flex-col gap-1">
-         <span class="text-sm font-medium text-foreground">
-          {{ $user->name }}
-         </span>
-         <span class="text-xs text-secondary-foreground">
-          {{ __('Avatar or profile image upload coming soon') }}
-         </span>
+        <div class="flex flex-col gap-2 min-w-0 flex-1">
+         <span class="text-sm font-medium text-foreground">{{ $user->name }}</span>
+         <label for="avatar-input" class="kt-btn kt-btn-sm kt-btn-outline cursor-pointer inline-flex items-center gap-1.5 w-fit">
+          <i class="ki-filled ki-picture text-base"></i>
+          <span>{{ __('Change photo') }}</span>
+         </label>
+         <input type="file" name="avatar" accept="image/jpeg,image/png,image/jpg,image/gif" class="hidden" id="avatar-input" aria-label="{{ __('Change profile photo') }}"/>
+         <span class="text-xs text-muted-foreground">{{ __('JPG, PNG or GIF. Max 2 MB.') }}</span>
+         @if($user->avatar_url)
+          <button type="submit" form="profile-form-remove-avatar" class="kt-link kt-link-underlined kt-link-dashed text-xs text-muted-foreground hover:text-destructive w-fit text-left">
+           {{ __('Remove photo') }}
+          </button>
+         @endif
+         @error('avatar')
+          <p class="text-xs text-destructive">{{ $message }}</p>
+         @enderror
         </div>
        </div>
+       @if($user->avatar_url)
+       <form id="profile-form-remove-avatar" method="post" action="{{ route('profile.avatar.destroy') }}" class="hidden">
+        @csrf
+        @method('delete')
+       </form>
+       @endif
 
        {{-- Name --}}
        <div class="grid gap-1.5">
@@ -234,5 +274,34 @@
   </div>
  </div>
 </div>
+
+@push('scripts')
+<script>
+(function() {
+  var input = document.getElementById('avatar-input');
+  var preview = document.getElementById('profile-avatar-preview');
+  var initials = document.getElementById('profile-avatar-initials');
+  if (!input) return;
+  input.addEventListener('change', function(e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function() {
+      if (preview) {
+        preview.src = reader.result;
+      } else if (initials) {
+        var img = document.createElement('img');
+        img.id = 'profile-avatar-preview';
+        img.className = 'w-full h-full object-cover object-center';
+        img.alt = '';
+        img.src = reader.result;
+        initials.parentNode.replaceChild(img, initials);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+})();
+</script>
+@endpush
 @endsection
 

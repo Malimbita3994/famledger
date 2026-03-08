@@ -34,6 +34,11 @@
             </div>
             <div class="kt-card-content">
                 <div class="flex flex-wrap gap-4">
+                    <div class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5">
+                        <i class="ki-filled ki-arrow-up text-muted-foreground"></i>
+                        <span class="font-medium text-sm">Total income</span>
+                        <span class="tabular-nums text-sm text-success">{{ number_format($totalIncome ?? 0, 2) }} {{ $currency ?? config('currencies.default', 'TZS') }}</span>
+                    </div>
                     @foreach ($wallets as $w)
                         <a href="{{ route('families.wallets.show', [$family, $w]) }}" class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 hover:bg-muted/50 transition-colors">
                             <i class="ki-filled ki-wallet text-muted-foreground"></i>
@@ -42,6 +47,11 @@
                         </a>
                     @endforeach
                 </div>
+                @if(request('wallet_id'))
+                    <p class="text-xs text-muted-foreground mt-3">Total income filtered by selected wallet</p>
+                @else
+                    <p class="text-xs text-muted-foreground mt-3">Total income: all wallets · all time</p>
+                @endif
             </div>
         </div>
     @endif
