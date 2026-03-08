@@ -42,6 +42,12 @@
                         <div class="grow">
                             <input type="number" name="target_amount" id="target_amount" value="{{ old('target_amount') }}" required step="0.01" min="0.01" placeholder="0.00" class="kt-input" />
                             @error('target_amount')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                            @if(isset($mainWallet))
+                                <p class="text-xs text-muted-foreground mt-0.5">Main wallet balance: {{ number_format($mainWallet->balance,2) }} {{ $mainWallet->currency_code }}</p>
+                            @endif
+                            @if(isset($mainBudget))
+                                <p class="text-xs text-muted-foreground mt-0.5">Remaining main budget: {{ number_format($mainBudget->remaining_amount,2) }} {{ $mainBudget->currency_code }}</p>
+                            @endif
                         </div>
                     </div>
 
@@ -62,10 +68,25 @@
                         <div class="grow">
                             <select name="wallet_id" id="wallet_id" required class="kt-select">
                                 @foreach ($wallets as $w)
-                                    <option value="{{ $w->id }}" {{ old('wallet_id') == $w->id ? 'selected' : '' }}>{{ $w->name }} ({{ $w->currency_code }})</option>
+                                    <option value="{{ $w->id }}" {{ old('wallet_id', $mainWallet->id ?? '') == $w->id ? 'selected' : '' }}>{{ $w->name }} ({{ $w->currency_code }})</option>
                                 @endforeach
                             </select>
                             @error('wallet_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                        <label for="budget_id" class="kt-form-label max-w-56">Linked budget</label>
+                        <div class="grow">
+                            <select name="budget_id" id="budget_id" class="kt-select">
+                                <option value="">No budget</option>
+                                @foreach ($budgets as $b)
+                                    <option value="{{ $b->id }}" {{ old('budget_id', $mainBudget->id ?? '') == $b->id ? 'selected' : '' }}>
+                                        {{ $b->name }} ({{ \App\Models\Budget::types()[$b->type] ?? $b->type }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('budget_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                         </div>
                     </div>
 

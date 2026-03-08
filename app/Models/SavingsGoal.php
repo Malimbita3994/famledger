@@ -21,6 +21,7 @@ class SavingsGoal extends Model
         'target_date',
         'start_date',
         'wallet_id',
+        'budget_id',
         'linked_project_id',
         'status',
         'priority',
@@ -67,6 +68,11 @@ class SavingsGoal extends Model
         return $this->belongsTo(Wallet::class);
     }
 
+    public function budget(): BelongsTo
+    {
+        return $this->belongsTo(Budget::class);
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -75,6 +81,11 @@ class SavingsGoal extends Model
     public function contributions(): HasMany
     {
         return $this->hasMany(SavingsContribution::class, 'savings_goal_id');
+    }
+
+    public function budgetAllocations(): HasMany
+    {
+        return $this->hasMany(SavingsBudgetAllocation::class);
     }
 
     public function getSavedAmountAttribute(): float

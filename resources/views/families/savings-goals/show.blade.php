@@ -35,6 +35,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <a href="{{ route('families.savings-goals.contribute', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-primary kt-btn-sm">Contribute</a>
+                    <a href="{{ route('families.savings-goals.allocate', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-outline kt-btn-sm">Allocate to budget</a>
                     <a href="{{ route('families.savings-goals.edit', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-ghost kt-btn-sm">Edit</a>
                 </div>
             </div>

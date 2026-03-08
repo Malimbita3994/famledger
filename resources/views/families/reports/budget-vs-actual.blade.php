@@ -55,6 +55,21 @@
                             {{ number_format($motherBudget->remaining_amount, 0) }} {{ $motherBudget->currency_code ?? $currency }}
                         </span>
                     </div>
+                    @if($budgetFeasibility)
+                        <div class="mt-3 p-3 rounded-lg border {{ $budgetFeasibility['can_support'] ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200' }}">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i class="ki-filled {{ $budgetFeasibility['can_support'] ? 'ki-check-circle text-green-600' : 'ki-information-2 text-red-600' }} text-sm"></i>
+                                <span class="text-xs font-medium {{ $budgetFeasibility['can_support'] ? 'text-green-800' : 'text-red-800' }}">
+                                    {{ $budgetFeasibility['can_support'] ? 'Budget supported by wallet' : 'Budget exceeds available funds' }}
+                                </span>
+                            </div>
+                            @if(!$budgetFeasibility['can_support'])
+                                <p class="text-xs {{ $budgetFeasibility['can_support'] ? 'text-green-700' : 'text-red-700' }} mt-1">
+                                    Shortfall: {{ number_format($budgetFeasibility['shortfall'], 0) }} {{ $primaryWallet->currency_code ?? $currency }}
+                                </p>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             @endif
 
@@ -82,6 +97,15 @@
                             {{ number_format($primaryWallet->balance, 0) }} {{ $primaryWallet->currency_code }}
                         </span>
                     </div>
+                    @if($budgetFeasibility)
+                        <div class="mt-2 text-xs text-muted-foreground">
+                            @if($budgetFeasibility['can_support'])
+                                <span class="text-green-600">✓ Sufficient for remaining budget</span>
+                            @else
+                                <span class="text-red-600">⚠ {{ number_format($budgetFeasibility['shortfall'], 0) }} {{ $primaryWallet->currency_code }} needed</span>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>
@@ -149,6 +173,94 @@
             <div class="text-muted-foreground text-sm mt-2">{{ number_format($budgetTotalUsed, 0) }} {{ $currency }} used</div>
         </div>
     </div>
+
+    @if($budgetFeasibility)
+        {{-- Budget Feasibility Summary --}}
+        <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card mb-6">
+            <div class="kt-card-header">
+                <h3 class="kt-card-title text-sm">Budget Health Check</h3>
+            </div>
+            <div class="kt-card-content pt-4">
+                <style>
+                @media (min-width: 1024px) {
+                    .budget-health-grid {
+                        display: grid;
+                        grid-template-columns: repeat(3, minmax(0, 1fr));
+                        gap: 1rem;
+                        width: 100%;
+                    }
+                }
+                @media (min-width: 768px) and (max-width: 1023px) {
+                    .budget-health-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        gap: 1rem;
+                        width: 100%;
+                    }
+                }
+                @media (max-width: 767px) {
+                    .budget-health-grid {
+                        display: grid;
+                        grid-template-columns: minmax(0, 1fr);
+                        gap: 0.75rem;
+                        width: 100%;
+                    }
+                }
+                .budget-health-item {
+                    min-width: 0;
+                    box-sizing: border-box;
+                }
+                </style>
+                <dl class="budget-health-grid">
+                    <div class="budget-health-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40 text-center">
+                        <dt class="text-xs text-muted-foreground uppercase tracking-wide mb-1">Status</dt>
+                        <dd class="text-foreground">
+                            <div class="text-2xl mb-1 {{ $budgetFeasibility['can_support'] ? 'text-green-600' : 'text-red-600' }}">
+                                {{ $budgetFeasibility['can_support'] ? '✓' : '⚠' }}
+                            </div>
+                            <div class="text-sm font-medium">
+                                {{ $budgetFeasibility['can_support'] ? 'Budget feasible' : 'Budget at risk' }}
+                            </div>
+                        </dd>
+                    </div>
+                    <div class="budget-health-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40 text-center">
+                        <dt class="text-xs text-muted-foreground uppercase tracking-wide mb-1">Remaining Budget</dt>
+                        <dd class="text-foreground">
+                            <div class="text-lg font-bold tabular-nums mb-1">
+                                {{ number_format($budgetFeasibility['remaining_budget'], 0) }} {{ $currency }}
+                            </div>
+                            <div class="text-xs text-muted-foreground">
+                                To be spent this period
+                            </div>
+                        </dd>
+                    </div>
+                    <div class="budget-health-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40 text-center">
+                        <dt class="text-xs text-muted-foreground uppercase tracking-wide mb-1">Available Balance</dt>
+                        <dd class="text-foreground">
+                            <div class="text-lg font-bold tabular-nums mb-1">
+                                {{ number_format($budgetFeasibility['available_balance'], 0) }} {{ $currency }}
+                            </div>
+                            <div class="text-xs text-muted-foreground">
+                                In main wallet
+                            </div>
+                        </dd>
+                    </div>
+                </dl>
+                @if(!$budgetFeasibility['can_support'])
+                    <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="ki-filled ki-information-2 text-red-600"></i>
+                            <span class="text-sm font-medium text-red-800">Action Required</span>
+                        </div>
+                        <p class="text-sm text-red-700 mt-1">
+                            The main budget requires {{ number_format($budgetFeasibility['shortfall'], 0) }} {{ $currency }} more than currently available in the main wallet.
+                            Consider adjusting the budget or adding funds to the wallet.
+                        </p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
 
     {{-- Content card: table with S/N, Budget Name, Allocated amount, Spent amount --}}
     <div class="kt-card kt-card-grid min-w-full rounded-xl border border-border shadow-sm overflow-hidden bg-card">

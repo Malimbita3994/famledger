@@ -33,17 +33,8 @@ class DashboardController extends Controller
             ->whereBetween('expense_date', [$startOfMonth, $endOfMonth])
             ->sum('amount');
 
-        $wallets = Wallet::whereIn('family_id', $familyIds)
-            ->withSum('incomes', 'amount')
-            ->withSum('expenses', 'amount')
-            ->withSum('incomingTransfers', 'amount')
-            ->withSum('outgoingTransfers', 'amount')
-            ->get();
-        $totalSavings = $wallets->sum(fn ($w) => (float) $w->initial_balance
-            + (float) ($w->incomes_sum_amount ?? 0)
-            - (float) ($w->expenses_sum_amount ?? 0)
-            + (float) ($w->incoming_transfers_sum_amount ?? 0)
-            - (float) ($w->outgoing_transfers_sum_amount ?? 0));
+        $wallets = Wallet::whereIn('family_id', $familyIds)->get();
+        $totalSavings = $wallets->sum(fn ($w) => $w->balance);
 
         $chartMonthKeys = [];
         for ($i = 5; $i >= 0; $i--) {

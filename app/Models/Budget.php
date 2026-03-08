@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Budgets = planning layer. They guide decisions; they do not move money.
@@ -82,42 +83,35 @@ class Budget extends Model
         return $this->belongsToMany(ExpenseCategory::class, 'budget_category', 'budget_id', 'expense_category_id')->withTimestamps();
     }
 
+    public function savingsAllocations(): HasMany
+    {
+        return $this->hasMany(SavingsBudgetAllocation::class);
+    }
+
     /**
-     * Sum of expenses in [start_date, end_date] matching this budget's scope.
+     * Sum of expenses in [start_date, end_date] matching this budget's scope or assignment.
+     * Plus any allocations from savings goals to this budget.
      */
     public function getUsedAmountAttribute(): float
     {
         $query = $this->family->expenses()
             ->whereBetween('expense_date', [$this->start_date, $this->end_date]);
 
-        switch ($this->type) {
-            case self::TYPE_FAMILY:
-                // All family expenses in period
-                break;
-            case self::TYPE_WALLET:
-                $walletIds = $this->wallets->pluck('id')->toArray();
-                if (empty($walletIds)) {
-                    return 0;
-                }
-                $query->whereIn('wallet_id', $walletIds);
-                break;
-            case self::TYPE_CATEGORY:
-                $categoryIds = $this->categories->pluck('id')->toArray();
-                if (empty($categoryIds)) {
-                    return 0;
-                }
-                $query->whereIn('category_id', $categoryIds);
-                break;
-            case self::TYPE_PROJECT:
-                if ($this->project_id) {
-                    $query->where('project_id', $this->project_id);
-                }
-                break;
-            default:
-                break;
+        $expenses = 0;
+        if ($this->type === self::TYPE_FAMILY) {
+            // For main budget, sum all expenses
+            $expenses = (float) $query->sum('amount');
+        } else {
+            // For sub-budgets, sum assigned expenses
+            $expenses = (float) $query->where('budget_id', $this->id)->sum('amount');
         }
 
-        return (float) $query->sum('amount');
+        // Add allocations from savings goals
+        $allocations = (float) $this->savingsAllocations()
+            ->whereBetween('allocated_date', [$this->start_date, $this->end_date])
+            ->sum('amount');
+
+        return $expenses + $allocations;
     }
 
     public function getRemainingAmountAttribute(): float
@@ -136,5 +130,21 @@ class Budget extends Model
     public function getIsExceededAttribute(): bool
     {
         return $this->used_amount >= (float) $this->amount;
+    }
+
+    /**
+     * Check if this budget can be supported by the given wallet balance.
+     */
+    public function canBeSupportedByWallet(Wallet $wallet): array
+    {
+        $remainingBudget = $this->remaining_amount;
+        $availableBalance = $wallet->balance;
+
+        return [
+            'can_support' => $availableBalance >= $remainingBudget,
+            'remaining_budget' => $remainingBudget,
+            'available_balance' => $availableBalance,
+            'shortfall' => max(0, $remainingBudget - $availableBalance),
+        ];
     }
 }

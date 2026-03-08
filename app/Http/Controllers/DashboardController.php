@@ -43,17 +43,8 @@ class DashboardController extends Controller
             ->sum('amount');
 
         // Total wallet balance across all user's family wallets
-        $wallets = Wallet::whereIn('family_id', $familyIds)
-            ->withSum('incomes', 'amount')
-            ->withSum('expenses', 'amount')
-            ->withSum('incomingTransfers', 'amount')
-            ->withSum('outgoingTransfers', 'amount')
-            ->get();
-        $totalSavings = $wallets->sum(fn ($w) => (float) $w->initial_balance
-            + (float) ($w->incomes_sum_amount ?? 0)
-            - (float) ($w->expenses_sum_amount ?? 0)
-            + (float) ($w->incoming_transfers_sum_amount ?? 0)
-            - (float) ($w->outgoing_transfers_sum_amount ?? 0));
+        $wallets = Wallet::whereIn('family_id', $familyIds)->get();
+        $totalSavings = $wallets->sum(fn ($w) => $w->balance);
 
         // Budget: total planned vs used this month (simplified – sum of budgets that have expenses)
         $budgetUsedPercent = 0;

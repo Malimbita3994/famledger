@@ -18,6 +18,10 @@ use App\Models\Wallet;
 use App\Models\WalletReconciliation;
 use App\Models\ProjectFunding;
 use App\Observers\AuditLogObserver;
+use App\Observers\ExpenseObserver;
+use App\Observers\IncomeObserver;
+use App\Observers\SavingsContributionObserver;
+use App\Observers\TransferObserver;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -109,5 +113,11 @@ class AppServiceProvider extends ServiceProvider
         FamilyLiability::observe(AuditLogObserver::class);
         FamilyInvitation::observe(AuditLogObserver::class);
         WalletReconciliation::observe(AuditLogObserver::class);
+
+        // Wallet transaction observers for ledger system
+        Income::observe(IncomeObserver::class);
+        Expense::observe(ExpenseObserver::class);
+        Transfer::observe(TransferObserver::class);
+        SavingsContribution::observe(SavingsContributionObserver::class);
     }
 }

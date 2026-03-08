@@ -107,12 +107,13 @@
                                 // For the main budget, "Used" should reflect what sub-budgets have spent.
                                 if ($mainBudget && $budget->id === $mainBudget->id) {
                                     $used = isset($subBudgets) ? (float) $subBudgets->sum(function ($b) { return $b->used_amount; }) : (float) $budget->used_amount;
+                                    $remaining = max(0, (float) $budget->amount - $used);
+                                    $pct = (float) $budget->amount > 0 ? min(100, round(($used / (float) $budget->amount) * 100, 1)) : 0;
                                 } else {
                                     $used = (float) $budget->used_amount;
+                                    $remaining = $budget->remaining_amount;
+                                    $pct = $budget->utilization_percent;
                                 }
-                                // Remaining and percent still use the budget's own helper properties
-                                $remaining = $budget->remaining_amount;
-                                $pct = $budget->utilization_percent;
                                 $barClass = $pct >= 100 ? 'bg-destructive' : ($pct >= 75 ? 'bg-amber-500' : 'bg-primary');
                             @endphp
                             <tr>

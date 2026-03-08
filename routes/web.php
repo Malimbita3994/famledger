@@ -152,6 +152,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('savings-goals', SavingsGoalController::class)->names('savings-goals');
         Route::get('savings-goals/{savings_goal}/contribute', [SavingsGoalController::class, 'contributeForm'])->name('savings-goals.contribute');
         Route::post('savings-goals/{savings_goal}/contribute', [SavingsGoalController::class, 'contributeStore'])->name('savings-goals.contribute.store');
+        Route::get('savings-goals/{savings_goal}/allocate', [SavingsGoalController::class, 'allocateForm'])->name('savings-goals.allocate');
+        Route::post('savings-goals/{savings_goal}/allocate', [SavingsGoalController::class, 'allocate'])->name('savings-goals.allocate.store');
 
         // Family Projects
         Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');

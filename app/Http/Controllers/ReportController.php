@@ -130,7 +130,7 @@ class ReportController extends Controller
         $wallet = $wallets->firstWhere('id', (int) $walletId) ?? $wallets->first();
 
         $rows = [];
-        $runningBalance = $wallet ? (float) $wallet->initial_balance : 0;
+        $runningBalance = $wallet ? $wallet->balanceAsOf(Carbon::parse($dateFrom)->subDay()) : 0;
 
         if ($wallet) {
             $from = Carbon::parse($dateFrom)->startOfDay();
@@ -711,6 +711,12 @@ class ReportController extends Controller
             ->orderBy('id')
             ->first();
 
+        // Check if main budget can be supported by main wallet balance
+        $budgetFeasibility = null;
+        if ($motherBudget && $primaryWallet) {
+            $budgetFeasibility = $motherBudget->canBeSupportedByWallet($primaryWallet);
+        }
+
         return view('families.reports.budget-vs-actual', [
             'family' => $family,
             'rows' => $rows,
@@ -723,6 +729,7 @@ class ReportController extends Controller
             'budgetRecurrences' => Budget::recurrences(),
             'motherBudget' => $motherBudget,
             'primaryWallet' => $primaryWallet,
+            'budgetFeasibility' => $budgetFeasibility,
         ]);
     }
 
@@ -817,11 +824,6 @@ class ReportController extends Controller
 
     private function walletBalanceAsOf(Wallet $wallet, Carbon $asOf): float
     {
-        $initial = (float) $wallet->initial_balance;
-        $income = Income::where('wallet_id', $wallet->id)->where('received_date', '<=', $asOf)->sum('amount');
-        $expense = Expense::where('wallet_id', $wallet->id)->where('expense_date', '<=', $asOf)->sum('amount');
-        $in = Transfer::where('to_wallet_id', $wallet->id)->where('transfer_date', '<=', $asOf)->sum('amount');
-        $out = Transfer::where('from_wallet_id', $wallet->id)->where('transfer_date', '<=', $asOf)->sum('amount');
-        return $initial + $income - $expense + $in - $out;
+        return $wallet->balanceAsOf($asOf);
     }
 }
