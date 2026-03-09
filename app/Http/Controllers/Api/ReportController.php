@@ -67,8 +67,16 @@ class ReportController extends Controller
             ->sum('amount');
 
         $savings = $totalIncome - $totalExpenses;
+
+        // Opening / closing balances for the selected wallets over the period
+        $openingBalance = 0.0;
+        foreach ($wallets->whereIn('id', $walletIds) as $w) {
+            $openingBalance += $w->balanceAsOf($from->copy()->subDay());
+        }
+        $closingBalance = $openingBalance + $savings;
         $activeProjects = Project::where('family_id', $family->id)->where('status', 'active')->count();
         $totalLiabilities = (float) FamilyLiability::where('family_id', $family->id)->sum('outstanding_balance');
+        $netWealth = $closingBalance - $totalLiabilities;
 
         $budgets = $family->budgets()
             ->where('start_date', '<=', $to)
@@ -91,11 +99,14 @@ class ReportController extends Controller
             'date_to' => $dateTo,
             'wallet_id' => $walletId ? (int) $walletId : null,
             'wallets' => $wallets->map(fn ($w) => ['id' => $w->id, 'name' => $w->name]),
+            'opening_balance' => (float) $openingBalance,
             'total_income' => (float) $totalIncome,
             'total_expenses' => (float) $totalExpenses,
             'savings' => (float) $savings,
+            'closing_balance' => (float) $closingBalance,
             'active_projects' => $activeProjects,
             'total_liabilities' => $totalLiabilities,
+            'net_wealth' => (float) $netWealth,
             'total_budget' => (float) $totalBudget,
             'total_budget_used' => (float) $totalBudgetUsed,
             'budget_used_percent' => $budgetUsedPercent,

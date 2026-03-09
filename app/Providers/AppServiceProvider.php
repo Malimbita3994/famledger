@@ -67,7 +67,8 @@ class AppServiceProvider extends ServiceProvider
                         ? mb_strtolower($currentFamilyMembership->role->name)
                         : null;
                     $isOwnerOrCoOwner = in_array($roleName, ['owner', 'co-owner'], true);
-                    $canViewFamilyAuditTrail = $user->hasRole('Super Admin') || $user->hasRole('Auditor') || $isOwnerOrCoOwner;
+                    // Audit trail is now Super Admin–only in the UI.
+                    $canViewFamilyAuditTrail = $user->hasRole('Super Admin');
                     $canManageInvites = $isOwnerOrCoOwner;
                     $canManageProperty = $isOwnerOrCoOwner;
                     $roleLabelForTopbar = $currentFamilyMembership && $currentFamilyMembership->role

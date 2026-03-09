@@ -154,6 +154,7 @@ class FamilyController extends Controller
     public function update(Request $request, Family $family)
     {
         $this->authorizeFamilyMember($family);
+        $this->authorizeManageFamilySettings($family);
 
         $validated = $request->validate([
             'name'          => ['required', 'string', 'max:255'],
@@ -202,6 +203,21 @@ class FamilyController extends Controller
 
         if (! $family->members()->where('user_id', $user?->id)->exists()) {
             abort(403, 'You do not have access to this family.');
+        }
+    }
+
+    /**
+     * Ensure only owners / co-owners can change core family settings (including currency).
+     */
+    protected function authorizeManageFamilySettings(Family $family): void
+    {
+        $membership = FamilyMember::where('family_id', $family->id)
+            ->where('user_id', auth()->id())
+            ->with('role')
+            ->first();
+
+        if (! $membership || ! in_array($membership->role->name ?? '', ['Owner', 'Co-Owner', 'Co-owner'], true)) {
+            abort(403, 'Only the owner or co-owner can update family settings.');
         }
     }
 }

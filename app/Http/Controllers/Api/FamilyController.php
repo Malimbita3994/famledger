@@ -115,6 +115,7 @@ class FamilyController extends Controller
     public function update(Request $request, Family $family): JsonResponse
     {
         $this->authorizeFamilyMember($family);
+        $this->authorizeManageFamilySettings($family);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -143,6 +144,21 @@ class FamilyController extends Controller
                 'status' => $family->status,
             ],
         ]);
+    }
+
+    /**
+     * Ensure only owners / co-owners can change core family settings (including currency).
+     */
+    private function authorizeManageFamilySettings(Family $family): void
+    {
+        $membership = FamilyMember::where('family_id', $family->id)
+            ->where('user_id', auth()->id())
+            ->with('role')
+            ->first();
+
+        if (! $membership || ! in_array($membership->role->name ?? '', ['Owner', 'Co-Owner', 'Co-owner'], true)) {
+            abort(403, 'Only the owner or co-owner can update family settings.');
+        }
     }
 
     public function destroy(Family $family): JsonResponse
