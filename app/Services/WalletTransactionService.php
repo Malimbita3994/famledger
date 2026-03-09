@@ -19,10 +19,10 @@ class WalletTransactionService
         Wallet $wallet,
         string $transactionType,
         float $amount,
-        string $description = null,
-        string $referenceType = null,
-        int $referenceId = null,
-        int $createdBy = null
+        ?string $description = null,
+        ?string $referenceType = null,
+        ?int $referenceId = null,
+        ?int $createdBy = null
     ): WalletTransaction {
         return DB::transaction(function () use (
             $wallet,
