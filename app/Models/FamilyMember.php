@@ -24,6 +24,9 @@ class FamilyMember extends Pivot
         'member_type',
         'joined_at',
         'status',
+        'leave_reason',
+        'leave_notes',
+        'leave_requested_at',
         'is_primary',
     ];
 
@@ -31,6 +34,7 @@ class FamilyMember extends Pivot
     {
         return [
             'joined_at' => 'datetime',
+            'leave_requested_at' => 'datetime',
             'is_primary' => 'boolean',
         ];
     }

@@ -46,12 +46,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/families/{family}', [FamilyController::class, 'update']);
     Route::patch('/families/{family}', [FamilyController::class, 'update']);
     Route::delete('/families/{family}', [FamilyController::class, 'destroy']);
+    Route::post('/families/{family}/leave', [FamilyController::class, 'leave']);
 
     // Family members
     Route::get('/families/{family}/members', [FamilyController::class, 'members']);
     Route::get('/families/{family}/member-roles', [FamilyController::class, 'memberRoles']);
     Route::post('/families/{family}/members', [FamilyController::class, 'addMember']);
     Route::put('/families/{family}/members/{member}', [FamilyController::class, 'updateMember']);
+    Route::patch('/families/{family}/members/{member}/approve-leave', [FamilyController::class, 'approveLeave']);
+    Route::patch('/families/{family}/members/{member}/reject-leave', [FamilyController::class, 'rejectLeave']);
     Route::patch('/families/{family}/members/{member}/activate', [FamilyController::class, 'activateMember']);
     Route::patch('/families/{family}/members/{member}/deactivate', [FamilyController::class, 'deactivateMember']);
     Route::delete('/families/{family}/members/{member}', [FamilyController::class, 'destroyMember']);
@@ -164,6 +167,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);
         Route::get('/users', [AdminUserController::class, 'index']);
         Route::get('/users/{user}', [AdminUserController::class, 'show']);
+        Route::post('/users', [AdminUserController::class, 'store']);
+        Route::put('/users/{user}', [AdminUserController::class, 'update']);
+        Route::patch('/users/{user}', [AdminUserController::class, 'update']);
+        Route::delete('/users/{user}', [AdminUserController::class, 'destroy']);
         Route::get('/roles', [AdminRoleController::class, 'index']);
         Route::get('/permissions', [AdminPermissionController::class, 'index']);
         Route::get('/reports/families', [AdminReportController::class, 'families']);

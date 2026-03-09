@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\Concerns\AuthorizesFamilyMember;
 use App\Http\Controllers\Controller;
 use App\Mail\MemberCredentialsMail;
+use App\Models\AuditLog;
 use App\Models\Family;
 use App\Models\FamilyMember;
 use App\Models\FamilyRole;
@@ -175,6 +176,176 @@ class FamilyController extends Controller
 
         return response()->json([
             'message' => 'Family deleted.',
+        ]);
+    }
+
+    /**
+     * Allow the current user to request to leave a family.
+     * The request must then be approved by an owner / co-owner.
+     */
+    public function leave(Request $request, Family $family): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $membership = FamilyMember::where('family_id', $family->id)
+            ->where('user_id', $user->id)
+            ->with('role')
+            ->firstOrFail();
+
+        // Prevent requesting leave when user is the only primary owner.
+        if ($membership->is_primary && $membership->role && in_array($membership->role->name, ['Owner', 'Co-Owner', 'Co-owner'], true)) {
+            $otherOwners = FamilyMember::where('family_id', $family->id)
+                ->where('id', '!=', $membership->id)
+                ->where('status', 'active')
+                ->whereHas('role', function ($q) {
+                    $q->whereIn('name', ['Owner', 'Co-Owner', 'Co-owner']);
+                })
+                ->count();
+
+            if ($otherOwners === 0) {
+                return response()->json([
+                    'message' => 'You are the only primary owner. Assign another owner as primary before leaving this family.',
+                ], 422);
+            }
+        }
+
+        if ($membership->status === 'left') {
+            return response()->json([
+                'message' => 'You have already left this family.',
+            ], 422);
+        }
+
+        if ($membership->status === 'pending_leave') {
+            return response()->json([
+                'message' => 'You already have a pending leave request.',
+            ], 422);
+        }
+
+        $membership->update([
+            'status' => 'pending_leave',
+            'leave_reason' => $validated['reason'],
+            'leave_notes' => $validated['notes'] ?? null,
+            'leave_requested_at' => now(),
+        ]);
+
+        AuditLog::logApplication(
+            'member_requested_leave',
+            sprintf('User %s requested to leave family %s.', $user->email, $family->name),
+            [
+                'family_id' => $family->id,
+                'reason' => $validated['reason'],
+                'notes' => $validated['notes'] ?? null,
+                'membership_id' => $membership->id,
+            ],
+        );
+
+        return response()->json([
+            'message' => 'Your request to leave this family has been sent for approval.',
+        ]);
+    }
+
+    /**
+     * Approve a pending leave request for a family member.
+     * Only owners / co-owners of the family can approve.
+     */
+    public function approveLeave(Family $family, FamilyMember $member): JsonResponse
+    {
+        $this->authorizeManageMembers($family);
+        if ($member->family_id !== $family->id) {
+            abort(404);
+        }
+
+        if ($member->status !== 'pending_leave') {
+            return response()->json([
+                'message' => 'This member does not have a pending leave request.',
+            ], 422);
+        }
+
+        // Prevent approving when this is the only primary owner.
+        if ($member->is_primary && $member->role && in_array($member->role->name, ['Owner', 'Co-Owner', 'Co-owner'], true)) {
+            $otherOwners = FamilyMember::where('family_id', $family->id)
+                ->where('id', '!=', $member->id)
+                ->where('status', 'active')
+                ->whereHas('role', function ($q) {
+                    $q->whereIn('name', ['Owner', 'Co-Owner', 'Co-owner']);
+                })
+                ->count();
+
+            if ($otherOwners === 0) {
+                return response()->json([
+                    'message' => 'Cannot approve leave for the only primary owner. Assign another owner as primary first.',
+                ], 422);
+            }
+        }
+
+        $member->update([
+            'status' => 'left',
+            'is_primary' => false,
+            'leave_reason' => null,
+            'leave_notes' => null,
+            'leave_requested_at' => null,
+        ]);
+
+        $member->load(['user:id,name,email', 'role:id,name']);
+
+        AuditLog::logApplication(
+            'member_leave_approved',
+            sprintf('Leave request for user %s in family %s was approved.', $member->user?->email, $family->name),
+            [
+                'family_id' => $family->id,
+                'membership_id' => $member->id,
+            ],
+        );
+
+        return response()->json([
+            'message' => 'Leave request approved.',
+            'member' => $this->formatMember($member),
+        ]);
+    }
+
+    /**
+     * Reject a pending leave request for a family member.
+     */
+    public function rejectLeave(Family $family, FamilyMember $member): JsonResponse
+    {
+        $this->authorizeManageMembers($family);
+        if ($member->family_id !== $family->id) {
+            abort(404);
+        }
+
+        if ($member->status !== 'pending_leave') {
+            return response()->json([
+                'message' => 'This member does not have a pending leave request.',
+            ], 422);
+        }
+
+        $member->update([
+            'status' => 'active',
+            'leave_requested_at' => null,
+        ]);
+
+        $member->load(['user:id,name,email', 'role:id,name']);
+
+        AuditLog::logApplication(
+            'member_leave_rejected',
+            sprintf('Leave request for user %s in family %s was rejected.', $member->user?->email, $family->name),
+            [
+                'family_id' => $family->id,
+                'membership_id' => $member->id,
+            ],
+        );
+
+        return response()->json([
+            'message' => 'Leave request rejected.',
+            'member' => $this->formatMember($member),
         ]);
     }
 
@@ -417,6 +588,8 @@ class FamilyController extends Controller
             'status' => $m->status,
             'is_primary' => (bool) $m->is_primary,
             'joined_at' => $m->joined_at?->format('Y-m-d'),
+            'leave_reason' => $m->leave_reason,
+            'leave_requested_at' => $m->leave_requested_at?->toIso8601String(),
         ];
     }
 }
