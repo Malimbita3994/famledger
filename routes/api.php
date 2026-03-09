@@ -172,7 +172,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/users/{user}', [AdminUserController::class, 'update']);
         Route::delete('/users/{user}', [AdminUserController::class, 'destroy']);
         Route::get('/roles', [AdminRoleController::class, 'index']);
+        Route::get('/roles/{role}', [AdminRoleController::class, 'show']);
+        Route::post('/roles', [AdminRoleController::class, 'store']);
+        Route::put('/roles/{role}', [AdminRoleController::class, 'update']);
+        Route::patch('/roles/{role}', [AdminRoleController::class, 'update']);
+        Route::delete('/roles/{role}', [AdminRoleController::class, 'destroy']);
+        Route::put('/roles/{role}/permissions', [AdminRoleController::class, 'syncPermissions']);
         Route::get('/permissions', [AdminPermissionController::class, 'index']);
+        Route::post('/permissions', [AdminPermissionController::class, 'store']);
+        Route::put('/permissions/{permission}', [AdminPermissionController::class, 'update']);
+        Route::patch('/permissions/{permission}', [AdminPermissionController::class, 'update']);
+        Route::delete('/permissions/{permission}', [AdminPermissionController::class, 'destroy']);
         Route::get('/reports/families', [AdminReportController::class, 'families']);
         Route::get('/contact-messages', [AdminContactMessageController::class, 'index']);
         Route::get('/contact-messages/{contact_message}', [AdminContactMessageController::class, 'show']);

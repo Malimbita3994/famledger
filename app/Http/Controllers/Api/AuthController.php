@@ -118,12 +118,18 @@ class AuthController extends Controller
 
     private function userResource(User $user): array
     {
-        $user->load('families:id,name,currency_code,status');
+        $user->load('families:id,name,currency_code,status', 'roles:id,name');
+
+        $roles = $user->getRoleNames()->values()->all();
+        $permissions = $user->getAllPermissions()->pluck('name')->values()->all();
+
         return [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'is_admin' => $user->hasRole('Super Admin') || $user->hasRole('Admin') || $user->can('access_admin_panel'),
+            'roles' => $roles,
+            'permissions' => $permissions,
             'families' => $user->families->map(fn ($f) => [
                 'id' => $f->id,
                 'name' => $f->name,
