@@ -40,4 +40,31 @@ class FamilyController extends Controller
             'status' => $family->status,
         ]);
     }
+
+    /**
+     * List members of the family (for mobile app).
+     */
+    public function members(Family $family): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+
+        $members = $family->familyMembers()
+            ->with(['user:id,name,email', 'role:id,name'])
+            ->orderByDesc('is_primary')
+            ->orderBy('member_name')
+            ->get();
+
+        return response()->json([
+            'members' => $members->map(fn ($m) => [
+                'id' => $m->id,
+                'user_id' => $m->user_id,
+                'name' => $m->member_name ?: $m->user?->name,
+                'email' => $m->user?->email,
+                'role' => $m->role ? ['id' => $m->role->id, 'name' => $m->role->name] : null,
+                'status' => $m->status,
+                'is_primary' => (bool) $m->is_primary,
+                'joined_at' => $m->joined_at?->format('Y-m-d'),
+            ]),
+        ]);
+    }
 }

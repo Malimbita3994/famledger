@@ -79,6 +79,7 @@ class AuthController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'is_admin' => $user->hasRole('Super Admin') || $user->hasRole('Admin') || $user->can('access_admin_panel'),
             'families' => $user->families->map(fn ($f) => [
                 'id' => $f->id,
                 'name' => $f->name,
