@@ -55,6 +55,13 @@ class FamilyController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if ($user->families()->exists()) {
+            return response()->json([
+                'message' => 'You can only belong to one family. Leave your existing family before creating a new one.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -63,7 +70,6 @@ class FamilyController extends Controller
             'country' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $user = $request->user();
         $ownerRole = FamilyRole::where('name', 'Owner')->firstOrFail();
 
         $family = DB::transaction(function () use ($validated, $user, $ownerRole) {
