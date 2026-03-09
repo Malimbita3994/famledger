@@ -150,10 +150,12 @@ class UserController extends Controller
             ], 422);
         }
 
-        $user->delete();
+        // Mirror web admin behaviour: "deactivate" rather than hard delete.
+        $user->status = User::STATUS_SUSPENDED;
+        $user->save();
 
         return response()->json([
-            'message' => 'User deleted.',
+            'message' => 'User deactivated.',
         ]);
     }
 
