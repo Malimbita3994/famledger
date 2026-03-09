@@ -11,6 +11,7 @@ use App\Models\PropertyDepreciation;
 use App\Models\PropertyDocument;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PropertyController extends Controller
 {
@@ -123,6 +124,75 @@ class PropertyController extends Controller
         ]);
     }
 
+    public function storeMaintenance(Request $request, Family $family): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+
+        $validated = $request->validate([
+            'property_id' => ['required', 'integer', 'exists:properties,id'],
+            'service_date' => ['required', 'date'],
+            'cost' => ['nullable', 'numeric', 'min:0'],
+            'service_provider' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'next_due_date' => ['nullable', 'date', 'after_or_equal:service_date'],
+        ]);
+
+        $property = Property::where('family_id', $family->id)->findOrFail($validated['property_id']);
+
+        $maintenance = PropertyMaintenance::create([
+            'property_id' => $property->id,
+            'service_date' => $validated['service_date'],
+            'cost' => $validated['cost'] ?? null,
+            'service_provider' => $validated['service_provider'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'next_due_date' => $validated['next_due_date'] ?? null,
+            'created_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'message' => 'Maintenance record created.',
+            'maintenance' => [
+                'id' => $maintenance->id,
+            ],
+        ], 201);
+    }
+
+    public function updateMaintenance(Request $request, Family $family, PropertyMaintenance $maintenance): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if (! $maintenance->property || $maintenance->property->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'service_date' => ['required', 'date'],
+            'cost' => ['nullable', 'numeric', 'min:0'],
+            'service_provider' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'next_due_date' => ['nullable', 'date', 'after_or_equal:service_date'],
+        ]);
+
+        $maintenance->update($validated);
+
+        return response()->json([
+            'message' => 'Maintenance record updated.',
+        ]);
+    }
+
+    public function destroyMaintenance(Family $family, PropertyMaintenance $maintenance): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if (! $maintenance->property || $maintenance->property->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $maintenance->delete();
+
+        return response()->json([
+            'message' => 'Maintenance record deleted.',
+        ]);
+    }
+
     /**
      * Valuation history (from depreciation year-end book values).
      */
@@ -182,6 +252,71 @@ class PropertyController extends Controller
         ]);
     }
 
+    public function storeDocument(Request $request, Family $family): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+
+        $validated = $request->validate([
+            'property_id' => ['required', 'integer', 'exists:properties,id'],
+            'document_type' => ['nullable', 'string', 'max:100'],
+            'original_name' => ['required', 'string', 'max:255'],
+        ]);
+
+        $property = Property::where('family_id', $family->id)->findOrFail($validated['property_id']);
+
+        $document = PropertyDocument::create([
+            'property_id' => $property->id,
+            'document_type' => $validated['document_type'] ?? null,
+            'original_name' => $validated['original_name'],
+            'path' => null,
+            'size' => null,
+            'mime_type' => null,
+            'is_archived' => false,
+            'uploaded_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'message' => 'Document created.',
+            'document' => [
+                'id' => $document->id,
+            ],
+        ], 201);
+    }
+
+    public function updateDocument(Request $request, Family $family, PropertyDocument $document): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if (! $document->property || $document->property->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'document_type' => ['nullable', 'string', 'max:100'],
+            'original_name' => ['required', 'string', 'max:255'],
+            'is_archived' => ['nullable', 'boolean'],
+        ]);
+
+        $document->update($validated);
+
+        return response()->json([
+            'message' => 'Document updated.',
+        ]);
+    }
+
+    public function destroyDocument(Family $family, PropertyDocument $document): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if (! $document->property || $document->property->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $document->delete();
+
+        return response()->json([
+            'message' => 'Document deleted.',
+        ]);
+    }
+
     /**
      * Depreciation records.
      */
@@ -213,6 +348,181 @@ class PropertyController extends Controller
                 'book_value' => (float) ($d->book_value ?? 0),
             ]),
             'meta' => ['current_page' => $items->currentPage(), 'last_page' => $items->lastPage(), 'total' => $items->total()],
+        ]);
+    }
+
+    public function storeDepreciation(Request $request, Family $family): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+
+        $validated = $request->validate([
+            'property_id' => ['required', 'integer', 'exists:properties,id'],
+            'year' => ['required', 'integer', 'min:1900', 'max:' . (int) date('Y') + 1],
+            'method' => ['nullable', 'string', 'max:100'],
+            'depreciation_amount' => ['required', 'numeric', 'min:0'],
+            'book_value' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $property = Property::where('family_id', $family->id)->findOrFail($validated['property_id']);
+
+        $dep = PropertyDepreciation::create([
+            'property_id' => $property->id,
+            'year' => $validated['year'],
+            'method' => $validated['method'] ?? null,
+            'depreciation_amount' => $validated['depreciation_amount'],
+            'book_value' => $validated['book_value'],
+            'created_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'message' => 'Depreciation record created.',
+            'depreciation' => [
+                'id' => $dep->id,
+            ],
+        ], 201);
+    }
+
+    public function updateDepreciation(Request $request, Family $family, PropertyDepreciation $depreciation): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if (! $depreciation->property || $depreciation->property->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'year' => ['required', 'integer', 'min:1900', 'max:' . (int) date('Y') + 1],
+            'method' => ['nullable', 'string', 'max:100'],
+            'depreciation_amount' => ['required', 'numeric', 'min:0'],
+            'book_value' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $depreciation->update($validated);
+
+        return response()->json([
+            'message' => 'Depreciation record updated.',
+        ]);
+    }
+
+    public function destroyDepreciation(Family $family, PropertyDepreciation $depreciation): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if (! $depreciation->property || $depreciation->property->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $depreciation->delete();
+
+        return response()->json([
+            'message' => 'Depreciation record deleted.',
+        ]);
+    }
+
+    public function store(Request $request, Family $family): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'category_id' => ['nullable', 'integer'],
+            'subcategory_id' => ['nullable', 'integer'],
+            'ownership_type' => ['nullable', 'string', 'max:100'],
+            'acquisition_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'purchase_price' => ['nullable', 'numeric', 'min:0'],
+            'current_estimated_value' => ['nullable', 'numeric', 'min:0'],
+            'valuation_date' => ['nullable', 'date'],
+            'currency_code' => ['nullable', 'string', 'size:3'],
+            'status' => ['nullable', 'string', 'max:100'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'region_city' => ['nullable', 'string', 'max:100'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $property = $family->properties()->create([
+            'name' => $validated['name'],
+            'category_id' => $validated['category_id'] ?? null,
+            'subcategory_id' => $validated['subcategory_id'] ?? null,
+            'ownership_type' => $validated['ownership_type'] ?? null,
+            'acquisition_date' => $validated['acquisition_date'] ?? null,
+            'purchase_price' => $validated['purchase_price'] ?? null,
+            'current_estimated_value' => $validated['current_estimated_value'] ?? null,
+            'valuation_date' => $validated['valuation_date'] ?? null,
+            'currency_code' => $validated['currency_code'] ?? $family->currency_code ?? config('currencies.default', 'TZS'),
+            'status' => $validated['status'] ?? 'active',
+            'country' => $validated['country'] ?? $family->country,
+            'region_city' => $validated['region_city'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return response()->json([
+            'message' => 'Property created.',
+            'property' => [
+                'id' => $property->id,
+                'name' => $property->name,
+                'status' => $property->status,
+                'currency_code' => $property->currency_code,
+            ],
+        ], 201);
+    }
+
+    public function update(Request $request, Family $family, Property $property): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($property->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'category_id' => ['nullable', 'integer'],
+            'subcategory_id' => ['nullable', 'integer'],
+            'ownership_type' => ['nullable', 'string', 'max:100'],
+            'acquisition_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'purchase_price' => ['nullable', 'numeric', 'min:0'],
+            'current_estimated_value' => ['nullable', 'numeric', 'min:0'],
+            'valuation_date' => ['nullable', 'date'],
+            'currency_code' => ['nullable', 'string', 'size:3'],
+            'status' => ['nullable', 'string', 'max:100'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'region_city' => ['nullable', 'string', 'max:100'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $property->update([
+            'name' => $validated['name'],
+            'category_id' => $validated['category_id'] ?? $property->category_id,
+            'subcategory_id' => $validated['subcategory_id'] ?? $property->subcategory_id,
+            'ownership_type' => $validated['ownership_type'] ?? $property->ownership_type,
+            'acquisition_date' => $validated['acquisition_date'] ?? $property->acquisition_date,
+            'purchase_price' => $validated['purchase_price'] ?? $property->purchase_price,
+            'current_estimated_value' => $validated['current_estimated_value'] ?? $property->current_estimated_value,
+            'valuation_date' => $validated['valuation_date'] ?? $property->valuation_date,
+            'currency_code' => $validated['currency_code'] ?? $property->currency_code,
+            'status' => $validated['status'] ?? $property->status,
+            'country' => $validated['country'] ?? $property->country,
+            'region_city' => $validated['region_city'] ?? $property->region_city,
+            'address' => $validated['address'] ?? $property->address,
+            'notes' => $validated['notes'] ?? $property->notes,
+        ]);
+
+        return response()->json([
+            'message' => 'Property updated.',
+        ]);
+    }
+
+    public function destroy(Family $family, Property $property): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($property->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $property->delete();
+
+        return response()->json([
+            'message' => 'Property deleted.',
         ]);
     }
 }

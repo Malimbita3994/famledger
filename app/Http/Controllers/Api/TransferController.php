@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\Concerns\AuthorizesFamilyMember;
 use App\Http\Controllers\Controller;
 use App\Models\Family;
+use App\Models\Transfer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -103,7 +104,60 @@ class TransferController extends Controller
                 'transfer_date' => $transfer->transfer_date?->format('Y-m-d'),
                 'from_wallet' => ['id' => $transfer->fromWallet->id, 'name' => $transfer->fromWallet->name],
                 'to_wallet' => ['id' => $transfer->toWallet->id, 'name' => $transfer->toWallet->name],
+                'description' => $transfer->description,
+                'reference' => $transfer->reference,
             ],
         ], 201);
+    }
+
+    /**
+     * Update an existing transfer.
+     * We allow editing metadata (description, reference, date) but not amount or wallets.
+     */
+    public function update(Request $request, Family $family, Transfer $transfer): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($transfer->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'transfer_date' => ['sometimes', 'date'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'reference' => ['sometimes', 'nullable', 'string', 'max:100'],
+        ]);
+
+        $transfer->fill($validated);
+        $transfer->save();
+
+        $transfer->load(['fromWallet:id,name,currency_code', 'toWallet:id,name,currency_code']);
+
+        return response()->json([
+            'message' => 'Transfer updated.',
+            'transfer' => [
+                'id' => $transfer->id,
+                'amount' => (float) $transfer->amount,
+                'currency_code' => $transfer->currency_code,
+                'transfer_date' => $transfer->transfer_date?->format('Y-m-d'),
+                'from_wallet' => $transfer->fromWallet ? ['id' => $transfer->fromWallet->id, 'name' => $transfer->fromWallet->name] : null,
+                'to_wallet' => $transfer->toWallet ? ['id' => $transfer->toWallet->id, 'name' => $transfer->toWallet->name] : null,
+                'description' => $transfer->description,
+                'reference' => $transfer->reference,
+            ],
+        ]);
+    }
+
+    public function destroy(Family $family, Transfer $transfer): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($transfer->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $transfer->delete();
+
+        return response()->json([
+            'message' => 'Transfer deleted.',
+        ]);
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Family;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
@@ -91,6 +92,113 @@ class ProjectController extends Controller
             'funded' => (float) ($project->fundings_sum_amount ?? 0),
             'spent' => (float) ($project->expenses_sum_amount ?? 0),
             'wallet' => $project->wallet ? ['id' => $project->wallet->id, 'name' => $project->wallet->name] : null,
+        ]);
+    }
+
+    public function store(Request $request, Family $family): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'type' => ['nullable', Rule::in(array_keys(Project::types()))],
+            'planned_budget' => ['required', 'numeric', 'min:0'],
+            'currency_code' => ['required', 'string', 'size:3'],
+            'start_date' => ['nullable', 'date'],
+            'target_end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'status' => ['required', Rule::in(array_keys(Project::statuses()))],
+            'priority' => ['nullable', Rule::in(array_keys(Project::priorities()))],
+        ]);
+
+        $project = $family->projects()->create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'type' => $validated['type'] ?? null,
+            'planned_budget' => $validated['planned_budget'],
+            'currency_code' => strtoupper($validated['currency_code']),
+            'start_date' => $validated['start_date'] ?? null,
+            'target_end_date' => $validated['target_end_date'] ?? null,
+            'status' => $validated['status'],
+            'priority' => $validated['priority'] ?? null,
+            'created_by' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Project created.',
+            'project' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'description' => $project->description,
+                'type' => $project->type,
+                'status' => $project->status,
+                'priority' => $project->priority,
+                'planned_budget' => (float) $project->planned_budget,
+                'currency_code' => $project->currency_code,
+                'start_date' => $project->start_date?->format('Y-m-d'),
+                'target_end_date' => $project->target_end_date?->format('Y-m-d'),
+            ],
+        ], 201);
+    }
+
+    public function update(Request $request, Family $family, Project $project): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($project->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'type' => ['nullable', Rule::in(array_keys(Project::types()))],
+            'planned_budget' => ['required', 'numeric', 'min:0'],
+            'currency_code' => ['required', 'string', 'size:3'],
+            'start_date' => ['nullable', 'date'],
+            'target_end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'actual_end_date' => ['nullable', 'date'],
+            'status' => ['required', Rule::in(array_keys(Project::statuses()))],
+            'priority' => ['nullable', Rule::in(array_keys(Project::priorities()))],
+        ]);
+
+        $project->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'type' => $validated['type'] ?? null,
+            'planned_budget' => $validated['planned_budget'],
+            'currency_code' => strtoupper($validated['currency_code']),
+            'start_date' => $validated['start_date'] ?? null,
+            'target_end_date' => $validated['target_end_date'] ?? null,
+            'actual_end_date' => $validated['actual_end_date'] ?? null,
+            'status' => $validated['status'],
+            'priority' => $validated['priority'] ?? null,
+        ]);
+
+        return response()->json([
+            'message' => 'Project updated.',
+        ]);
+    }
+
+    public function destroy(Family $family, Project $project): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($project->family_id !== $family->id) {
+            abort(404);
+        }
+
+        if ($project->fundings()->exists() || $project->expenses()->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete project with existing funding or expenses. Consider marking it as Cancelled.',
+            ], 422);
+        }
+
+        if ($project->wallet_id) {
+            $project->wallet()->delete();
+        }
+        $project->delete();
+
+        return response()->json([
+            'message' => 'Project removed.',
         ]);
     }
 }

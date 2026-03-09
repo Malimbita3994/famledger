@@ -104,4 +104,61 @@ class ExpenseController extends Controller
             ],
         ], 201);
     }
+
+    /**
+     * Update an existing expense.
+     * We allow editing metadata (category, description, dates, links) but not amount or wallet.
+     */
+    public function update(Request $request, Family $family, Expense $expense): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($expense->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'category_id' => ['sometimes', 'nullable', Rule::exists('expense_categories', 'id')],
+            'subcategory' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'expense_date' => ['sometimes', 'date'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'merchant' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'paid_by' => ['sometimes', 'nullable', Rule::in($family->members()->pluck('users.id')->toArray())],
+            'payment_method' => ['sometimes', 'nullable', 'string', 'max:50', Rule::in(array_keys(Expense::paymentMethods()))],
+            'reference' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'project_id' => ['sometimes', 'nullable', Rule::exists('projects', 'id')->where('family_id', $family->id)],
+            'budget_id' => ['sometimes', 'nullable', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
+        ]);
+
+        $expense->fill($validated);
+        $expense->save();
+
+        $expense->load(['wallet:id,name,currency_code', 'category:id,name']);
+
+        return response()->json([
+            'message' => 'Expense updated.',
+            'expense' => [
+                'id' => $expense->id,
+                'amount' => (float) $expense->amount,
+                'currency_code' => $expense->currency_code,
+                'description' => $expense->description,
+                'expense_date' => $expense->expense_date?->format('Y-m-d'),
+                'wallet' => $expense->wallet ? ['id' => $expense->wallet->id, 'name' => $expense->wallet->name] : null,
+                'category' => $expense->category ? ['id' => $expense->category->id, 'name' => $expense->category->name] : null,
+            ],
+        ]);
+    }
+
+    public function destroy(Family $family, Expense $expense): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($expense->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $expense->delete();
+
+        return response()->json([
+            'message' => 'Expense deleted.',
+        ]);
+    }
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Family;
 use App\Models\SavingsGoal;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SavingsGoalController extends Controller
 {
@@ -35,6 +36,87 @@ class SavingsGoalController extends Controller
                 'contributed' => (float) ($g->contributions_sum_amount ?? 0),
                 'wallet' => $g->wallet ? ['id' => $g->wallet->id, 'name' => $g->wallet->name] : null,
             ]),
+        ]);
+    }
+
+    public function store(Request $request, Family $family): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'target_amount' => ['required', 'numeric', 'min:0'],
+            'currency_code' => ['nullable', 'string', 'size:3'],
+            'target_date' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'max:50'],
+            'priority' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'wallet_id' => ['nullable', 'integer', 'exists:wallets,id'],
+        ]);
+
+        $goal = $family->savingsGoals()->create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'target_amount' => $validated['target_amount'],
+            'currency_code' => $validated['currency_code'] ?? $family->currency_code ?? config('currencies.default', 'TZS'),
+            'target_date' => $validated['target_date'] ?? null,
+            'status' => $validated['status'] ?? 'active',
+            'priority' => $validated['priority'] ?? 3,
+            'wallet_id' => $validated['wallet_id'] ?? null,
+            'created_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'message' => 'Savings goal created.',
+            'goal' => ['id' => $goal->id],
+        ], 201);
+    }
+
+    public function update(Request $request, Family $family, SavingsGoal $goal): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($goal->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'target_amount' => ['required', 'numeric', 'min:0'],
+            'currency_code' => ['nullable', 'string', 'size:3'],
+            'target_date' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'max:50'],
+            'priority' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'wallet_id' => ['nullable', 'integer', 'exists:wallets,id'],
+        ]);
+
+        $goal->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? $goal->description,
+            'target_amount' => $validated['target_amount'],
+            'currency_code' => $validated['currency_code'] ?? $goal->currency_code,
+            'target_date' => $validated['target_date'] ?? $goal->target_date,
+            'status' => $validated['status'] ?? $goal->status,
+            'priority' => $validated['priority'] ?? $goal->priority,
+            'wallet_id' => $validated['wallet_id'] ?? $goal->wallet_id,
+        ]);
+
+        return response()->json([
+            'message' => 'Savings goal updated.',
+        ]);
+    }
+
+    public function destroy(Family $family, SavingsGoal $goal): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($goal->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $goal->delete();
+
+        return response()->json([
+            'message' => 'Savings goal deleted.',
         ]);
     }
 }
