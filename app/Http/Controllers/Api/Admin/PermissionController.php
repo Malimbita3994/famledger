@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Concerns\AuthorizesAdmin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 
 class PermissionController extends Controller
@@ -17,9 +18,11 @@ class PermissionController extends Controller
         $this->authorizeAdmin();
 
         $permissions = Permission::where('guard_name', config('auth.defaults.guard'))
-            ->withCount(['roles', 'users'])
+            ->withCount(['roles'])
             ->orderBy('name')
             ->get(['id', 'name', 'display_name', 'description']);
+
+        $modelHasPermissionsTable = config('permission.table_names.model_has_permissions', 'model_has_permissions');
 
         $items = $permissions->map(fn (Permission $p) => [
             'id' => $p->id,
@@ -27,7 +30,7 @@ class PermissionController extends Controller
             'display_name' => $p->display_name,
             'description' => $p->description,
             'roles_count' => $p->roles_count,
-            'users_count' => $p->users_count,
+            'users_count' => DB::table($modelHasPermissionsTable)->where('permission_id', $p->id)->count(),
         ]);
 
         return response()->json(['permissions' => $items]);
