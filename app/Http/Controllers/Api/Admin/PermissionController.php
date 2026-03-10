@@ -18,10 +18,13 @@ class PermissionController extends Controller
     {
         $this->authorizeAdmin();
 
-        $permissions = Permission::where('guard_name', config('auth.defaults.guard'))
+        // Do not filter by guard here so that all
+        // existing web permissions are visible to
+        // the mobile/API clients as well.
+        $permissions = Permission::query()
             ->withCount(['roles'])
             ->orderBy('name')
-            ->get(['id', 'name', 'display_name', 'description']);
+            ->get(['id', 'name', 'display_name', 'description', 'guard_name']);
 
         $modelHasPermissionsTable = config('permission.table_names.model_has_permissions', 'model_has_permissions');
 
@@ -32,6 +35,7 @@ class PermissionController extends Controller
             'description' => $p->description,
             'roles_count' => $p->roles_count,
             'users_count' => DB::table($modelHasPermissionsTable)->where('permission_id', $p->id)->count(),
+            'guard_name' => $p->guard_name,
         ]);
 
         return response()->json(['permissions' => $items]);
