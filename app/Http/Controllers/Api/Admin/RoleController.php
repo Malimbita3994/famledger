@@ -46,7 +46,9 @@ class RoleController extends Controller
     {
         $this->authorizeAdmin();
 
-        $role->load('permissions:id,name,display_name,description', 'users:id');
+        // Only load permissions here; loading users can fail if the
+        // guard is not mapped to a concrete user model in config.
+        $role->load('permissions:id,name,display_name,description');
 
         return response()->json($this->formatRoleDetail($role));
     }
@@ -78,7 +80,7 @@ class RoleController extends Controller
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $role->load('permissions:id,name,display_name,description', 'users:id');
+        $role->load('permissions:id,name,display_name,description');
 
         return response()->json([
             'message' => 'Role created.',
@@ -115,7 +117,7 @@ class RoleController extends Controller
             app(PermissionRegistrar::class)->forgetCachedPermissions();
         }
 
-        $role->load('permissions:id,name,display_name,description', 'users:id');
+        $role->load('permissions:id,name,display_name,description');
 
         return response()->json([
             'message' => 'Role updated.',
@@ -153,7 +155,7 @@ class RoleController extends Controller
         $this->syncRolePermissionsByName($role, $validated['permissions'] ?? []);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $role->load('permissions:id,name,display_name,description', 'users:id');
+        $role->load('permissions:id,name,display_name,description');
 
         return response()->json([
             'message' => 'Role permissions updated.',
