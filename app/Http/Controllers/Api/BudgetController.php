@@ -31,6 +31,7 @@ class BudgetController extends Controller
                 'currency_code' => $b->currency_code,
                 'start_date' => $b->start_date?->format('Y-m-d'),
                 'end_date' => $b->end_date?->format('Y-m-d'),
+                'recurrence' => $b->recurrence,
                 'status' => $b->status,
                 'wallet' => $b->wallets->first() ? ['id' => $b->wallets->first()->id, 'name' => $b->wallets->first()->name] : null,
                 'category' => $b->categories->first() ? ['id' => $b->categories->first()->id, 'name' => $b->categories->first()->name] : null,
@@ -49,6 +50,9 @@ class BudgetController extends Controller
             'currency_code' => ['nullable', 'string', 'size:3'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'recurrence' => ['nullable', 'string', 'max:20'],
+            'wallet_ids' => ['nullable', 'array'],
+            'wallet_ids.*' => ['nullable', Rule::exists('wallets', 'id')->where('family_id', $family->id)],
             'status' => ['nullable', 'string', 'max:50'],
         ]);
 
@@ -59,9 +63,18 @@ class BudgetController extends Controller
             'currency_code' => $validated['currency_code'] ?? $family->currency_code ?? config('currencies.default', 'TZS'),
             'start_date' => $validated['start_date'] ?? null,
             'end_date' => $validated['end_date'] ?? null,
+            'recurrence' => $validated['recurrence'] ?? 'none',
             'status' => $validated['status'] ?? 'active',
             'created_by' => auth()->id(),
         ]);
+
+        // For wallet budgets, optionally sync a primary wallet assignment (first ID only for now)
+        if ($budget->type === Budget::TYPE_WALLET) {
+            $walletIds = array_filter($validated['wallet_ids'] ?? []);
+            if (! empty($walletIds)) {
+                $budget->wallets()->sync($walletIds);
+            }
+        }
 
         return response()->json([
             'message' => 'Budget created.',
@@ -83,6 +96,9 @@ class BudgetController extends Controller
             'currency_code' => ['nullable', 'string', 'size:3'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'recurrence' => ['nullable', 'string', 'max:20'],
+            'wallet_ids' => ['nullable', 'array'],
+            'wallet_ids.*' => ['nullable', Rule::exists('wallets', 'id')->where('family_id', $family->id)],
             'status' => ['nullable', 'string', 'max:50'],
         ]);
 
@@ -93,8 +109,16 @@ class BudgetController extends Controller
             'currency_code' => $validated['currency_code'] ?? $budget->currency_code,
             'start_date' => $validated['start_date'] ?? $budget->start_date,
             'end_date' => $validated['end_date'] ?? $budget->end_date,
+            'recurrence' => $validated['recurrence'] ?? $budget->recurrence,
             'status' => $validated['status'] ?? $budget->status,
         ]);
+
+        if ($budget->type === Budget::TYPE_WALLET) {
+            $walletIds = array_filter($validated['wallet_ids'] ?? []);
+            if (! empty($walletIds)) {
+                $budget->wallets()->sync($walletIds);
+            }
+        }
 
         return response()->json([
             'message' => 'Budget updated.',

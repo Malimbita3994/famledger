@@ -42,16 +42,31 @@
 
                     <div class="grid gap-1.5">
                         <label for="type" class="kt-form-label">Type <span class="text-destructive">*</span></label>
-                        <input
-                            type="text"
+                        <select
                             name="type"
                             id="type"
-                            value="{{ old('type') }}"
-                            placeholder="e.g. Loan, Mortgage, Credit, Other"
-                            class="kt-input"
+                            class="kt-select"
                             aria-invalid="{{ $errors->has('type') ? 'true' : 'false' }}"
                             required
-                        />
+                        >
+                            <option value="">Select type</option>
+                            @php
+                                $liabilityTypes = [
+                                    'Loans' => 'Loans',
+                                    'Credit' => 'Credit',
+                                    'Bills' => 'Bills',
+                                    'Family Borrowing' => 'Family Borrowing',
+                                    'Business Debt' => 'Business Debt',
+                                    'Taxes & Fees' => 'Taxes & Fees',
+                                ];
+                                $oldType = old('type');
+                            @endphp
+                            @foreach ($liabilityTypes as $value => $label)
+                                <option value="{{ $value }}" {{ $oldType === $value ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
                         @error('type')<p class="kt-form-message">{{ $message }}</p>@enderror
                     </div>
                 </div>

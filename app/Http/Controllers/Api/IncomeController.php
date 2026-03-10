@@ -35,6 +35,7 @@ class IncomeController extends Controller
                 'source' => $i->source,
                 'received_date' => $i->received_date?->format('Y-m-d'),
                 'notes' => $i->notes,
+                'is_recurring' => (bool) $i->is_recurring,
                 'wallet' => $i->wallet ? ['id' => $i->wallet->id, 'name' => $i->wallet->name] : null,
                 'category' => $i->category ? ['id' => $i->category->id, 'name' => $i->category->name] : null,
             ]),
@@ -66,6 +67,7 @@ class IncomeController extends Controller
             'source' => ['nullable', 'string', 'max:255'],
             'received_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'is_recurring' => ['nullable', 'boolean'],
         ]);
 
         $income = $family->incomes()->create([
@@ -77,6 +79,7 @@ class IncomeController extends Controller
             'source' => $validated['source'] ?? null,
             'received_date' => $validated['received_date'],
             'notes' => $validated['notes'] ?? null,
+            'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
             'received_by' => auth()->id(),
             'created_by' => auth()->id(),
         ]);
@@ -94,6 +97,7 @@ class IncomeController extends Controller
                 'wallet' => ['id' => $income->wallet->id, 'name' => $income->wallet->name],
                 'category' => ['id' => $income->category->id, 'name' => $income->category->name],
                 'notes' => $income->notes,
+                'is_recurring' => (bool) $income->is_recurring,
             ],
         ], 201);
     }
@@ -115,6 +119,7 @@ class IncomeController extends Controller
             'source' => ['sometimes', 'nullable', 'string', 'max:255'],
             'received_date' => ['sometimes', 'date'],
             'notes' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'is_recurring' => ['sometimes', 'nullable', 'boolean'],
         ]);
 
         $income->fill($validated);
@@ -133,6 +138,7 @@ class IncomeController extends Controller
                 'wallet' => ['id' => $income->wallet->id, 'name' => $income->wallet->name],
                 'category' => $income->category ? ['id' => $income->category->id, 'name' => $income->category->name] : null,
                 'notes' => $income->notes,
+                'is_recurring' => (bool) $income->is_recurring,
             ],
         ]);
     }
