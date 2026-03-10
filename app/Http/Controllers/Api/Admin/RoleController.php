@@ -46,11 +46,6 @@ class RoleController extends Controller
     {
         $this->authorizeAdmin();
 
-        $guard = config('auth.defaults.guard');
-        if ($role->guard_name !== $guard) {
-            abort(404);
-        }
-
         $role->load('permissions:id,name,display_name,description', 'users:id');
 
         return response()->json($this->formatRoleDetail($role));
@@ -95,11 +90,6 @@ class RoleController extends Controller
     {
         $this->authorizeAdmin();
 
-        $guard = config('auth.defaults.guard');
-        if ($role->guard_name !== $guard) {
-            abort(404);
-        }
-
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('roles', 'name')->ignore($role->id)],
             'display_name' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -137,11 +127,6 @@ class RoleController extends Controller
     {
         $this->authorizeAdmin();
 
-        $guard = config('auth.defaults.guard');
-        if ($role->guard_name !== $guard) {
-            abort(404);
-        }
-
         if (in_array($role->name, ['Super Admin', 'Admin'], true)) {
             return response()->json([
                 'message' => 'This core system role cannot be deleted.',
@@ -159,11 +144,6 @@ class RoleController extends Controller
     public function syncPermissions(Request $request, Role $role): JsonResponse
     {
         $this->authorizeAdmin();
-
-        $guard = config('auth.defaults.guard');
-        if ($role->guard_name !== $guard) {
-            abort(404);
-        }
 
         $validated = $request->validate([
             'permissions' => ['nullable', 'array'],
@@ -183,8 +163,10 @@ class RoleController extends Controller
 
     private function syncRolePermissionsByName(Role $role, array $names): void
     {
-        $guard = config('auth.defaults.guard');
-        $permissions = Permission::where('guard_name', $guard)
+        // Use the role's own guard to look up permissions so that
+        // API/mobile stays in sync with whatever guard was used
+        // when roles & permissions were created.
+        $permissions = Permission::where('guard_name', $role->guard_name)
             ->whereIn('name', $names)
             ->pluck('id')
             ->all();
