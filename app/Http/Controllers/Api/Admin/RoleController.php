@@ -20,10 +20,12 @@ class RoleController extends Controller
     {
         $this->authorizeAdmin();
 
-        $roles = Role::where('guard_name', config('auth.defaults.guard'))
+        // Return all roles (regardless of guard) so that API/mobile
+        // always see the same set of system roles as the web admin UI.
+        $roles = Role::query()
             ->withCount(['permissions'])
             ->orderBy('name')
-            ->get(['id', 'name', 'display_name', 'description']);
+            ->get(['id', 'name', 'display_name', 'description', 'guard_name']);
 
         $modelHasRolesTable = config('permission.table_names.model_has_roles', 'model_has_roles');
 
@@ -34,6 +36,7 @@ class RoleController extends Controller
             'description' => $r->description,
             'permissions_count' => $r->permissions_count,
             'users_count' => DB::table($modelHasRolesTable)->where('role_id', $r->id)->count(),
+            'guard_name' => $r->guard_name,
         ]);
 
         return response()->json(['roles' => $items]);
