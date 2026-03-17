@@ -9,11 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Stand-alone family wallet (internal ledger).
  * Money lives here; no bank/external integration.
- *
- * Relationships (aligns with schema):
- *   Family (1) ──< Wallet (many)  via wallets.family_id
- *   Wallet (1) ──< wallet_transactions (many)  via wallet_transactions.wallet_id
- *   Wallet (1) ──< transfers (many) as from_wallet_id (outgoingTransfers) and to_wallet_id (incomingTransfers)
  */
 class Wallet extends Model
 {
@@ -25,8 +20,6 @@ class Wallet extends Model
         'description',
         'initial_balance',
         'is_primary',
-        'is_liquid',
-        'is_wealth_wallet',
         'is_shared',
         'status',
         'created_by',
@@ -37,8 +30,6 @@ class Wallet extends Model
         return [
             'initial_balance' => 'decimal:2',
             'is_primary' => 'boolean',
-            'is_liquid' => 'boolean',
-            'is_wealth_wallet' => 'boolean',
             'is_shared' => 'boolean',
         ];
     }
@@ -97,24 +88,12 @@ class Wallet extends Model
         return $this->hasMany(SavingsGoal::class, 'wallet_id');
     }
 
-    public function transactions(): HasMany
-    {
-        return $this->hasMany(WalletTransaction::class);
-    }
-
     /**
-     * Balance computed from wallet_transactions ledger.
-     * Falls back to initial_balance + manual calculation if no ledger entries.
+     * Balance = initial_balance + income - expenses + transfers_in - transfers_out.
+     * Uses *_sum_amount when eager-loaded via withSum().
      */
     public function getBalanceAttribute(): float
     {
-        // First try to get balance from the latest transaction
-        $latestTransaction = $this->transactions()->latest('created_at')->first();
-        if ($latestTransaction && $latestTransaction->balance_after !== null) {
-            return (float) $latestTransaction->balance_after;
-        }
-
-        // Fallback to manual calculation (for backward compatibility during migration)
         $income = isset($this->attributes['incomes_sum_amount'])
             ? (float) $this->attributes['incomes_sum_amount']
             : (float) $this->incomes()->sum('amount');
@@ -127,29 +106,6 @@ class Wallet extends Model
         $outgoing = isset($this->attributes['outgoing_transfers_sum_amount'])
             ? (float) $this->attributes['outgoing_transfers_sum_amount']
             : (float) $this->outgoingTransfers()->sum('amount');
-        return (float) $this->initial_balance + $income - $expense + $incoming - $outgoing;
-    }
-
-    /**
-     * Get balance as of a specific date from the ledger.
-     */
-    public function balanceAsOf(\Carbon\Carbon $asOf): float
-    {
-        // Find the latest transaction on or before the given date
-        $latestTransaction = $this->transactions()
-            ->where('created_at', '<=', $asOf)
-            ->latest('created_at')
-            ->first();
-
-        if ($latestTransaction && $latestTransaction->balance_after !== null) {
-            return (float) $latestTransaction->balance_after;
-        }
-
-        // Fallback to manual calculation for transactions up to the date
-        $income = $this->incomes()->where('received_date', '<=', $asOf)->sum('amount');
-        $expense = $this->expenses()->where('expense_date', '<=', $asOf)->sum('amount');
-        $incoming = $this->incomingTransfers()->where('transfer_date', '<=', $asOf)->sum('amount');
-        $outgoing = $this->outgoingTransfers()->where('transfer_date', '<=', $asOf)->sum('amount');
         return (float) $this->initial_balance + $income - $expense + $incoming - $outgoing;
     }
 }

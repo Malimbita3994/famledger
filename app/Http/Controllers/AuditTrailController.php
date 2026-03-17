@@ -13,15 +13,22 @@ use Symfony\Component\HttpFoundation\Response;
 class AuditTrailController extends Controller
 {
     /**
-     * Only Super Admin can view any family's audit trail.
-     * This keeps the audit trail as a platform-level, independent module.
+     * Super Admin and Auditor can view any family's audit trail; others must be Owner or Co-owner of that family.
      */
     protected function authorizeFamilyAuditView(Family $family): void
     {
         $user = auth()->user();
+        if ($user->hasRole('Super Admin') || $user->hasRole('Auditor')) {
+            return;
+        }
 
-        if (! $user || ! $user->hasRole('Super Admin')) {
-            abort(403, 'Only Super Admin can view audit trail.');
+        $membership = FamilyMember::where('family_id', $family->id)
+            ->where('user_id', $user->id)
+            ->with('role')
+            ->first();
+
+        if (! $membership || ! in_array($membership->role->name ?? '', ['Owner', 'Co-owner', 'Co-Owner'], true)) {
+            abort(403, 'Only the owner or co-owner can view this family\'s audit trail.');
         }
     }
 
@@ -60,8 +67,13 @@ class AuditTrailController extends Controller
 
         $logs = $query->paginate(50)->withQueryString();
 
-        // Member dropdown: Super Admin sees all users (global audit scope).
-        $users = User::orderBy('name')->get(['id', 'name', 'email']);
+        // Member dropdown: Super Admin and Auditor see all users; Owner/Co-owner see only this family's members
+        if (auth()->user()->hasRole('Super Admin') || auth()->user()->hasRole('Auditor')) {
+            $users = User::orderBy('name')->get(['id', 'name', 'email']);
+        } else {
+            $memberIds = $family->members()->pluck('user_id')->unique()->toArray();
+            $users = User::whereIn('id', $memberIds)->orderBy('name')->get(['id', 'name', 'email']);
+        }
 
         return view('families.audit-trail.index', [
             'family' => $family,

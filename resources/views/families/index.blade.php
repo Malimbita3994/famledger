@@ -24,7 +24,7 @@
     </div>
 </div>
 
-<div class="kt-container-fixed">
+<div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
     @if (session('success'))
         <div class="mb-6 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 flex items-center gap-3 text-green-800 dark:text-green-200">
             <i class="ki-filled ki-check-circle text-xl shrink-0"></i>
@@ -34,18 +34,57 @@
 
     @if ($families->isEmpty())
         <div class="kt-card">
-            <div class="kt-card-content py-12 text-center">
-                <i class="ki-filled ki-people text-5xl text-muted-foreground mb-4"></i>
-                <p class="font-semibold text-foreground">No families yet</p>
-                <p class="text-sm text-secondary-foreground mt-1">Create your first household to start managing finances together.</p>
-                <a href="{{ route('families.create') }}" class="kt-btn kt-btn-primary mt-6">Create Family</a>
+            <div class="kt-card-content py-16 text-center">
+                <div class="mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center mb-6">
+                    <i class="ki-filled ki-people text-4xl text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-foreground mb-2">No families yet</h2>
+                <p class="text-muted-foreground mb-8 max-w-md mx-auto">Create your first household to start managing finances together. Invite family members and track expenses, incomes, and savings goals collaboratively.</p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="{{ route('families.create') }}" class="kt-btn kt-btn-primary">
+                        <i class="ki-filled ki-plus"></i>
+                        Create Your First Family
+                    </a>
+                    <a href="{{ route('dashboard') }}" class="kt-btn kt-btn-outline">
+                        <i class="ki-filled ki-home"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
             </div>
         </div>
     @else
-        <div class="grid gap-5 lg:gap-7.5">
+        <style>
+            .stats-summary-grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 0.75rem;
+                width: 100%;
+                margin-bottom: 1.5rem;
+            }
+        </style>
+        <div class="stats-summary-grid">
+            <div class="rounded-xl border border-border bg-card px-4 py-3">
+                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Families</div>
+                <div class="mt-1.5 text-lg font-semibold tabular-nums">{{ $families->count() }}</div>
+            </div>
+            <div class="rounded-xl border border-border bg-card px-4 py-3">
+                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Active Families</div>
+                <div class="mt-1.5 text-lg font-semibold tabular-nums text-green-600">{{ $families->where('status', 'active')->count() }}</div>
+            </div>
+            <div class="rounded-xl border border-border bg-card px-4 py-3">
+                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Members</div>
+                <div class="mt-1.5 text-lg font-semibold tabular-nums">{{ $families->sum('family_members_count') }}</div>
+            </div>
+            <div class="rounded-xl border border-border bg-card px-4 py-3">
+                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Currencies Used</div>
+                <div class="mt-1.5 text-lg font-semibold tabular-nums">{{ $families->pluck('currency_code')->unique()->count() }}</div>
+            </div>
+        </div>
+
+        {{-- Families List --}}
             <div class="kt-card kt-card-grid min-w-full">
                 <div class="kt-card-header flex-wrap gap-2">
-                    <h3 class="kt-card-title text-sm">Showing {{ $families->count() }} {{ Str::plural('family', $families->count()) }}</h3>
+                    <h3 class="kt-card-title text-sm">Your Families</h3>
                     <div class="flex flex-wrap gap-2 lg:gap-5">
                         <div class="flex items-center gap-2 families-view-toggle-wrapper hidden md:flex">
                             <span class="text-sm text-secondary-foreground">View:</span>
@@ -90,20 +129,20 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($families as $family)
-                                    <tr>
+                                    <tr class="hover:bg-muted/50 transition-colors">
                                         <td>
-                                            <a href="{{ route('families.show', $family) }}" class="flex items-center gap-2.5 hover:opacity-90">
-                                                <span class="flex items-center justify-center rounded-full size-9 shrink-0 bg-muted text-foreground font-medium text-sm">{{ strtoupper(substr($family->name, 0, 1)) }}</span>
+                                            <a href="{{ route('families.show', $family) }}" class="flex items-center gap-3 hover:opacity-90 transition-opacity">
+                                                <span class="flex items-center justify-center rounded-full size-10 shrink-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">{{ strtoupper(substr($family->name, 0, 1)) }}</span>
                                                 <div class="flex flex-col min-w-0">
-                                                    <span class="text-sm font-medium text-mono hover:text-primary truncate">{{ $family->name }}</span>
+                                                    <span class="text-sm font-semibold text-foreground hover:text-primary truncate">{{ $family->name }}</span>
                                                     @if ($family->description)
                                                         <span class="text-sm text-secondary-foreground font-normal truncate max-w-[200px] block">{{ Str::limit($family->description, 40) }}</span>
                                                     @endif
                                                 </div>
                                             </a>
                                         </td>
-                                        <td class="text-foreground font-normal">{{ $family->family_members_count }} {{ Str::plural('member', $family->family_members_count) }}</td>
-                                        <td class="text-foreground font-normal">{{ $family->currency_code }}</td>
+                                        <td class="text-foreground font-medium">{{ $family->family_members_count }} {{ Str::plural('member', $family->family_members_count) }}</td>
+                                        <td class="text-foreground font-medium">{{ $family->currency_code }}</td>
                                         <td>
                                             <span class="kt-badge {{ $family->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-[30px]">
                                                 <span class="kt-badge-dot size-1.5"></span>
@@ -153,11 +192,11 @@
 
                     {{-- Cards view (optional) --}}
                     <div id="families_cards_view" class="families-view-panel md:hidden">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 families-grid">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 families-grid">
                             @foreach ($families as $family)
-                            <div class="rounded-2xl border border-border bg-background shadow-sm overflow-hidden hover:shadow-md hover:border-primary/20 transition-all duration-200 relative min-h-[140px] flex flex-col">
-                                <div class="absolute top-3 right-3 z-10 flex items-center gap-1">
-                                    <a href="{{ route('families.edit', $family) }}" onclick="event.stopPropagation()" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" title="Edit">
+                            <div class="group rounded-2xl border border-border bg-background shadow-sm overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300 relative min-h-[180px] flex flex-col">
+                                <div class="absolute top-4 right-4 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <a href="{{ route('families.edit', $family) }}" onclick="event.stopPropagation()" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost hover:bg-primary/10" title="Edit">
                                         <i class="ki-filled ki-pencil text-sm"></i>
                                     </a>
                                     <form action="{{ route('families.destroy', $family) }}" method="POST" class="inline js-confirm-delete" data-confirm-title="Delete this family?" data-confirm-message="This cannot be undone." onclick="event.stopPropagation()">
@@ -168,19 +207,29 @@
                                         </button>
                                     </form>
                                 </div>
-                                <a href="{{ route('families.show', $family) }}" class="block p-5 pr-14 flex flex-col flex-1 min-h-0">
-                                    <h3 class="font-semibold text-foreground truncate pr-2">{{ $family->name }}</h3>
-                                    @if ($family->description)
-                                        <p class="text-sm text-secondary-foreground mt-1 line-clamp-2">{{ $family->description }}</p>
-                                    @endif
-                                    <div class="mt-auto pt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                                        <span>{{ $family->currency_code }}</span>
-                                        <span>·</span>
-                                        <span>{{ $family->family_members_count }} {{ Str::plural('member', $family->family_members_count) }}</span>
+                                <a href="{{ route('families.show', $family) }}" class="block p-6 pr-14 flex flex-col flex-1 min-h-0">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <span class="flex items-center justify-center rounded-full size-12 shrink-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">{{ strtoupper(substr($family->name, 0, 1)) }}</span>
+                                        <div class="flex-1 min-w-0">
+                                            <h3 class="font-semibold text-foreground truncate">{{ $family->name }}</h3>
+                                            <span class="kt-badge kt-badge-sm {{ $family->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline mt-1 w-fit">
+                                                {{ $family->status }}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span class="kt-badge kt-badge-sm {{ $family->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline mt-2 w-fit">
-                                        {{ $family->status }}
-                                    </span>
+                                    @if ($family->description)
+                                        <p class="text-sm text-secondary-foreground line-clamp-2 mb-4">{{ $family->description }}</p>
+                                    @endif
+                                    <div class="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                                        <div class="flex items-center gap-1">
+                                            <i class="ki-filled ki-profile-user text-xs"></i>
+                                            <span>{{ $family->family_members_count }} {{ Str::plural('member', $family->family_members_count) }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <i class="ki-filled ki-dollar text-xs"></i>
+                                            <span>{{ $family->currency_code }}</span>
+                                        </div>
+                                    </div>
                                 </a>
                             </div>
                             @endforeach

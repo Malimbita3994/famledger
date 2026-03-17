@@ -30,6 +30,7 @@ use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\InviteJoinController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\TransactionController;
 
 Route::get('/', function () {
     return view('marketing.landing');
@@ -46,7 +47,6 @@ Route::get('/dashboard', [MainDashboardController::class, 'index'])->middleware(
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile/avatar', [ProfileController::class, 'destroyAvatar'])->name('profile.avatar.destroy');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // User & family settings
@@ -136,6 +136,9 @@ Route::middleware('auth')->group(function () {
         Route::get('expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
         Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
 
+        // Transactions (Income + Expenses in one page)
+        Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
+
         // Transfers (move money between wallets; total wealth unchanged)
         Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
         Route::get('transfers/create', [TransferController::class, 'create'])->name('transfers.create');
@@ -153,8 +156,6 @@ Route::middleware('auth')->group(function () {
         Route::resource('savings-goals', SavingsGoalController::class)->names('savings-goals');
         Route::get('savings-goals/{savings_goal}/contribute', [SavingsGoalController::class, 'contributeForm'])->name('savings-goals.contribute');
         Route::post('savings-goals/{savings_goal}/contribute', [SavingsGoalController::class, 'contributeStore'])->name('savings-goals.contribute.store');
-        Route::get('savings-goals/{savings_goal}/allocate', [SavingsGoalController::class, 'allocateForm'])->name('savings-goals.allocate');
-        Route::post('savings-goals/{savings_goal}/allocate', [SavingsGoalController::class, 'allocate'])->name('savings-goals.allocate.store');
 
         // Family Projects
         Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
@@ -185,8 +186,7 @@ Route::middleware('auth')->group(function () {
         Route::get('properties/{property}', [PropertyController::class, 'show'])->name('properties.show');
 
         // Financial Accounts (sidebar links)
-        Route::get('accounts/income', [IncomeController::class, 'index'])->name('accounts.income');
-        Route::get('accounts/expenses', [ExpenseController::class, 'index'])->name('accounts.expenses');
+        Route::get('accounts/transactions', [TransactionController::class, 'index'])->name('accounts.transactions');
         Route::get('accounts/transfers', [TransferController::class, 'index'])->name('accounts.transfers');
         Route::get('accounts/savings', [SavingsGoalController::class, 'index'])->name('accounts.savings');
         Route::get('accounts/projects-funding', [ProjectFundingController::class, 'index'])->name('accounts.projects-funding');

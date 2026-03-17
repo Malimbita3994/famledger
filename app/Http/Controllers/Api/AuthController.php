@@ -72,64 +72,13 @@ class AuthController extends Controller
         return response()->json(['user' => $this->userResource($request->user())]);
     }
 
-    public function updateProfile(Request $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = $request->user();
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-        ]);
-
-        $user->update([
-            'name' => $validated['name'],
-        ]);
-
-        return response()->json([
-            'message' => 'Profile updated.',
-            'user' => $this->userResource($user),
-        ]);
-    }
-
-    public function updatePassword(Request $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = $request->user();
-
-        $request->validate([
-            'current_password' => ['required', 'string'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
-        if (! Hash::check($request->current_password, $user->password)) {
-            throw ValidationException::withMessages([
-                'current_password' => [__('The current password is incorrect.')],
-            ]);
-        }
-
-        $user->forceFill([
-            'password' => Hash::make($request->password),
-        ])->save();
-
-        return response()->json([
-            'message' => 'Password updated.',
-        ]);
-    }
-
     private function userResource(User $user): array
     {
-        $user->load('families:id,name,currency_code,status', 'roles:id,name');
-
-        $roles = $user->getRoleNames()->values()->all();
-        $permissions = $user->getAllPermissions()->pluck('name')->values()->all();
-
+        $user->load('families:id,name,currency_code,status');
         return [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'is_admin' => $user->hasRole('Super Admin') || $user->hasRole('Admin') || $user->can('access_admin_panel'),
-            'roles' => $roles,
-            'permissions' => $permissions,
             'families' => $user->families->map(fn ($f) => [
                 'id' => $f->id,
                 'name' => $f->name,

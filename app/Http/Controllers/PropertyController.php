@@ -413,10 +413,6 @@ class PropertyController extends Controller
         ]);
     }
 
-    /**
-     * Valuation history: derived from depreciation (no manual entry).
-     * Each depreciation year's book_value is shown as the estimated value for end-of-year.
-     */
     public function valuations(Request $request, Family $family): View
     {
         $this->authorizePropertyManager($family);
@@ -429,20 +425,20 @@ class PropertyController extends Controller
         $from = $request->query('from');
         $to = $request->query('to');
 
-        $query = PropertyDepreciation::with('property')
+        $query = PropertyValuation::with('property')
             ->whereHas('property', function ($q) use ($family) {
                 $q->where('family_id', $family->id);
             })
-            ->orderByDesc('year');
+            ->orderByDesc('valuation_date');
 
         if ($propertyId) {
             $query->where('property_id', $propertyId);
         }
         if ($from) {
-            $query->whereRaw('CONCAT(year, ?) >= ?', ['-12-31', $from]);
+            $query->whereDate('valuation_date', '>=', $from);
         }
         if ($to) {
-            $query->whereRaw('CONCAT(year, ?) <= ?', ['-12-31', $to]);
+            $query->whereDate('valuation_date', '<=', $to);
         }
 
         $valuations = $query->paginate(25)->withQueryString();
@@ -509,16 +505,8 @@ class PropertyController extends Controller
         $this->authorizePropertyManager($family);
 
         $properties = Property::where('family_id', $family->id)
-            ->with('category:id,name,slug')
             ->orderBy('name')
             ->get();
-
-        $propertyIdsLand = $properties->filter(function ($p) {
-            $name = $p->name ?? '';
-            $catName = $p->category->name ?? '';
-
-            return stripos($name, 'land') !== false || stripos($catName, 'land') !== false;
-        })->pluck('id')->values()->all();
 
         $propertyId = (int) $request->query('property_id', 0);
         $year = $request->query('year');
@@ -546,7 +534,6 @@ class PropertyController extends Controller
                 'property_id' => $propertyId ?: null,
                 'year' => $year,
             ],
-            'propertyIdsLand' => $propertyIdsLand,
         ]);
     }
 

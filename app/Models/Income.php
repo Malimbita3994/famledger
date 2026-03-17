@@ -21,7 +21,6 @@ class Income extends Model
         'source',
         'received_date',
         'notes',
-        'is_recurring',
         'received_by',
         'created_by',
         'reconciliation_id',
@@ -32,7 +31,6 @@ class Income extends Model
         return [
             'amount' => 'decimal:2',
             'received_date' => 'date',
-            'is_recurring' => 'boolean',
         ];
     }
 

@@ -14,7 +14,6 @@ use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\Wallet;
 use App\Models\FamilyLiability;
-use App\Support\FinancialYear;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,8 +35,8 @@ class ReportController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
-        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
-        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
+        $dateFrom = $request->input('from', now()->subDays(30)->format('Y-m-d'));
+        $dateTo = $request->input('to', now()->format('Y-m-d'));
         $walletId = $request->input('wallet_id');
 
         $from = Carbon::parse($dateFrom)->startOfDay();
@@ -124,14 +123,14 @@ class ReportController extends Controller
         $this->authorizeFamilyMember($family);
 
         $walletId = $request->input('wallet_id');
-        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
-        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
+        $dateFrom = $request->input('from', now()->subDays(30)->format('Y-m-d'));
+        $dateTo = $request->input('to', now()->format('Y-m-d'));
 
         $wallets = $family->wallets()->orderBy('name')->get();
         $wallet = $wallets->firstWhere('id', (int) $walletId) ?? $wallets->first();
 
         $rows = [];
-        $runningBalance = $wallet ? $wallet->balanceAsOf(Carbon::parse($dateFrom)->subDay()) : 0;
+        $runningBalance = $wallet ? (float) $wallet->initial_balance : 0;
 
         if ($wallet) {
             $from = Carbon::parse($dateFrom)->startOfDay();
@@ -249,8 +248,8 @@ class ReportController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
-        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
-        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
+        $dateFrom = $request->input('from', now()->subDays(30)->format('Y-m-d'));
+        $dateTo = $request->input('to', now()->format('Y-m-d'));
         $walletId = $request->input('wallet_id');
 
         $from = Carbon::parse($dateFrom)->startOfDay();
@@ -322,8 +321,8 @@ class ReportController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
-        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
-        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
+        $dateFrom = $request->input('from', now()->subDays(30)->format('Y-m-d'));
+        $dateTo = $request->input('to', now()->format('Y-m-d'));
         $walletId = $request->input('wallet_id');
 
         $from = Carbon::parse($dateFrom)->startOfDay();
@@ -418,8 +417,8 @@ class ReportController extends Controller
             $report = 'cash-flow';
         }
 
-        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
-        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
+        $dateFrom = $request->input('from', now()->subMonth()->format('Y-m-d'));
+        $dateTo = $request->input('to', now()->format('Y-m-d'));
         $walletId = $request->input('wallet_id');
 
         $from = Carbon::parse($dateFrom)->startOfDay();
@@ -576,8 +575,8 @@ class ReportController extends Controller
         if ($report === 'budget') {
             $filterType = $request->input('type');
             $filterStatus = $request->input('status');
-            $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
-            $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
+            $dateFrom = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
+            $dateTo = $request->input('to', now()->endOfMonth()->format('Y-m-d'));
             $from = Carbon::parse($dateFrom)->startOfDay();
             $to = Carbon::parse($dateTo)->endOfDay();
             $budgetTypes = Budget::types();
@@ -662,8 +661,8 @@ class ReportController extends Controller
 
         $type = $request->input('type');
         $status = $request->input('status');
-        $dateFrom = $request->input('from', FinancialYear::start()->format('Y-m-d'));
-        $dateTo = $request->input('to', FinancialYear::end()->format('Y-m-d'));
+        $dateFrom = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->input('to', now()->endOfMonth()->format('Y-m-d'));
         $from = Carbon::parse($dateFrom)->startOfDay();
         $to = Carbon::parse($dateTo)->endOfDay();
 
@@ -712,12 +711,6 @@ class ReportController extends Controller
             ->orderBy('id')
             ->first();
 
-        // Check if main budget can be supported by main wallet balance
-        $budgetFeasibility = null;
-        if ($motherBudget && $primaryWallet) {
-            $budgetFeasibility = $motherBudget->canBeSupportedByWallet($primaryWallet);
-        }
-
         return view('families.reports.budget-vs-actual', [
             'family' => $family,
             'rows' => $rows,
@@ -730,7 +723,6 @@ class ReportController extends Controller
             'budgetRecurrences' => Budget::recurrences(),
             'motherBudget' => $motherBudget,
             'primaryWallet' => $primaryWallet,
-            'budgetFeasibility' => $budgetFeasibility,
         ]);
     }
 
@@ -825,6 +817,11 @@ class ReportController extends Controller
 
     private function walletBalanceAsOf(Wallet $wallet, Carbon $asOf): float
     {
-        return $wallet->balanceAsOf($asOf);
+        $initial = (float) $wallet->initial_balance;
+        $income = Income::where('wallet_id', $wallet->id)->where('received_date', '<=', $asOf)->sum('amount');
+        $expense = Expense::where('wallet_id', $wallet->id)->where('expense_date', '<=', $asOf)->sum('amount');
+        $in = Transfer::where('to_wallet_id', $wallet->id)->where('transfer_date', '<=', $asOf)->sum('amount');
+        $out = Transfer::where('from_wallet_id', $wallet->id)->where('transfer_date', '<=', $asOf)->sum('amount');
+        return $initial + $income - $expense + $in - $out;
     }
 }

@@ -18,8 +18,6 @@ class SettingsController extends Controller
      */
     public function index(Request $request): View
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
-
         $user = $request->user();
 
         $currentFamily = null;
@@ -54,7 +52,6 @@ class SettingsController extends Controller
      */
     public function categories(): View
     {
-        abort_unless(auth()->user() && auth()->user()->hasRole('Super Admin'), 403);
         $currencies = config('currencies', []);
         $defaultCurrency = $currencies['default'] ?? null;
 
@@ -82,7 +79,6 @@ class SettingsController extends Controller
      */
     public function storeLookup(Request $request)
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
         $validated = $request->validate([
             'type'        => ['required', 'string', 'max:255'],
             'name'        => ['required', 'string', 'max:255'],
@@ -147,7 +143,6 @@ class SettingsController extends Controller
      */
     public function updateLookup(Request $request, SystemLookup $systemLookup)
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
         $validated = $request->validate([
             'group'       => ['required', 'string', 'max:255'],
             'name'        => ['required', 'string', 'max:255'],
@@ -170,7 +165,6 @@ class SettingsController extends Controller
      */
     public function destroyLookup(SystemLookup $systemLookup)
     {
-        abort_unless(auth()->user() && auth()->user()->hasRole('Super Admin'), 403);
         $systemLookup->delete();
 
         return redirect()
@@ -183,7 +177,6 @@ class SettingsController extends Controller
      */
     public function storeIncomeCategory(Request $request)
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
         ]);
@@ -203,7 +196,6 @@ class SettingsController extends Controller
      */
     public function updateIncomeCategory(Request $request, IncomeCategory $incomeCategory)
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
         abort_unless($incomeCategory->family_id === null, 404);
 
         $validated = $request->validate([
@@ -222,7 +214,6 @@ class SettingsController extends Controller
      */
     public function destroyIncomeCategory(IncomeCategory $incomeCategory)
     {
-        abort_unless(auth()->user() && auth()->user()->hasRole('Super Admin'), 403);
         abort_unless($incomeCategory->family_id === null, 404);
 
         $incomeCategory->delete();
@@ -237,7 +228,6 @@ class SettingsController extends Controller
      */
     public function storeExpenseCategory(Request $request)
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
         ]);
@@ -257,7 +247,6 @@ class SettingsController extends Controller
      */
     public function updateExpenseCategory(Request $request, ExpenseCategory $expenseCategory)
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
         abort_unless($expenseCategory->family_id === null, 404);
 
         $validated = $request->validate([
@@ -276,7 +265,6 @@ class SettingsController extends Controller
      */
     public function destroyExpenseCategory(ExpenseCategory $expenseCategory)
     {
-        abort_unless(auth()->user() && auth()->user()->hasRole('Super Admin'), 403);
         abort_unless($expenseCategory->family_id === null, 404);
 
         $expenseCategory->delete();
@@ -291,7 +279,6 @@ class SettingsController extends Controller
      */
     public function storeFamilyRole(Request $request)
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
         $validated = $request->validate([
             'name'        => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -315,7 +302,6 @@ class SettingsController extends Controller
      */
     public function updateFamilyRole(Request $request, FamilyRole $familyRole)
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
         $validated = $request->validate([
             'name'        => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -341,7 +327,6 @@ class SettingsController extends Controller
      */
     public function destroyFamilyRole(FamilyRole $familyRole)
     {
-        abort_unless(auth()->user() && auth()->user()->hasRole('Super Admin'), 403);
         if ($familyRole->is_system) {
             return redirect()
                 ->route('settings.categories')
@@ -360,7 +345,6 @@ class SettingsController extends Controller
      */
     public function notifications(): View
     {
-        abort_unless(auth()->user() && auth()->user()->hasRole('Super Admin'), 403);
         return view('settings.notifications');
     }
 
@@ -369,7 +353,6 @@ class SettingsController extends Controller
      */
     public function auditLog(Request $request): View
     {
-        abort_unless($request->user() && $request->user()->hasRole('Super Admin'), 403);
         $query = AuditLog::with(['user:id,name,email', 'family:id,name'])
             ->orderByDesc('created_at');
 

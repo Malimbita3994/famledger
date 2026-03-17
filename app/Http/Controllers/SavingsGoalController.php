@@ -47,19 +47,16 @@ class SavingsGoalController extends Controller
         if ($family->currency_code && ! isset($currencies[$family->currency_code])) {
             $currencies = [$family->currency_code => $family->currency_code] + $currencies;
         }
-        $budgets = $family->budgets()->orderBy('name')->get(['id', 'name', 'type']);
-        $mainBudget = $family->budgets()->where('type', \App\Models\Budget::TYPE_FAMILY)->first();
-        $mainWallet = $family->mainWallet();
+        $budgets = $family->budgets()->where('status', 'active')->orderBy('name')->get(['id', 'name', 'type']);
 
-        return view('families.savings-goals.create', compact('family', 'wallets', 'currencies', 'budgets', 'mainBudget', 'mainWallet'));
+        return view('families.savings-goals.create', compact('family', 'wallets', 'currencies', 'budgets'));
     }
 
     public function store(Request $request, Family $family)
     {
         $this->authorizeFamilyMember($family);
 
-        // primary validation
-        $validator = validator($request->all(), [
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'target_amount' => ['required', 'numeric', 'min:0.01'],
@@ -67,29 +64,9 @@ class SavingsGoalController extends Controller
             'target_date' => ['nullable', 'date'],
             'start_date' => ['nullable', 'date'],
             'wallet_id' => ['required', Rule::exists('wallets', 'id')->where('family_id', $family->id)],
-            'budget_id' => ['nullable', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
             'priority' => ['nullable', Rule::in(array_keys(SavingsGoal::priorities()))],
             'status' => ['nullable', Rule::in(array_keys(SavingsGoal::statuses()))],
         ]);
-
-        // add post‑validation constraints
-        $validator->after(function ($validator) use ($family, $request) {
-            $amount = (float) $request->input('target_amount', 0);
-            $mainWallet = $family->mainWallet();
-            if ($mainWallet && $amount > $mainWallet->balance) {
-                $validator->errors()->add('target_amount', 'Goal amount cannot exceed main wallet balance (' . number_format($mainWallet->balance,2) . ').');
-            }
-            $mainBudget = $family->budgets()->where('type', \App\Models\Budget::TYPE_FAMILY)->first();
-            if ($mainBudget) {
-                $existingTotal = $family->savingsGoals()->sum('target_amount');
-                $available = $mainBudget->remaining_amount - $existingTotal;
-                if ($amount > $available) {
-                    $validator->errors()->add('target_amount', 'Total of savings goals cannot exceed remaining main budget (' . number_format($mainBudget->remaining_amount,2) . '). Available for new goal: ' . number_format($available,2) . '.');
-                }
-            }
-        });
-
-        $validated = $validator->validate();
 
         $family->savingsGoals()->create([
             'name' => $validated['name'],
@@ -99,7 +76,6 @@ class SavingsGoalController extends Controller
             'target_date' => $validated['target_date'] ?? null,
             'start_date' => $validated['start_date'] ?? null,
             'wallet_id' => $validated['wallet_id'],
-            'budget_id' => $validated['budget_id'] ?? null,
             'priority' => $validated['priority'] ?? 'medium',
             'status' => $validated['status'] ?? 'active',
             'created_by' => auth()->id(),
@@ -136,11 +112,9 @@ class SavingsGoalController extends Controller
         if ($family->currency_code && ! isset($currencies[$family->currency_code])) {
             $currencies = [$family->currency_code => $family->currency_code] + $currencies;
         }
-        $budgets = $family->budgets()->orderBy('name')->get(['id', 'name', 'type']);
-        $mainBudget = $family->budgets()->where('type', \App\Models\Budget::TYPE_FAMILY)->first();
-        $mainWallet = $family->mainWallet();
+        $budgets = $family->budgets()->where('status', 'active')->orderBy('name')->get(['id', 'name', 'type']);
 
-        return view('families.savings-goals.edit', compact('family', 'savingsGoal', 'wallets', 'currencies', 'budgets', 'mainBudget', 'mainWallet'));
+        return view('families.savings-goals.edit', compact('family', 'savingsGoal', 'wallets', 'currencies', 'budgets'));
     }
 
     public function update(Request $request, Family $family, SavingsGoal $savingsGoal)
@@ -150,8 +124,7 @@ class SavingsGoalController extends Controller
             abort(404);
         }
 
-        // validate update input
-        $validator = validator($request->all(), [
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'target_amount' => ['required', 'numeric', 'min:0.01'],
@@ -159,30 +132,9 @@ class SavingsGoalController extends Controller
             'target_date' => ['nullable', 'date'],
             'start_date' => ['nullable', 'date'],
             'wallet_id' => ['required', Rule::exists('wallets', 'id')->where('family_id', $family->id)],
-            'budget_id' => ['nullable', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
             'priority' => ['nullable', Rule::in(array_keys(SavingsGoal::priorities()))],
             'status' => ['nullable', Rule::in(array_keys(SavingsGoal::statuses()))],
         ]);
-
-        $validator->after(function ($validator) use ($family, $request, $savingsGoal) {
-            $amount = (float) $request->input('target_amount', 0);
-            $mainWallet = $family->mainWallet();
-            if ($mainWallet && $amount > $mainWallet->balance) {
-                $validator->errors()->add('target_amount', 'Goal amount cannot exceed main wallet balance (' . number_format($mainWallet->balance,2) . ').');
-            }
-            $mainBudget = $family->budgets()->where('type', \App\Models\Budget::TYPE_FAMILY)->first();
-            if ($mainBudget) {
-                $existingTotal = $family->savingsGoals()
-                    ->where('id','!=',$savingsGoal->id)
-                    ->sum('target_amount');
-                $available = $mainBudget->remaining_amount - $existingTotal;
-                if ($amount > $available) {
-                    $validator->errors()->add('target_amount', 'Total of savings goals cannot exceed remaining main budget (' . number_format($mainBudget->remaining_amount,2) . '). Available for update: ' . number_format($available,2) . '.');
-                }
-            }
-        });
-
-        $validated = $validator->validate();
 
         $savingsGoal->update([
             'name' => $validated['name'],
@@ -192,7 +144,6 @@ class SavingsGoalController extends Controller
             'target_date' => $validated['target_date'] ?? null,
             'start_date' => $validated['start_date'] ?? null,
             'wallet_id' => $validated['wallet_id'],
-            'budget_id' => $validated['budget_id'] ?? null,
             'priority' => $validated['priority'] ?? $savingsGoal->priority,
             'status' => $validated['status'] ?? $savingsGoal->status,
         ]);
@@ -307,80 +258,5 @@ class SavingsGoalController extends Controller
         return redirect()
             ->route('families.savings-goals.show', [$family, $savingsGoal])
             ->with('success', 'Contribution recorded. Funds transferred to goal wallet; progress updated.');
-    }
-
-    public function allocateForm(Family $family, SavingsGoal $savingsGoal)
-    {
-        $this->authorizeFamilyMember($family);
-        if ($savingsGoal->family_id !== $family->id) {
-            abort(404);
-        }
-
-        $budgets = $family->budgets()
-            ->where('status', 'active')
-            ->where('end_date', '>=', now()->toDateString())
-            ->orderBy('name')
-            ->get(['id', 'name', 'type', 'start_date', 'end_date']);
-
-        $allocations = $savingsGoal->budgetAllocations()
-            ->with('budget:id,name,type')
-            ->orderByDesc('allocated_date')
-            ->get();
-
-        $totalAllocated = $savingsGoal->budgetAllocations()->sum('amount');
-        // Use goal wallet's actual balance so funds in that wallet (e.g. "Allocated fund for specific purpose") can be allocated
-        $savingsGoal->load('wallet');
-        $walletBalance = $savingsGoal->wallet ? (float) $savingsGoal->wallet->balance : 0;
-        $availableToAllocate = max(0, $walletBalance - $totalAllocated);
-
-        return view('families.savings-goals.allocate', compact('family', 'savingsGoal', 'budgets', 'allocations', 'availableToAllocate'));
-    }
-
-    public function allocate(Request $request, Family $family, SavingsGoal $savingsGoal)
-    {
-        $this->authorizeFamilyMember($family);
-        if ($savingsGoal->family_id !== $family->id) {
-            abort(404);
-        }
-
-        $validated = $request->validate([
-            'budget_id' => ['required', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'reason' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $totalAllocated = $savingsGoal->budgetAllocations()->sum('amount');
-        $savingsGoal->load('wallet');
-        $walletBalance = $savingsGoal->wallet ? (float) $savingsGoal->wallet->balance : 0;
-        $availableToAllocate = max(0, $walletBalance - $totalAllocated);
-
-        if ((float) $validated['amount'] > $availableToAllocate) {
-            return back()
-                ->withInput()
-                ->with('error', 'Available balance is only ' . number_format($availableToAllocate, 2) . '.');
-        }
-
-        try {
-            DB::transaction(function () use ($family, $savingsGoal, $validated) {
-                \App\Models\SavingsBudgetAllocation::create([
-                    'family_id' => $family->id,
-                    'savings_goal_id' => $savingsGoal->id,
-                    'budget_id' => $validated['budget_id'],
-                    'amount' => $validated['amount'],
-                    'currency_code' => $savingsGoal->currency_code,
-                    'allocated_date' => now()->toDateString(),
-                    'reason' => $validated['reason'] ?? null,
-                    'created_by' => auth()->id(),
-                ]);
-            });
-
-            return redirect()
-                ->route('families.savings-goals.allocate', [$family, $savingsGoal])
-                ->with('success', 'Allocated ' . number_format($validated['amount'], 2) . ' to budget. The amount will contribute to the budget\'s used total.');
-        } catch (\Throwable $e) {
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to allocate funds: ' . $e->getMessage());
-        }
     }
 }
