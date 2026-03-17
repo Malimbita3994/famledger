@@ -63,19 +63,19 @@
             }
         </style>
         <div class="stats-summary-grid">
-            <div class="rounded-xl border border-border bg-card px-4 py-3">
+            <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
                 <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Families</div>
                 <div class="mt-1.5 text-lg font-semibold tabular-nums">{{ $families->count() }}</div>
             </div>
-            <div class="rounded-xl border border-border bg-card px-4 py-3">
+            <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
                 <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Active Families</div>
                 <div class="mt-1.5 text-lg font-semibold tabular-nums text-green-600">{{ $families->where('status', 'active')->count() }}</div>
             </div>
-            <div class="rounded-xl border border-border bg-card px-4 py-3">
+            <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
                 <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Members</div>
                 <div class="mt-1.5 text-lg font-semibold tabular-nums">{{ $families->sum('family_members_count') }}</div>
             </div>
-            <div class="rounded-xl border border-border bg-card px-4 py-3">
+            <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
                 <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Currencies Used</div>
                 <div class="mt-1.5 text-lg font-semibold tabular-nums">{{ $families->pluck('currency_code')->unique()->count() }}</div>
             </div>
