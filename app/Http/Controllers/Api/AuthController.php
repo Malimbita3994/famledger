@@ -74,7 +74,9 @@ class AuthController extends Controller
 
     private function userResource(User $user): array
     {
-        $user->load('families:id,name,currency_code,status');
+        // The families relationship is heavy and not required for login.
+        // It can be fetched later via a dedicated endpoint if needed.
+        // $user->load('families:id,name,currency_code,status');
         return [
             'id' => $user->id,
             'name' => $user->name,
