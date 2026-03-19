@@ -15,6 +15,11 @@
             <h1 class="font-medium text-lg text-mono">Budget</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Planned budget and actual spending. Each sub-budget sits under the family master budget and draws from the main family wallet.</p>
         </div>
+        <a href="{{ route('families.reports.budget-vs-actual.export-pdf', $family) . '?' . http_build_query(request()->only(['from','to','type','status'])) }}"
+           class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
+            <i class="ki-filled ki-file-down text-base"></i>
+            Export PDF
+        </a>
     </div>
 
     @if($motherBudget || $primaryWallet)

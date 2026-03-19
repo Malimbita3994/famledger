@@ -66,35 +66,221 @@
     }
     </style>
     {{-- Summary / hero --}}
-    <div class="kt-card mb-5 lg:mb-7.5">
-        <div class="kt-card-content py-6 lg:py-8">
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2 mb-1">
-                        <h2 class="text-xl lg:text-2xl font-semibold text-foreground truncate">{{ $family->name }}</h2>
-                        <span class="kt-badge {{ $family->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-[30px] shrink-0">
-                            <span class="kt-badge-dot size-1.5"></span>
-                            {{ ucfirst($family->status) }}
-                        </span>
+    <div class="kt-card mb-5 lg:mb-7.5" style="overflow: visible;">
+        <div class="kt-card-content py-6 lg:py-8" style="overflow: visible;">
+
+            {{-- Top row: avatar + name/status + currency switcher --}}
+            <div class="flex items-start gap-4">
+
+                {{-- Family Avatar --}}
+                <div class="shrink-0 size-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-border flex items-center justify-center">
+                    <i class="ki-filled ki-people text-2xl text-primary"></i>
+                </div>
+
+                {{-- Name + badge + description + meta --}}
+                <div class="flex-1 min-w-0">
+                    {{-- Name row + currency switcher --}}
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+                        <div class="flex flex-wrap items-center gap-2 min-w-0">
+                            <h2 class="text-xl lg:text-2xl font-semibold text-foreground truncate">{{ $family->name }}</h2>
+                            <span class="kt-badge {{ $family->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-[30px] shrink-0">
+                                <span class="kt-badge-dot size-1.5"></span>
+                                {{ ucfirst($family->status) }}
+                            </span>
+                        </div>
+
+                        {{-- Currency Switcher (top-right) --}}
+                        <div class="shrink-0 flex items-center gap-2">
+                            <span class="text-xs text-muted-foreground">Currency</span>
+                            @if($canManageMembers)
+                            <div class="relative">
+                                <button type="button" id="curr_btn"
+                                    class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-accent/40 hover:bg-accent text-sm font-semibold text-foreground transition-colors">
+                                    <i class="ki-filled ki-finance-calculator text-xs text-muted-foreground"></i>
+                                    <span id="curr_label">{{ $family->currency_code }}</span>
+                                    <i class="ki-filled ki-down text-[10px] text-muted-foreground" id="curr_chevron"></i>
+                                </button>
+                            </div>
+                            {{-- Dropdown teleported to body --}}
+                            <div id="curr_menu"
+                                 style="display:none; position:fixed; z-index:99999; width:224px; max-height:288px;
+                                        background:var(--color-card, #fff); border:1px solid var(--color-border,#e5e7eb);
+                                        border-radius:0.5rem; box-shadow:0 10px 25px -5px rgba(0,0,0,.18); overflow:hidden; flex-direction:column;">
+                                <div style="padding:8px 12px; border-bottom:1px solid var(--color-border,#e5e7eb); flex-shrink:0;">
+                                    <input type="text" id="curr_search" placeholder="Search currency…"
+                                        style="width:100%; font-size:12px; background:transparent; border:none; outline:none; color:inherit;"
+                                        autocomplete="off">
+                                </div>
+                                <ul id="curr_list" style="overflow-y:auto; flex:1; list-style:none; margin:0; padding:4px 0;">
+                                    @foreach($currencies as $code => $label)
+                                    <li data-lbl="{{ strtolower($label) }}">
+                                        <form method="POST" action="{{ route('families.currency.switch', $family) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="currency_code" value="{{ $code }}">
+                                            <button type="submit" style="display:flex; align-items:center; gap:6px; width:100%; text-align:left;
+                                                padding:7px 14px; font-size:13px; background:none; border:none; cursor:pointer;
+                                                color:{{ $family->currency_code === $code ? 'var(--color-primary,#2563eb)' : 'inherit' }};
+                                                font-weight:{{ $family->currency_code === $code ? '600' : '400' }};">
+                                                <span style="font-family:monospace; font-size:11px; opacity:.6; min-width:34px;">{{ $code }}</span>
+                                                {{ explode(' – ', $label)[1] ?? $label }}
+                                                @if($family->currency_code === $code)
+                                                <i class="ki-filled ki-check" style="margin-left:auto; font-size:12px;"></i>
+                                                @endif
+                                            </button>
+                                        </form>
+                                    </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            @else
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-accent/40 text-sm font-semibold text-foreground">
+                                <i class="ki-filled ki-finance-calculator text-xs text-muted-foreground"></i>
+                                {{ $family->currency_code }}
+                            </span>
+                            @endif
+                        </div>
                     </div>
+
+                    {{-- Description --}}
                     @if ($family->description)
-                        <p class="text-secondary-foreground text-sm leading-relaxed max-w-2xl mt-1">{{ Str::limit($family->description, 160) }}</p>
+                        <p class="text-secondary-foreground text-sm leading-relaxed max-w-2xl mt-1 mb-3">{{ Str::limit($family->description, 160) }}</p>
                     @endif
-                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-4 text-sm text-muted-foreground">
+
+                    {{-- Meta row with dot separators --}}
+                    <div class="flex flex-wrap items-center gap-1.5 mt-3 text-sm text-muted-foreground">
                         <span class="inline-flex items-center gap-1.5">
-                            <i class="ki-filled ki-people text-base text-muted-foreground"></i>
-                            {{ $family->familyMembers->count() }} {{ Str::plural('member', $family->familyMembers->count()) }}
+                            <i class="ki-filled ki-people text-sm"></i>
+                            <span>{{ $family->familyMembers->count() }} {{ Str::plural('member', $family->familyMembers->count()) }}</span>
                         </span>
-                        <span>{{ $family->currency_code }}</span>
                         @if ($family->creator)
-                            <span>Created by {{ $family->creator->name }}</span>
+                            <span class="text-border select-none">·</span>
+                            <span class="inline-flex items-center gap-1">
+                                <i class="ki-filled ki-user text-sm"></i>
+                                Created by <span class="text-foreground font-medium ml-0.5">{{ $family->creator->name }}</span>
+                            </span>
                         @endif
                         @if ($family->created_at)
-                            <span>{{ $family->created_at->format('M j, Y') }}</span>
+                            <span class="text-border select-none">·</span>
+                            <span class="inline-flex items-center gap-1">
+                                <i class="ki-filled ki-calendar text-sm"></i>
+                                {{ $family->created_at->format('M j, Y') }}
+                            </span>
+                        @endif
+                        @if($family->country)
+                            <span class="text-border select-none">·</span>
+                            <span class="inline-flex items-center gap-1">
+                                <i class="ki-filled ki-geolocation text-sm"></i>
+                                {{ $family->country }}
+                            </span>
+                        @endif
+                        @if($family->timezone)
+                            <span class="text-border select-none">·</span>
+                            <span>{{ $family->timezone }}</span>
                         @endif
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    {{-- Currency switcher script --}}
+    <script>
+    (function(){
+        var btn    = document.getElementById('curr_btn');
+        var menu   = document.getElementById('curr_menu');
+        var search = document.getElementById('curr_search');
+        var list   = document.getElementById('curr_list');
+        if (!btn || !menu) return;
+
+        // Move menu to body so it escapes overflow:hidden
+        document.body.appendChild(menu);
+
+        function openMenu() {
+            var r = btn.getBoundingClientRect();
+            menu.style.display = 'flex';
+            // Position below the button, right-aligned
+            var menuW = 224;
+            var left  = r.right - menuW;
+            var top   = r.bottom + 6;
+            // Clamp to viewport
+            if (left < 4) left = 4;
+            menu.style.left = left + 'px';
+            menu.style.top  = top + 'px';
+            if (search) { search.value = ''; search.focus(); filterList(''); }
+        }
+
+        function closeMenu() {
+            menu.style.display = 'none';
+        }
+
+        function isOpen() {
+            return menu.style.display !== 'none';
+        }
+
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            isOpen() ? closeMenu() : openMenu();
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!menu.contains(e.target) && e.target !== btn) closeMenu();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeMenu();
+        });
+
+        // reposition on scroll/resize
+        window.addEventListener('scroll', function() { if (isOpen()) openMenu(); }, true);
+        window.addEventListener('resize', function() { if (isOpen()) openMenu(); });
+
+        // Search filter
+        function filterList(q) {
+            list.querySelectorAll('li').forEach(function(li) {
+                li.style.display = li.dataset.lbl.includes(q) ? '' : 'none';
+            });
+        }
+        if (search) {
+            search.addEventListener('input', function() {
+                filterList(this.value.toLowerCase());
+            });
+        }
+
+        // Hover highlight
+        list.addEventListener('mouseover', function(e) {
+            var btn = e.target.closest('button');
+            if (btn) btn.style.background = 'rgba(0,0,0,.05)';
+        });
+        list.addEventListener('mouseout', function(e) {
+            var btn = e.target.closest('button');
+            if (btn) btn.style.background = '';
+        });
+    })();
+    </script>
+
+    {{-- Financial Summary --}}
+    <style>
+        .family-fin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.75rem;
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+    <div class="family-fin-grid">
+        <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
+            <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Income</div>
+            <div class="mt-1.5 text-lg font-semibold tabular-nums text-green-600">{{ $family->currency_code }} {{ number_format((float) $totalIncome, 2) }}</div>
+        </div>
+        <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
+            <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Expenses</div>
+            <div class="mt-1.5 text-lg font-semibold tabular-nums text-destructive">{{ $family->currency_code }} {{ number_format((float) $totalExpenses, 2) }}</div>
+        </div>
+        <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
+            <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Balance</div>
+            <div class="mt-1.5 text-lg font-semibold tabular-nums {{ $balance >= 0 ? 'text-green-600' : 'text-destructive' }}">{{ $family->currency_code }} {{ number_format((float) $balance, 2) }}</div>
         </div>
     </div>
 

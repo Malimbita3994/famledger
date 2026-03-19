@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->string('currency_code', 3)->default('USD');
+            $table->string('currency_code', 3)->default('TZS');
             $table->string('timezone')->default('UTC');
             $table->string('country')->nullable();
             $table->foreignId('created_by')->constrained('users');

@@ -48,9 +48,9 @@
                 <label for="currency_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Currency <span class="text-red-500">*</span>
                 </label>
-                <input type="text" name="currency_code" id="currency_code" value="{{ old('currency_code', $family?->currency_code ?? 'USD') }}" required maxlength="3"
+                <input type="text" name="currency_code" id="currency_code" value="{{ old('currency_code', $family?->currency_code ?? 'TZS') }}" required maxlength="3"
                        class="{{ $inputClass }} min-h-[44px] uppercase tracking-wider"
-                       placeholder="USD">
+                       placeholder="TZS">
                 @error('currency_code')
                     <p class="text-sm text-red-600 dark:text-red-400 mt-2">{{ $message }}</p>
                 @enderror

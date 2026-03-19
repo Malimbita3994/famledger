@@ -28,12 +28,26 @@ class WealthController extends Controller
 
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
 
-        // Wallet totals (real cash only, split between general wallets and project wallets)
-        $wallets = Wallet::where('family_id', $family->id)->get(['id', 'balance', 'type']);
+        // Wallet totals — balance is computed from transactions (no stored balance column)
+        $wallets = Wallet::where('family_id', $family->id)
+            ->withSum('incomes', 'amount')
+            ->withSum('expenses', 'amount')
+            ->withSum('incomingTransfers', 'amount')
+            ->withSum('outgoingTransfers', 'amount')
+            ->get(['id', 'type', 'initial_balance']);
+
+        // Attach computed balance to each wallet
+        $wallets->each(function (Wallet $w) {
+            $w->balance = (float) ($w->initial_balance ?? 0)
+                + (float) ($w->incomes_sum_amount ?? 0)
+                - (float) ($w->expenses_sum_amount ?? 0)
+                + (float) ($w->incoming_transfers_sum_amount ?? 0)
+                - (float) ($w->outgoing_transfers_sum_amount ?? 0);
+        });
 
         // Project wallets hold funds reserved for projects (type = project_fund).
         $projectWallets = $wallets->where('type', 'project_fund');
-        $otherWallets = $wallets->where('type', '!=', 'project_fund');
+        $otherWallets   = $wallets->where('type', '!=', 'project_fund');
 
         // Real cash in normal family wallets
         $walletTotal = (float) $otherWallets->sum('balance');
@@ -122,5 +136,75 @@ class WealthController extends Controller
             ],
             'trend' => $trend,
         ]);
+    }
+
+    /**
+     * Export wealth overview as PDF.
+     */
+    public function exportPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    {
+        $this->authorizeFamilyMember($family);
+
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+
+        $wallets = Wallet::where('family_id', $family->id)
+            ->withSum('incomes', 'amount')
+            ->withSum('expenses', 'amount')
+            ->withSum('incomingTransfers', 'amount')
+            ->withSum('outgoingTransfers', 'amount')
+            ->get(['id', 'type', 'initial_balance']);
+
+        $wallets->each(function (Wallet $w) {
+            $w->balance = (float) ($w->initial_balance ?? 0)
+                + (float) ($w->incomes_sum_amount ?? 0)
+                - (float) ($w->expenses_sum_amount ?? 0)
+                + (float) ($w->incoming_transfers_sum_amount ?? 0)
+                - (float) ($w->outgoing_transfers_sum_amount ?? 0);
+        });
+
+        $projectWallets = $wallets->where('type', 'project_fund');
+        $otherWallets   = $wallets->where('type', '!=', 'project_fund');
+        $walletTotal    = (float) $otherWallets->sum('balance');
+
+        $properties  = Property::where('family_id', $family->id)->get(['id', 'purchase_price', 'current_estimated_value']);
+        $propertyIds = $properties->pluck('id')->all();
+
+        $latestValuations = PropertyValuation::whereIn('property_id', $propertyIds)
+            ->select('property_id', 'estimated_value', 'valuation_date')
+            ->orderBy('valuation_date', 'desc')->get()->groupBy('property_id')->map->first();
+
+        $latestDepreciations = PropertyDepreciation::whereIn('property_id', $propertyIds)
+            ->select('property_id', 'year', 'book_value')
+            ->orderBy('year', 'desc')->get()->groupBy('property_id')->map->first();
+
+        $propertyTotal = 0.0;
+        foreach ($properties as $property) {
+            $latestVal     = $latestValuations[$property->id] ?? null;
+            $latestDep     = $latestDepreciations[$property->id] ?? null;
+            $valuation     = $latestVal ? (float) $latestVal->estimated_value : (float) ($property->current_estimated_value ?? 0);
+            $propertyTotal += $latestDep ? (float) $latestDep->book_value : ($valuation ?: (float) ($property->purchase_price ?? 0));
+        }
+
+        $projectTotal   = (float) $projectWallets->sum(fn (Wallet $w) => $w->balance);
+        $liabilityTotal = (float) FamilyLiability::where('family_id', $family->id)->where('status', '!=', 'closed')->sum('outstanding_balance');
+        $netWealth      = $walletTotal + $propertyTotal + $projectTotal - $liabilityTotal;
+        $totalAssets    = $walletTotal + $propertyTotal + $projectTotal;
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('families.wealth.pdf', [
+            'family'      => $family,
+            'currency'    => $currency,
+            'overview'    => ['wallet_total' => $walletTotal, 'property_total' => $propertyTotal, 'project_total' => $projectTotal, 'liability_total' => $liabilityTotal, 'net_wealth' => $netWealth],
+            'allocation'  => [
+                'wallet_pct'   => $totalAssets > 0 ? round(($walletTotal / $totalAssets) * 100, 1) : 0.0,
+                'property_pct' => $totalAssets > 0 ? round(($propertyTotal / $totalAssets) * 100, 1) : 0.0,
+                'project_pct'  => $totalAssets > 0 ? round(($projectTotal / $totalAssets) * 100, 1) : 0.0,
+            ],
+            'trend'       => FamilyWealthTrend::where('family_id', $family->id)->orderBy('snapshot_date')->get(),
+            'generatedAt' => now()->format('Y-m-d H:i'),
+        ]);
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('wealth-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
     }
 }

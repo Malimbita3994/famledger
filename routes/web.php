@@ -94,8 +94,12 @@ Route::middleware('auth')->group(function () {
     // Family Management (CRUD)
     Route::resource('families', FamilyController::class);
 
+    // Family currency switcher (updates display currency for this family)
+    Route::patch('families/{family}/currency', [FamilyController::class, 'switchCurrency'])->name('families.currency.switch');
+
     // Family wealth
     Route::get('families/{family}/wealth', [WealthController::class, 'index'])->name('families.wealth.index');
+    Route::get('families/{family}/wealth/export-pdf', [WealthController::class, 'exportPdf'])->name('families.wealth.export-pdf');
 
     // Family Members (add, edit role, remove)
     Route::prefix('families/{family}')->name('families.')->group(function () {
@@ -202,6 +206,13 @@ Route::middleware('auth')->group(function () {
         Route::get('reports/savings', [ReportController::class, 'savings'])->name('reports.savings');
         Route::get('reports/project-summary', [ReportController::class, 'projectSummary'])->name('reports.project-summary');
         Route::get('reports/property', [ReportController::class, 'property'])->name('reports.property');
+
+        // PDF Exports
+        Route::get('reports/export-pdf', [ReportController::class, 'exportOverviewPdf'])->name('reports.export-pdf');
+        Route::get('reports/cash-flow/export-pdf', [ReportController::class, 'exportCashFlowPdf'])->name('reports.cash-flow.export-pdf');
+        Route::get('reports/budget-vs-actual/export-pdf', [ReportController::class, 'exportBudgetVsActualPdf'])->name('reports.budget-vs-actual.export-pdf');
+        Route::get('reports/project-summary/export-pdf', [ReportController::class, 'exportProjectSummaryPdf'])->name('reports.project-summary.export-pdf');
+        Route::get('reports/property/export-pdf', [ReportController::class, 'exportPropertyPdf'])->name('reports.property.export-pdf');
 
         // Audit trail (application + database) for this family
         Route::get('audit-trail', [AuditTrailController::class, 'index'])->name('audit-trail.index');

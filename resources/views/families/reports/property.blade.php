@@ -10,40 +10,15 @@
         Back to {{ $family->name }}
     </a>
 
-    <style>
-    .property-report-filter-row {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        width: 100%;
-    }
 
-    .property-report-filter-col {
-        width: 100%;
-    }
-
-    @media (min-width: 900px) {
-        .property-report-filter-row {
-            flex-direction: row;
-            align-items: flex-end;
-        }
-
-        .property-report-filter-col {
-            flex: 1 1 0;
-        }
-    }
-    </style>
-
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div>
-            <h1 class="font-medium text-lg text-mono">Property reports</h1>
-            <p class="text-sm text-muted-foreground mt-0.5">
-                Snapshot of this family&rsquo;s properties with purchase vs. latest valuation and book value.
-            </p>
-        </div>
-        <form method="GET" class="property-report-filter-row mb-3">
-            <div class="property-report-filter-col">
-                <select name="category_id" class="kt-select w-full">
+    <div class="mb-6">
+        <h1 class="font-medium text-lg text-mono">Property reports</h1>
+        <p class="text-sm text-muted-foreground mt-0.5">
+            Snapshot of this family&rsquo;s properties with purchase vs. latest valuation and book value.
+        </p>
+        <div class="flex items-center justify-end gap-2 flex-nowrap mt-4">
+            <form method="GET" class="flex items-center gap-2 flex-nowrap">
+                <select name="category_id" class="kt-select" style="min-width:140px">
                     <option value="">All categories</option>
                     @foreach ($categories as $cat)
                         <option value="{{ $cat->id }}" @selected(($filters['category_id'] ?? null) == $cat->id)>
@@ -51,21 +26,20 @@
                         </option>
                     @endforeach
                 </select>
-            </div>
-            <div class="property-report-filter-col">
-                <select name="status" class="kt-select w-full">
+                <select name="status" class="kt-select" style="min-width:130px">
                     <option value="">All status</option>
                     @foreach (['active' => 'Active', 'sold' => 'Sold', 'under_mortgage' => 'Under mortgage', 'under_maintenance' => 'Under maintenance', 'disposed' => 'Disposed'] as $key => $label)
                         <option value="{{ $key }}" @selected(($filters['status'] ?? null) === $key)>{{ $label }}</option>
                     @endforeach
                 </select>
-            </div>
-            <div class="property-report-filter-col flex justify-end">
-                <button type="submit" class="kt-btn kt-btn-outline kt-btn-sm">
-                    Filter
-                </button>
-            </div>
-        </form>
+                <button type="submit" class="kt-btn kt-btn-outline kt-btn-sm whitespace-nowrap">Filter</button>
+            </form>
+            <a href="{{ route('families.reports.property.export-pdf', $family) . '?' . http_build_query(request()->only(['category_id','status'])) }}"
+               class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5 whitespace-nowrap">
+                <i class="ki-filled ki-file-down text-base"></i>
+                Export PDF
+            </a>
+        </div>
     </div>
 
     <div class="kt-card kt-card-grid min-w-full mt-4">

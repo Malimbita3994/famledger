@@ -83,19 +83,27 @@ class TransactionController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'currency_code']);
 
+        // Summary totals (respect wallet filter but ignore type filter)
         $totalIncome = DB::table('incomes')
             ->where('family_id', $family->id)
             ->when($walletId, fn ($q) => $q->where('wallet_id', $walletId))
             ->sum('amount');
 
-        $totalExpense = DB::table('expenses')
+        $totalExpenses = DB::table('expenses')
             ->where('family_id', $family->id)
             ->when($walletId, fn ($q) => $q->where('wallet_id', $walletId))
             ->sum('amount');
 
-        $netBalance = $totalIncome - $totalExpense;
+        $balance = $totalIncome - $totalExpenses;
 
-        return view('families.transactions.index', compact('family', 'transactions', 'wallets', 'type', 'totalIncome', 'totalExpense', 'netBalance'));
+        // Transaction count (for subtitle)
+        $transactionCount = DB::table('incomes')->where('family_id', $family->id)->when($walletId, fn ($q) => $q->where('wallet_id', $walletId))->count()
+            + DB::table('expenses')->where('family_id', $family->id)->when($walletId, fn ($q) => $q->where('wallet_id', $walletId))->count();
+
+        return view('families.transactions.index', compact(
+            'family', 'transactions', 'wallets', 'type',
+            'totalIncome', 'totalExpenses', 'balance', 'transactionCount'
+        ));
     }
 }
 

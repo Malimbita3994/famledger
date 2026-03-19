@@ -1,4 +1,4 @@
-<!--
+﻿<!--
 Product: Metronic is a toolkit of UI components built with Tailwind CSS for developing scalable web applications quickly and efficiently
 Version: v9.4.5
 Author: Keenthemes
@@ -31,7 +31,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <meta content="" property="og:description"/>
   <meta content="{{ asset('metronic/assets/media/app/og-image.png') }}" property="og:image"/>
   <link href="{{ asset('metronic/assets/media/app/apple-touch-icon.png') }}" rel="apple-touch-icon" sizes="180x180"/>
-  <link rel="icon" type="image/png" href="{{ asset('images/Flavicon.png') }}"/>
+  <link rel="icon" type="image/svg+xml" href="{{ asset('metronic/assets/media/brand-logos/logo.svg') }}"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/vendors/apexcharts/apexcharts.css') }}" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/vendors/keenicons/styles.bundle.css') }}" rel="stylesheet"/>
@@ -328,6 +328,70 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            </span>
           </a>
          </div>
+          @if(!empty($currentFamily))
+          {{-- Family Section --}}
+          <div class="kt-menu-item {{ request()->routeIs('families.*') ? 'kt-menu-item-show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-hover:bg-transparent kt-menu-item-here:bg-transparent">
+            <span class="kt-menu-icon items-start text-muted-foreground text-lg kt-menu-item-here:text-foreground kt-menu-item-show:text-foreground kt-menu-link-hover:text-foreground">
+             <i class="ki-filled ki-profile-circle"></i>
+            </span>
+            <span class="kt-menu-title font-medium text-sm text-secondary-foreground kt-menu-item-here:text-foreground kt-menu-item-show:text-foreground kt-menu-link-hover:text-foreground">Family</span>
+            <span class="kt-menu-arrow text-muted-foreground kt-menu-item-here:text-muted-foreground kt-menu-item-show:text-foreground kt-menu-link-hover:text-foreground">
+             <span class="inline-flex kt-menu-item-show:hidden"><i class="ki-filled ki-down text-xs"></i></span>
+             <span class="hidden kt-menu-item-show:inline-flex"><i class="ki-filled ki-up text-xs"></i></span>
+            </span>
+           </div>
+           <div class="kt-menu-accordion gap-px ps-7">
+            <div class="kt-menu-item {{ request()->routeIs('families.show') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.show', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-home-2"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Overview</span>
+             </a>
+            </div>
+            <div class="kt-menu-item {{ request()->routeIs('families.members.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.show', $currentFamily) }}#family-members">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-people"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Members</span>
+             </a>
+            </div>
+            @if(!empty($canManageInvites))
+            <div class="kt-menu-item {{ request()->routeIs('families.invites.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.invites.index', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-sms"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Invitations</span>
+             </a>
+            </div>
+            @endif
+            <div class="px-2.5 pt-3 pb-1">
+             <span class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Finances</span>
+            </div>
+            <div class="kt-menu-item {{ request()->routeIs('families.wallets.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.wallets.index', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-wallet"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Wallets</span>
+             </a>
+            </div>
+            <div class="kt-menu-item {{ request()->routeIs('families.accounts.transactions') || request()->routeIs('families.transactions.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.accounts.transactions', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-arrows-loop"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Transactions</span>
+             </a>
+            </div>
+            <div class="kt-menu-item {{ request()->routeIs('families.budgets.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.budgets.index', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-chart-line-up"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Budgets</span>
+             </a>
+            </div>
+            <div class="kt-menu-item {{ request()->routeIs('families.reports.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.reports.index', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-chart-pie-simple"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Reports</span>
+             </a>
+            </div>
+           </div>
+          </div>
+          @endif
          <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-hover:bg-transparent kt-menu-item-here:bg-transparent">
            <span class="kt-menu-icon items-start text-muted-foreground text-lg kt-menu-item-here:text-foreground kt-menu-item-show:text-foreground kt-menu-link-hover:text-foreground">
@@ -1318,67 +1382,6 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          </div>
          @endif
          @if(isset($currentFamily) && $currentFamily)
-         <!-- Property -->
-         @if(!empty($canManageProperty))
-         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
-          <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
-           <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
-            <i class="ki-filled ki-home-3"></i>
-           </span>
-           <span class="kt-menu-title text-sm text-foreground font-medium">
-            Property
-           </span>
-           <span class="kt-menu-arrow text-muted-foreground">
-            <span class="inline-flex kt-menu-item-show:hidden">
-             <i class="ki-filled ki-down text-xs"></i>
-            </span>
-            <span class="hidden kt-menu-item-show:inline-flex">
-             <i class="ki-filled ki-up text-xs"></i>
-            </span>
-           </span>
-          </div>
-          <div class="kt-menu-accordion gap-px ps-2.5">
-           <div class="kt-menu-item">
-            <a href="{{ route('families.properties.assets', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.assets') ? 'bg-secondary' : '' }}">
-             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-category"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Assets List</span>
-            </a>
-           </div>
-           <div class="kt-menu-item">
-            <a href="{{ route('families.properties.create', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.create') ? 'bg-secondary' : '' }}">
-             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-plus-circle"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Add Property</span>
-            </a>
-           </div>
-           <div class="kt-menu-item">
-            <a href="{{ route('families.properties.maintenance', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.maintenance') ? 'bg-secondary' : '' }}">
-             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-setting-2"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Maintenance</span>
-            </a>
-           </div>
-           <div class="kt-menu-item">
-            <a href="{{ route('families.properties.valuations', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.valuations') ? 'bg-secondary' : '' }}">
-             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-graph-3"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Valuation History</span>
-            </a>
-           </div>
-           <div class="kt-menu-item">
-            <a href="{{ route('families.properties.documents', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.documents') ? 'bg-secondary' : '' }}">
-             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-document"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Documents</span>
-            </a>
-           </div>
-           <div class="kt-menu-item">
-            <a href="{{ route('families.properties.depreciation', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.depreciation') ? 'bg-secondary' : '' }}">
-             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-chart-pie-simple"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Depreciation</span>
-            </a>
-           </div>
-          </div>
-         </div>
-         @endif
-         @endif
-         @if(isset($currentFamily) && $currentFamily)
          <!-- Projects -->
          <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
@@ -1558,6 +1561,67 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
 
           </div>
          </div>
+         @endif
+         @if(isset($currentFamily) && $currentFamily)
+         <!-- Property -->
+         @if(!empty($canManageProperty))
+         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+          <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
+           <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
+            <i class="ki-filled ki-home-3"></i>
+           </span>
+           <span class="kt-menu-title text-sm text-foreground font-medium">
+            Property
+           </span>
+           <span class="kt-menu-arrow text-muted-foreground">
+            <span class="inline-flex kt-menu-item-show:hidden">
+             <i class="ki-filled ki-down text-xs"></i>
+            </span>
+            <span class="hidden kt-menu-item-show:inline-flex">
+             <i class="ki-filled ki-up text-xs"></i>
+            </span>
+           </span>
+          </div>
+          <div class="kt-menu-accordion gap-px ps-2.5">
+           <div class="kt-menu-item">
+            <a href="{{ route('families.properties.assets', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.assets') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-category"></i></span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Assets List</span>
+            </a>
+           </div>
+           <div class="kt-menu-item">
+            <a href="{{ route('families.properties.create', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.create') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-plus-circle"></i></span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Add Property</span>
+            </a>
+           </div>
+           <div class="kt-menu-item">
+            <a href="{{ route('families.properties.maintenance', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.maintenance') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-setting-2"></i></span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Maintenance</span>
+            </a>
+           </div>
+           <div class="kt-menu-item">
+            <a href="{{ route('families.properties.valuations', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.valuations') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-graph-3"></i></span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Valuation History</span>
+            </a>
+           </div>
+           <div class="kt-menu-item">
+            <a href="{{ route('families.properties.documents', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.documents') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-document"></i></span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Documents</span>
+            </a>
+           </div>
+           <div class="kt-menu-item">
+            <a href="{{ route('families.properties.depreciation', $currentFamily) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.properties.depreciation') ? 'bg-secondary' : '' }}">
+             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-chart-pie-simple"></i></span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Depreciation</span>
+            </a>
+           </div>
+          </div>
+         </div>
+         @endif
          @endif
          <!-- Settings (single entry that opens settings overview) -->
          <div class="kt-menu-item">
@@ -1886,6 +1950,80 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           </button>
          </div>
          <div class="kt-menu" data-kt-menu="true">
+          @if(!empty($currentFamily))
+          {{-- Family Section --}}
+          <div class="kt-menu-item {{ request()->routeIs('families.*') ? 'kt-menu-item-show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-hover:bg-transparent kt-menu-item-here:bg-transparent">
+            <span class="kt-menu-icon items-start text-muted-foreground text-lg kt-menu-item-here:text-foreground kt-menu-item-show:text-foreground kt-menu-link-hover:text-foreground">
+             <i class="ki-filled ki-profile-circle"></i>
+            </span>
+            <span class="kt-menu-title font-medium text-sm text-secondary-foreground kt-menu-item-here:text-foreground kt-menu-item-show:text-foreground kt-menu-link-hover:text-foreground">
+             Family
+            </span>
+            <span class="kt-menu-arrow text-muted-foreground kt-menu-item-here:text-muted-foreground kt-menu-item-show:text-foreground kt-menu-link-hover:text-foreground">
+             <span class="inline-flex kt-menu-item-show:hidden"><i class="ki-filled ki-down text-xs"></i></span>
+             <span class="hidden kt-menu-item-show:inline-flex"><i class="ki-filled ki-up text-xs"></i></span>
+            </span>
+           </div>
+           <div class="kt-menu-accordion gap-px ps-7">
+            {{-- Overview --}}
+            <div class="kt-menu-item {{ request()->routeIs('families.show') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.show', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-home-2"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Overview</span>
+             </a>
+            </div>
+            {{-- Members --}}
+            <div class="kt-menu-item {{ request()->routeIs('families.members.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.show', $currentFamily) }}#family-members">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-people"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Members</span>
+             </a>
+            </div>
+            {{-- Invitations --}}
+            @if(!empty($canManageInvites))
+            <div class="kt-menu-item {{ request()->routeIs('families.invites.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.invites.index', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-sms"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Invitations</span>
+             </a>
+            </div>
+            @endif
+            {{-- Finances divider --}}
+            <div class="px-2.5 pt-3 pb-1">
+             <span class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Finances</span>
+            </div>
+            {{-- Wallets --}}
+            <div class="kt-menu-item {{ request()->routeIs('families.wallets.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.wallets.index', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-wallet"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Wallets</span>
+             </a>
+            </div>
+            {{-- Transactions --}}
+            <div class="kt-menu-item {{ request()->routeIs('families.accounts.transactions') || request()->routeIs('families.transactions.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.accounts.transactions', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-arrows-loop"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Transactions</span>
+             </a>
+            </div>
+            {{-- Budgets --}}
+            <div class="kt-menu-item {{ request()->routeIs('families.budgets.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.budgets.index', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-chart-line-up"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Budgets</span>
+             </a>
+            </div>
+            {{-- Reports --}}
+            <div class="kt-menu-item {{ request()->routeIs('families.reports.*') ? 'kt-menu-item-active' : '' }}">
+             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.reports.index', $currentFamily) }}">
+              <span class="kt-menu-icon text-base"><i class="ki-filled ki-chart-pie-simple"></i></span>
+              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Reports</span>
+             </a>
+            </div>
+           </div>
+          </div>
+          @endif
           <div class="kt-menu-item" data-kt-menu-item-offset="0,10px" data-kt-menu-item-placement="bottom-end" data-kt-menu-item-placement-rtl="bottom-start" data-kt-menu-item-toggle="dropdown" data-kt-menu-item-trigger="click|lg:hover">
            <button class="kt-menu-toggle kt-btn kt-btn-icon kt-btn-ghost">
             <i class="ki-filled ki-setting-2">

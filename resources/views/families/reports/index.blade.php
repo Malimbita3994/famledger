@@ -10,6 +10,11 @@
             <h1 class="font-medium text-lg text-mono">General Report</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Overview of family finances, budgets, savings, and projects. Filter by date and wallet.</p>
         </div>
+        <a href="{{ route('families.reports.export-pdf', $family) . '?' . http_build_query(request()->only(['from','to','wallet_id'])) }}"
+           class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
+            <i class="ki-filled ki-file-down text-base"></i>
+            Export PDF
+        </a>
     </div>
 
     {{-- Filter report card (standard) --}}

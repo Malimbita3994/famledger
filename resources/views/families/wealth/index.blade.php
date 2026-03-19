@@ -31,6 +31,11 @@
                 Live net worth from real wallet balances, property values and funded projects for {{ $family->name }}.
             </p>
         </div>
+        <a href="{{ route('families.wealth.export-pdf', $family) }}"
+           class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
+            <i class="ki-filled ki-file-down text-base"></i>
+            Export PDF
+        </a>
     </div>
 
     {{-- Wealth overview (KPI style, similar to reports) --}}

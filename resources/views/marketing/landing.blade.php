@@ -27,7 +27,7 @@
      <!-- MAIN CSS -->
      <link rel="stylesheet" href="{{ asset('metronic/assets/css/tooplate-style.css') }}">
 
-     <style>
+    <style>
      @keyframes blink {
        0%, 100% { opacity: 1; }
        50% { opacity: 0; }
@@ -39,7 +39,7 @@
 
      .hero-cta {
        padding: 10px 24px;
-       border-radius: 999px;
+            border-radius: 999px;
        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
        display: inline-block;
      }
@@ -98,8 +98,8 @@
      #footer a,
      #footer .social-icon li a {
        color: #ffffff;
-     }
-     </style>
+        }
+    </style>
 
 </head>
 <body>
@@ -110,7 +110,7 @@
 
                <span class="spinner-rotate"></span>
                
-          </div>
+            </div>
      </section>
 
 
@@ -129,8 +129,8 @@
                     <a href="#home" class="navbar-brand">
                          <img src="{{ asset('images/logo.png') }}" alt="FamLedger logo" style="height:32px; margin-right:8px; display:inline-block; vertical-align:middle;">
                          <span style="color:#009EF7; font-weight:700;">FamLedger</span>
-                    </a>
-               </div>
+                </a>
+            </div>
 
                <!-- MENU LINKS -->
                <div class="collapse navbar-collapse">
@@ -146,7 +146,7 @@
                     </ul>
                </div>
 
-          </div>
+        </div>
      </section>
 
     <!-- HOME -->
@@ -170,7 +170,7 @@
                     </div>
 
                </div>
-          </div>
+                        </div>
      </section>
 
 
@@ -182,7 +182,7 @@
                     <div class="col-md-12 col-sm-12 scroll-reveal">
                          <div class="section-title">
                               <h1>What your family gets</h1>
-                         </div>
+                        </div>
                     </div>
 
                     <div class="col-md-6 col-sm-6 scroll-reveal scroll-reveal-delay-1">
@@ -219,32 +219,32 @@
                                    <div class="tab-pane-item">
                                         <h2>Projects as assets</h2>
                                         <p>Plan budgets, track funding and actual spending for family projects (construction, education, investments) and convert completed projects into long‑term properties.</p>
-                                   </div>
-                              </div>
+                </div>
+                        </div>
 
                               <div class="tab-pane" id="tab03" role="tabpanel">
                                    <div class="tab-pane-item">
                                         <h2>Roles for owners & members</h2>
                                         <p>Give owners and co‑owners full control while offering read-only or limited access to selected family members, assistants or advisors.</p>
-                                   </div>
+                            </div>
                                    <div class="tab-pane-item">
                                         <h2>Secure permissions</h2>
                                         <p>Use fine-grained permissions, confirmations and a clear separation between family roles and system admin roles so every important change is intentional and traceable.</p>
-                                   </div>
-                              </div>
-                         </div>
+                            </div>
+                            </div>
+                        </div>
 
-                    </div>
+                            </div>
 
                     <div class="col-md-6 col-sm-6 scroll-reveal scroll-reveal-delay-2">
                          <div class="feature-image">
                               <img src="{{ asset('images/feature-mockup.png') }}" class="img-responsive" alt="Thin Laptop" loading="lazy" decoding="async">                             
-                         </div>
+                        </div>
                     </div>
 
-               </div>
-          </div>
-     </section>
+                </div>
+            </div>
+        </section>
 
 
      <!-- ABOUT -->
@@ -287,12 +287,12 @@
                                    <h2>FamLedger Team</h2>
                                    <small>Product & Engineering</small>
                                    <p>We are focused on privacy, clarity and long‑term stewardship of family wealth and responsibilities.</p>
-                              </div>
-                         </div>
+                </div>
+                        </div>
                     </div>
                     
                </div>
-          </div>
+                        </div>
      </section>
 
 
@@ -338,12 +338,12 @@
                                    </div>
                               </div>
 
-                         </div>
+                        </div>
                     </div>
                     
-               </div>
-          </div>
-     </section>
+                </div>
+            </div>
+        </section>
 
 
     <!-- PRICING (temporarily hidden) -->
@@ -389,26 +389,26 @@
                              <div class="pricing-bottom">
                                    <span class="pricing-dollar">$19/mo</span>
                                    <a href="{{ route('register') }}" class="section-btn pricing-btn">Choose Growing</a>
-                             </div>
-                         </div>
                     </div>
+                </div>
+                        </div>
 
                     <div class="col-md-4 col-sm-6">
                          <div class="pricing-thumb">
                              <div class="pricing-title">
                                   <h2>Family Office</h2>
-                             </div>
+                            </div>
                              <div class="pricing-info">
                                    <p>Unlimited members & families</p>
                                    <p>Custom roles and permissions</p>
                                    <p>Dedicated success manager</p>
                                    <p>Audit‑ready reporting</p>
-                             </div>
+                            </div>
                              <div class="pricing-bottom">
                                    <span class="pricing-dollar">Talk to us</span>
                                    <a href="#contact" class="section-btn pricing-btn">Book a demo</a>
-                             </div>
-                         </div>
+                            </div>
+                        </div>
                     </div>
                     
                </div>
@@ -459,9 +459,9 @@
                          </form>
                     </div>
 
-               </div>
-          </div>
-     </section>       
+                </div>
+            </div>
+        </section>
 
 
      <!-- FOOTER -->

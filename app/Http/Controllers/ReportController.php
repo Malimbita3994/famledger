@@ -824,4 +824,224 @@ class ReportController extends Controller
         $out = Transfer::where('from_wallet_id', $wallet->id)->where('transfer_date', '<=', $asOf)->sum('amount');
         return $initial + $income - $expense + $in - $out;
     }
+
+    /* -----------------------------------------------------------------------
+     * PDF EXPORT METHODS
+     * ----------------------------------------------------------------------- */
+
+    /**
+     * Export the reports overview as PDF.
+     */
+    public function exportOverviewPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    {
+        $this->authorizeFamilyMember($family);
+
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+        $dateFrom = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
+        $dateTo   = $request->input('to',   now()->endOfMonth()->format('Y-m-d'));
+        $from     = Carbon::parse($dateFrom)->startOfDay();
+        $to       = Carbon::parse($dateTo)->endOfDay();
+
+        $totalIncome   = (float) Income::where('family_id', $family->id)->whereBetween('received_date', [$from, $to])->sum('amount');
+        $totalExpenses = (float) Expense::where('family_id', $family->id)->whereBetween('expense_date', [$from, $to])->sum('amount');
+        $savings       = $totalIncome - $totalExpenses;
+        $activeProjects = $family->projects()->where('status', 'active')->count();
+
+        $budgets         = Budget::where('family_id', $family->id)->where('status', 'active')->get();
+        $totalBudget     = (float) $budgets->sum('amount');
+        $totalBudgetUsed = 0.0;
+        $budgetRows      = [];
+        foreach ($budgets as $budget) {
+            $used = (float) Expense::where('budget_id', $budget->id)->whereBetween('expense_date', [$from, $to])->sum('amount');
+            $totalBudgetUsed += $used;
+            $budgetRows[] = ['budget' => $budget, 'planned' => (float) $budget->amount, 'used' => $used, 'over' => $used > (float) $budget->amount, 'remaining' => (float) $budget->amount - $used];
+        }
+        $budgetUsedPercent = $totalBudget > 0 ? round(($totalBudgetUsed / $totalBudget) * 100, 1) : 0.0;
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('families.reports.pdf.overview', [
+            'family'            => $family,
+            'currency'          => $currency,
+            'dateFrom'          => $dateFrom,
+            'dateTo'            => $dateTo,
+            'totalIncome'       => $totalIncome,
+            'totalExpenses'     => $totalExpenses,
+            'savings'           => $savings,
+            'activeProjects'    => $activeProjects,
+            'totalBudget'       => $totalBudget,
+            'totalBudgetUsed'   => $totalBudgetUsed,
+            'budgetUsedPercent' => $budgetUsedPercent,
+            'budgetRows'        => $budgetRows,
+            'generatedAt'       => now()->format('Y-m-d H:i'),
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+        return $pdf->download('reports-overview-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Export cash flow report as PDF.
+     */
+    public function exportCashFlowPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    {
+        $this->authorizeFamilyMember($family);
+
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+        $dateFrom = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
+        $dateTo   = $request->input('to',   now()->endOfMonth()->format('Y-m-d'));
+        $from     = Carbon::parse($dateFrom)->startOfDay();
+        $to       = Carbon::parse($dateTo)->endOfDay();
+
+        $walletId = $request->input('wallet_id');
+        $walletQuery = fn ($q) => $walletId ? $q->where('wallet_id', $walletId) : $q->where('family_id', $family->id);
+
+        $totalIncome   = (float) $walletQuery(new Income())->whereBetween('received_date', [$from, $to])->sum('amount');
+        $totalExpenses = (float) $walletQuery(new Expense())->whereBetween('expense_date', [$from, $to])->sum('amount');
+        $netFlow       = $totalIncome - $totalExpenses;
+
+        $wallets = $family->wallets()->withSum('incomes', 'amount')->withSum('expenses', 'amount')
+            ->withSum('incomingTransfers', 'amount')->withSum('outgoingTransfers', 'amount')->get();
+        $wallets->each(function ($w) {
+            $w->balance = (float) ($w->initial_balance ?? 0) + (float) ($w->incomes_sum_amount ?? 0)
+                - (float) ($w->expenses_sum_amount ?? 0) + (float) ($w->incoming_transfers_sum_amount ?? 0)
+                - (float) ($w->outgoing_transfers_sum_amount ?? 0);
+        });
+        $openingBalance = 0.0; $closingBalance = (float) $wallets->sum('balance');
+
+        $transfers = Transfer::where('family_id', $family->id)->whereBetween('transfer_date', [$from, $to])
+            ->with(['fromWallet:id,name', 'toWallet:id,name'])->orderByDesc('transfer_date')->limit(100)->get();
+        $totalTransferred = (float) $transfers->sum('amount');
+
+        // Income by source
+        $incomeBySource = Income::where('family_id', $family->id)->whereBetween('received_date', [$from, $to])
+            ->select('source', DB::raw('SUM(amount) as total'))->groupBy('source')->get();
+        $bySource = $incomeBySource->map(fn ($r) => [
+            'name' => $r->source ?? 'Unknown', 'total' => (float) $r->total,
+            'percent' => $totalIncome > 0 ? round(($r->total / $totalIncome) * 100, 1) : 0,
+        ])->sortByDesc('total')->values();
+
+        // Expenses by category
+        $expenseByCategory = Expense::where('family_id', $family->id)->whereBetween('expense_date', [$from, $to])
+            ->join('expense_categories', 'expenses.category_id', '=', 'expense_categories.id', 'left')
+            ->select('expense_categories.name as cat_name', DB::raw('SUM(expenses.amount) as total'))
+            ->groupBy('expense_categories.name')->get();
+        $byCategory = $expenseByCategory->map(fn ($r) => [
+            'name' => $r->cat_name ?? 'Uncategorised', 'total' => (float) $r->total,
+            'percent' => $totalExpenses > 0 ? round(($r->total / $totalExpenses) * 100, 1) : 0,
+        ])->sortByDesc('total')->values();
+
+        // Budgets
+        $budgetRows = [];
+        foreach (Budget::where('family_id', $family->id)->where('status', 'active')->get() as $budget) {
+            $used = (float) Expense::where('budget_id', $budget->id)->whereBetween('expense_date', [$from, $to])->sum('amount');
+            $budgetRows[] = ['budget' => $budget, 'planned' => (float) $budget->amount, 'used' => $used, 'over' => $used > (float) $budget->amount, 'percent' => (float) $budget->amount > 0 ? round(($used / (float) $budget->amount) * 100, 1) : 0];
+        }
+
+        // Savings
+        $savingsRows = [];
+        foreach (SavingsGoal::where('family_id', $family->id)->get() as $goal) {
+            $saved = (float) $goal->contributions()->sum('amount');
+            $target = (float) $goal->target_amount;
+            $savingsRows[] = ['goal' => $goal, 'target' => $target, 'saved' => $saved, 'percent' => $target > 0 ? round(($saved / $target) * 100, 1) : 0];
+        }
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('families.reports.pdf.cash-flow', compact(
+            'family', 'currency', 'dateFrom', 'dateTo', 'totalIncome', 'totalExpenses', 'netFlow',
+            'openingBalance', 'closingBalance', 'transfers', 'totalTransferred', 'bySource', 'byCategory',
+            'budgetRows', 'savingsRows'
+        ) + ['generatedAt' => now()->format('Y-m-d H:i')]);
+        $pdf->setPaper('a4', 'portrait');
+        return $pdf->download('cash-flow-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Export budget vs actual as PDF.
+     */
+    public function exportBudgetVsActualPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    {
+        $this->authorizeFamilyMember($family);
+
+        $currency    = $family->currency_code ?? config('currencies.default', 'TZS');
+        $dateFrom    = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
+        $dateTo      = $request->input('to',   now()->endOfMonth()->format('Y-m-d'));
+        $from        = Carbon::parse($dateFrom)->startOfDay();
+        $to          = Carbon::parse($dateTo)->endOfDay();
+        $filterType   = $request->input('type');
+        $filterStatus = $request->input('status', 'active');
+
+        $query = Budget::where('family_id', $family->id);
+        if ($filterType)   $query->where('type', $filterType);
+        if ($filterStatus) $query->where('status', $filterStatus);
+        $budgets = $query->orderBy('name')->get();
+
+        $motherBudget     = $budgets->where('type', 'family')->first();
+        $budgetRecurrences = ['monthly' => 'Monthly', 'weekly' => 'Weekly', 'quarterly' => 'Quarterly', 'annually' => 'Annually', 'one_time' => 'Single period'];
+
+        $rows = $budgets->map(function ($budget) use ($from, $to) {
+            $used      = (float) Expense::where('budget_id', $budget->id)->whereBetween('expense_date', [$from, $to])->sum('amount');
+            $planned   = (float) $budget->amount;
+            $remaining = $planned - $used;
+            return ['budget' => $budget, 'planned' => $planned, 'used' => $used, 'remaining' => $remaining, 'over' => $used > $planned];
+        })->values()->all();
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('families.reports.pdf.budget-vs-actual', compact(
+            'family', 'currency', 'dateFrom', 'dateTo', 'rows', 'motherBudget', 'budgetRecurrences'
+        ) + ['generatedAt' => now()->format('Y-m-d H:i')]);
+        $pdf->setPaper('a4', 'portrait');
+        return $pdf->download('budget-vs-actual-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Export project summary as PDF.
+     */
+    public function exportProjectSummaryPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    {
+        $this->authorizeFamilyMember($family);
+
+        $currency       = $family->currency_code ?? config('currencies.default', 'TZS');
+        $projects       = $family->projects()->withSum('fundings', 'amount')->withSum('expenses', 'amount')->with('budget')->orderBy('name')->get();
+        $totalProjects  = $projects->count();
+        $counts         = $projects->countBy('status');
+        $activeCount    = (int) ($counts['active'] ?? 0);
+        $completedCount = (int) ($counts['completed'] ?? 0);
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('families.reports.pdf.project-summary', compact(
+            'family', 'currency', 'projects', 'totalProjects', 'activeCount', 'completedCount'
+        ) + ['generatedAt' => now()->format('Y-m-d H:i')]);
+        $pdf->setPaper('a4', 'portrait');
+        return $pdf->download('project-summary-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Export property report as PDF.
+     */
+    public function exportPropertyPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    {
+        $this->authorizeFamilyMember($family);
+
+        $currency    = $family->currency_code ?? config('currencies.default', 'TZS');
+        $filters     = $request->only(['category_id', 'status']);
+        $query       = Property::where('family_id', $family->id)->with('category');
+        if (! empty($filters['category_id'])) $query->where('category_id', $filters['category_id']);
+        if (! empty($filters['status']))      $query->where('status', $filters['status']);
+        $properties  = $query->orderBy('name')->get();
+        $propertyIds = $properties->pluck('id')->all();
+
+        $latestValuations = PropertyValuation::whereIn('property_id', $propertyIds)
+            ->select('property_id', 'estimated_value', 'valuation_date')
+            ->orderBy('valuation_date', 'desc')->get()->groupBy('property_id')->map->first();
+
+        $latestDepreciations = PropertyDepreciation::whereIn('property_id', $propertyIds)
+            ->select('property_id', 'year', 'book_value')
+            ->orderBy('year', 'desc')->get()->groupBy('property_id')->map->first();
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('families.reports.pdf.property', compact(
+            'family', 'currency', 'properties', 'latestValuations', 'latestDepreciations'
+        ) + ['generatedAt' => now()->format('Y-m-d H:i')]);
+        $pdf->setPaper('a4', 'landscape');
+        return $pdf->download('property-report-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+    }
 }

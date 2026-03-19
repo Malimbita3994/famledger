@@ -25,6 +25,11 @@
             <h1 class="font-medium text-lg text-mono">Project Summary Report</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Status, budget, spent, remaining, and completion. Filter by tab or search by name.</p>
         </div>
+        <a href="{{ route('families.reports.project-summary.export-pdf', $family) . '?' . http_build_query(request()->only(['tab','search'])) }}"
+           class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
+            <i class="ki-filled ki-file-down text-base"></i>
+            Export PDF
+        </a>
     </div>
 
     {{-- Filter report card with tabs (cash-flow style) --}}

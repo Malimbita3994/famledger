@@ -33,6 +33,11 @@
         <div>
             <h1 class="font-medium text-lg text-mono">Cash Flow Report</h1>
         </div>
+        <a href="{{ route('families.reports.cash-flow.export-pdf', $family) . '?' . http_build_query(request()->only(['from','to','wallet_id'])) }}"
+           class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
+            <i class="ki-filled ki-file-down text-base"></i>
+            Export PDF
+        </a>
     </div>
 
     {{-- Filters (card style like accounts/income) --}}

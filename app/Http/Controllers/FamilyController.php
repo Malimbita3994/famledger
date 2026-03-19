@@ -130,7 +130,14 @@ class FamilyController extends Controller
             ->first();
         $canManageMembers = $currentMembership && in_array($currentMembership->role->name ?? '', ['Owner', 'Co-owner'], true);
 
-        return view('families.show', compact('family', 'canManageMembers'));
+        // Financial summary for the overview page
+        $totalIncome   = DB::table('incomes')->where('family_id', $family->id)->sum('amount');
+        $totalExpenses = DB::table('expenses')->where('family_id', $family->id)->sum('amount');
+        $balance       = $totalIncome - $totalExpenses;
+
+        $currencies = Arr::except(config('currencies', []), ['default']);
+
+        return view('families.show', compact('family', 'canManageMembers', 'totalIncome', 'totalExpenses', 'balance', 'currencies'));
     }
 
     /**
@@ -174,6 +181,35 @@ class FamilyController extends Controller
         ]);
 
         return redirect()->route('families.index')->with('success', 'Family updated successfully.');
+    }
+
+    /**
+     * Switch the family's primary display currency (Owner/Co-owner only).
+     */
+    public function switchCurrency(Request $request, Family $family)
+    {
+        $this->authorizeFamilyMember($family);
+
+        // Only owner/co-owner may change the family currency
+        $membership = \App\Models\FamilyMember::where('family_id', $family->id)
+            ->where('user_id', auth()->id())
+            ->with('role')
+            ->first();
+
+        $roleName = mb_strtolower($membership?->role?->name ?? '');
+        if (! in_array($roleName, ['owner', 'co-owner'], true) && ! auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'Only family owners can change the currency.');
+        }
+
+        $validCurrencies = array_keys(\Illuminate\Support\Arr::except(config('currencies', []), ['default']));
+
+        $validated = $request->validate([
+            'currency_code' => ['required', 'string', 'size:3', \Illuminate\Validation\Rule::in($validCurrencies)],
+        ]);
+
+        $family->update(['currency_code' => strtoupper($validated['currency_code'])]);
+
+        return back()->with('success', 'Family currency updated to ' . strtoupper($validated['currency_code']) . '.');
     }
 
     /**
