@@ -1,0 +1,155 @@
+/* ------------------------------------------------------------
+   FamLedger Design System – Mobile First
+   ------------------------------------------------------------ */
+
+/* Color palette – HSL for easy theming */
+:root {
+  --color-primary-h: 210;   /* blue */
+  --color-primary-s: 80%;
+  --color-primary-l: 50%;
+  --color-primary: hsl(var(--color-primary-h), var(--color-primary-s), var(--color-primary-l));
+
+  --color-bg-h: 0;
+  --color-bg-s: 0%;
+  --color-bg-l: 100%;
+  --color-bg: hsl(var(--color-bg-h), var(--color-bg-s), var(--color-bg-l));
+
+  --color-text-h: 0;
+  --color-text-s: 0%;
+  --color-text-l: 10%;
+  --color-text: hsl(var(--color-text-h), var(--color-text-s), var(--color-text-l));
+
+  --radius: 0.5rem;
+  --transition-speed: 0.2s;
+}
+
+/* Dark mode – prefers‑color‑scheme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-l: 10%;
+    --color-text-l: 90%;
+  }
+}
+
+/* Global resets */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Responsive container */
+.container {
+  width: 100%;
+  max-width: 640px; /* mobile‑first */
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Buttons – primary action */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* touch target */
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background var(--transition-speed) ease, transform var(--transition-speed) ease;
+}
+
+.btn:hover,
+.btn:focus {
+  background: hsl(var(--color-primary-h), var(--color-primary-s), calc(var(--color-primary-l) - 5%));
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* Ripple effect – lightweight */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.btn:active::after {
+  width: 200px;
+  height: 200px;
+}
+
+/* Card component – glassmorphism */
+.card {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Bottom navigation bar */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 56px;
+  background: var(--color-bg);
+  border-top: 1px solid rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1000;
+}
+
+.bottom-nav a {
+  color: var(--color-text);
+  font-size: 0.9rem;
+  text-align: center;
+  text-decoration: none;
+  flex: 1;
+}
+
+.bottom-nav a.active {
+  color: var(--color-primary);
+}
+
+/* Utility classes */
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+
+/* Media queries – tablet & up */
+@media (min-width: 768px) {
+  .container { max-width: 720px; }
+}

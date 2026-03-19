@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 Product: Metronic is a toolkit of UI components built with Tailwind CSS for developing scalable web applications quickly and efficiently
 Version: v9.4.5
 Author: Keenthemes
@@ -36,6 +36,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <link href="{{ asset('metronic/assets/vendors/apexcharts/apexcharts.css') }}" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/vendors/keenicons/styles.bundle.css') }}" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/css/styles.css') }}" rel="stylesheet"/>
+<link href="{{ asset('css/design.css') }}" rel="stylesheet"/>
   <style>
    .app-logo {
     height: 2.25rem;
