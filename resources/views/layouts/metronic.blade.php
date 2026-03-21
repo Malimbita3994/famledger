@@ -36,6 +36,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <link href="{{ asset('metronic/assets/vendors/apexcharts/apexcharts.css') }}" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/vendors/keenicons/styles.bundle.css') }}" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/css/styles.css') }}" rel="stylesheet"/>
+  @stack('styles')
   <style>
    .app-logo {
     height: 2.25rem;
@@ -3293,7 +3294,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     </div>
     <!-- End of Sidebar -->
     <!-- Main -->
-    <div class="flex flex-col grow lg:rounded-l-xl bg-background border border-input lg:ms-(--sidebar-width)">
+    <div class="flex flex-col grow min-w-0 lg:rounded-l-xl bg-background border border-input lg:ms-(--sidebar-width)">
      <!-- Top nav bar: active page label (left), shrink sidebar, user profile (right) -->
      <div class="flex items-center justify-between shrink-0 px-4 lg:px-6 h-14 border-b border-border bg-background sticky top-0 z-50">
       <div class="flex items-center gap-3 min-w-0">
@@ -3366,7 +3367,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
       </div>
      </div>
      <div class="flex flex-col grow kt-scrollable-y-auto lg:[--kt-scrollbar-width:auto] pt-5" id="scrollable_content">
-      <main class="grow" role="content">
+      <main class="grow min-w-0" role="content">
        @yield('content')
       </main>
       <!-- Footer -->

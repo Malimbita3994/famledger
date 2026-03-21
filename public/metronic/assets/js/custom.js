@@ -2,10 +2,22 @@
 
   "use strict";
 
-    // PRE LOADER
-    $(window).load(function(){
-      $('.preloader').fadeOut(1000); // set duration in brackets    
-    });
+    // PRE LOADER — hide on window load, with a hard timeout fallback.
+    // Edge + lazy-loaded images can defer or stall the "load" event; without fallback the overlay never clears.
+    (function () {
+      var hidden = false;
+      function hidePreloader() {
+        if (hidden) {
+          return;
+        }
+        hidden = true;
+        $('.preloader').stop(true, true).fadeOut(500);
+      }
+      $(function () {
+        $(window).on('load', hidePreloader);
+        window.setTimeout(hidePreloader, 1200);
+      });
+    })();
 
 
     // MENU

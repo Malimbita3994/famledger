@@ -3,7 +3,54 @@
 @section('title', __('Notifications'))
 @section('page_title', __('Notifications'))
 
+@push('styles')
+ @if ($canManageNotificationPage)
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet"/>
+  <style>
+   .faq-quill-editor .ql-toolbar { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; border-color: var(--tw-border-opacity, 1); }
+   .faq-quill-editor .ql-container { border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; font-size: 0.875rem; border-color: var(--tw-border-opacity, 1); }
+   .faq-quill-editor .ql-editor { min-height: 5.5rem; line-height: 1.55; }
+   .faq-quill-editor.faq-quill-question .ql-editor { min-height: 3.25rem; }
+   .faq-quill-editor.faq-quill-answer .ql-editor { min-height: 10rem; }
+   .dark .faq-quill-editor .ql-stroke { stroke: #cbd5e1; }
+   .dark .faq-quill-editor .ql-fill { fill: #cbd5e1; }
+   .dark .faq-quill-editor .ql-picker { color: #e2e8f0; }
+   .dark .faq-quill-editor .ql-toolbar, .dark .faq-quill-editor .ql-container { border-color: rgba(148, 163, 184, 0.35); background: rgba(15, 23, 42, 0.35); }
+   /* Metronic may not include Tailwind `sr-only`; Quill writes `<p><br></p>` into the sync field when empty — hide it. */
+   textarea.faq-quill-sync-field {
+    display: none !important;
+   }
+  </style>
+ @endif
+@endpush
+
 @section('content')
+ @if (session('success'))
+  <div class="kt-container-fixed pb-3">
+   <div class="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 text-sm text-green-800 dark:text-green-200">
+    {{ session('success') }}
+   </div>
+  </div>
+ @endif
+ @if (session('error'))
+  <div class="kt-container-fixed pb-3">
+   <div class="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-800 dark:text-red-200">
+    {{ session('error') }}
+   </div>
+  </div>
+ @endif
+ @if ($errors->any())
+  <div class="kt-container-fixed pb-3">
+   <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+    <p class="font-medium mb-1">{{ __('Please fix the following:') }}</p>
+    <ul class="list-disc ps-5 space-y-0.5">
+     @foreach ($errors->all() as $message)
+      <li>{{ $message }}</li>
+     @endforeach
+    </ul>
+   </div>
+  </div>
+ @endif
  <div class="pb-5">
   <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
    <div class="flex items-center flex-wrap gap-1 lg:gap-5">
@@ -37,10 +84,96 @@
   </div>
  </div>
 
- <div class="kt-container-fixed pb-6">
-  <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 lg:gap-7.5">
-   <div class="col-span-2">
-    <div class="flex flex-col gap-5 lg:gap-7.5">
+ <div class="kt-container-fixed pb-6 flex flex-col gap-4">
+  {{-- Standalone form (inputs use form= attribute) so FAQ / page-content forms can live inside tabs --}}
+  <form method="post" action="{{ route('settings.notifications.update') }}" id="notification_settings_form" class="absolute start-0 top-0 h-px w-px overflow-hidden opacity-0 pointer-events-none" tabindex="-1" aria-hidden="true">
+   @csrf
+   @method('PUT')
+   <button type="submit" tabindex="-1">{{ __('Save preferences') }}</button>
+  </form>
+   @php
+    $dndUntilInput = '';
+    if (old('dnd_until') !== null && old('dnd_until') !== '') {
+        $dndUntilInput = old('dnd_until');
+    } elseif (! empty($prefs['dnd_until'] ?? null)) {
+        try {
+            $dndUntilInput = \Illuminate\Support\Carbon::parse($prefs['dnd_until'])->timezone(config('app.timezone'))->format('Y-m-d\TH:i');
+        } catch (\Throwable $e) {
+            $dndUntilInput = '';
+        }
+    }
+    $dndScheduled = false;
+    if (! empty($prefs['dnd_until'] ?? null)) {
+        try {
+            $dndScheduled = \Illuminate\Support\Carbon::parse($prefs['dnd_until'])->isFuture();
+        } catch (\Throwable $e) {
+            $dndScheduled = false;
+        }
+    }
+    $dndOn = ($prefs['dnd_enabled'] ?? false) && $dndScheduled;
+   @endphp
+  <style>
+   /* Notification settings: own tab logic (avoid data-kt-tabs — conflicts with header drawer tabs) */
+   /* Descendant (not only direct child): tab panels must show/hide even if markup nesting shifts */
+   #notification_settings_tabs_root .notifications-settings-tab-panel[hidden] {
+    display: none !important;
+   }
+   #notification_settings_tabs_root .notifications-settings-tab-panel:not([hidden]) {
+    display: flex !important;
+    flex-direction: column;
+   }
+   /* Line-tab look without .kt-tab-toggle (avoids KTUI binding clicks → blank panels). */
+   #notification_settings_tabs.kt-tabs-line .notif-settings-tab {
+    display: inline-flex;
+    cursor: pointer;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 2px;
+    border-bottom-color: transparent;
+    padding-block: calc(var(--spacing) * 2);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    color: var(--secondary-foreground);
+    background: transparent;
+   }
+   @media (hover: hover) {
+    #notification_settings_tabs.kt-tabs-line .notif-settings-tab:hover {
+     color: var(--primary);
+    }
+   }
+   #notification_settings_tabs.kt-tabs-line .notif-settings-tab.active,
+   #notification_settings_tabs.kt-tabs-line .notif-settings-tab[aria-selected="true"] {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+   }
+  </style>
+  <div class="kt-card">
+   <div class="kt-card-content p-5 lg:p-7.5 flex flex-col gap-5" id="notification_settings_tabs_root">
+    <div class="kt-tabs kt-tabs-line w-full border-b border-border pb-1 -mb-1" id="notification_settings_tabs" role="tablist">
+     <div class="flex flex-wrap gap-1">
+      <button type="button" role="tab" id="notif_tab_btn_channels" class="notif-settings-tab py-2.5 px-3 text-sm active" data-notif-tab-target="notif_tab_channels" aria-selected="true" aria-controls="notif_tab_channels">
+       {{ __('Notification channels') }}
+      </button>
+      <button type="button" role="tab" id="notif_tab_btn_other" class="notif-settings-tab py-2.5 px-3 text-sm" data-notif-tab-target="notif_tab_other" aria-selected="false" aria-controls="notif_tab_other">
+       {{ __('Other notifications') }}
+      </button>
+      <button type="button" role="tab" id="notif_tab_btn_faq" class="notif-settings-tab py-2.5 px-3 text-sm" data-notif-tab-target="notif_tab_faq" aria-selected="false" aria-controls="notif_tab_faq">
+       {{ __('FAQ') }}
+      </button>
+      <button type="button" role="tab" id="notif_tab_btn_contact" class="notif-settings-tab py-2.5 px-3 text-sm" data-notif-tab-target="notif_tab_contact" aria-selected="false" aria-controls="notif_tab_contact">
+       {{ __('Contact support') }}
+      </button>
+      <button type="button" role="tab" id="notif_tab_btn_dnd" class="notif-settings-tab py-2.5 px-3 text-sm" data-notif-tab-target="notif_tab_dnd" aria-selected="false" aria-controls="notif_tab_dnd">
+       {{ __('Do not disturb') }}
+      </button>
+     </div>
+    </div>
+    <div role="tabpanel" class="kt-tab-content notifications-settings-tab-panel active flex flex-col gap-5 lg:gap-7.5" id="notif_tab_channels" aria-labelledby="notif_tab_btn_channels">
      {{-- Notification channels --}}
      <div class="kt-card">
       <div class="kt-card-header gap-2">
@@ -50,7 +183,7 @@
        <div class="flex items-center gap-2">
         <label class="kt-label">
          {{ __('Family alerts') }}
-         <input class="kt-switch kt-switch-sm" name="team_wide_alerts" type="checkbox" value="1" checked />
+         <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="team_wide_alerts" type="checkbox" value="1" @checked(old('team_wide_alerts', $prefs['team_wide_alerts'] ?? true)) />
         </label>
        </div>
       </div>
@@ -80,11 +213,11 @@
          </div>
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
-         <a href="#" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-ghost">
+         <a href="{{ route('profile.edit') }}" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-ghost" title="{{ __('Edit profile & email') }}">
           <i class="ki-filled ki-notepad-edit"></i>
          </a>
          <div class="flex items-center gap-2.5">
-          <input checked class="kt-switch" name="channel_email_enabled" type="checkbox" value="1" />
+          <input form="notification_settings_form" class="kt-switch" name="channel_email_enabled" type="checkbox" value="1" @checked(old('channel_email_enabled', $prefs['channel_email_enabled'] ?? true)) />
          </div>
         </div>
        </div>
@@ -114,17 +247,17 @@
          </div>
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
-         <a href="#" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-ghost">
+         <a href="{{ route('profile.edit') }}" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-ghost" title="{{ __('Add phone in profile') }}">
           <i class="ki-filled ki-notepad-edit"></i>
          </a>
          <div class="flex items-center gap-2.5">
-          <input class="kt-switch" name="channel_mobile_enabled" type="checkbox" value="1" />
+          <input form="notification_settings_form" class="kt-switch" name="channel_mobile_enabled" type="checkbox" value="1" @checked(old('channel_mobile_enabled', $prefs['channel_mobile_enabled'] ?? false)) />
          </div>
         </div>
        </div>
 
-       <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
-        <div class="flex items-center gap-3.5">
+       <div class="kt-card-group flex flex-col gap-3 py-4 px-1 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3.5 min-w-0">
          <div class="relative size-[50px] shrink-0">
           <svg class="w-full h-full stroke-border fill-muted/30" fill="none" height="48" viewBox="0 0 44 48" width="44" xmlns="http://www.w3.org/2000/svg">
            <path d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506 
@@ -147,12 +280,27 @@
           </span>
          </div>
         </div>
-        <div class="flex items-center gap-2 lg:gap-5">
-         <div class="flex items-center gap-2.5">
-          <a href="#" class="kt-btn kt-btn-outline text-center">
-           {{ __('Connect Slack') }}
-          </a>
+        <div class="flex flex-col gap-3 items-stretch sm:items-end w-full sm:w-auto sm:min-w-[min(100%,320px)]">
+         <div class="flex flex-col gap-1 w-full">
+          <label class="text-xs font-medium text-secondary-foreground" for="slack_webhook_url">{{ __('Incoming webhook URL') }}</label>
+          <input
+           form="notification_settings_form"
+           id="slack_webhook_url"
+           type="url"
+           name="slack_webhook_url"
+           class="kt-input text-sm"
+           placeholder="https://hooks.slack.com/services/…"
+           value="{{ old('slack_webhook_url', $prefs['slack_webhook_url'] ?? '') }}"
+           autocomplete="off"
+          />
+          @error('slack_webhook_url')
+           <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
+          @enderror
          </div>
+         <label class="kt-label justify-end">
+          {{ __('Slack alerts') }}
+          <input form="notification_settings_form" class="kt-switch" name="channel_slack_enabled" type="checkbox" value="1" @checked(old('channel_slack_enabled', $prefs['channel_slack_enabled'] ?? false)) />
+         </label>
         </div>
        </div>
 
@@ -182,13 +330,14 @@
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
          <div class="flex items-center gap-2.5">
-          <input checked class="kt-switch" name="channel_desktop_enabled" type="checkbox" value="1" />
+          <input form="notification_settings_form" class="kt-switch" name="channel_desktop_enabled" type="checkbox" value="1" @checked(old('channel_desktop_enabled', $prefs['channel_desktop_enabled'] ?? true)) />
          </div>
         </div>
        </div>
       </div>
      </div>
-
+    </div>
+    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_other" aria-labelledby="notif_tab_btn_other">
      {{-- Other notifications --}}
      <div class="kt-card">
       <div class="kt-card-header gap-2">
@@ -198,7 +347,7 @@
        <div class="flex items-center gap-2">
         <label class="kt-label">
          {{ __('Family alerts') }}
-         <input class="kt-switch kt-switch-sm" name="family_wide_alerts" type="checkbox" value="1" checked />
+         <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="family_wide_alerts" type="checkbox" value="1" @checked(old('family_wide_alerts', $prefs['family_wide_alerts'] ?? true)) />
         </label>
        </div>
       </div>
@@ -229,7 +378,7 @@
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
          <div class="flex items-center gap-2.5">
-          <input checked class="kt-switch kt-switch-sm" name="notify_task_assigned" type="checkbox" value="1" />
+          <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="notify_task_assigned" type="checkbox" value="1" @checked(old('notify_task_assigned', $prefs['notify_task_assigned'] ?? true)) />
          </div>
         </div>
        </div>
@@ -260,7 +409,7 @@
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
          <div class="flex items-center gap-2.5">
-          <input checked class="kt-switch kt-switch-sm" name="notify_budget_warning" type="checkbox" value="1" />
+          <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="notify_budget_warning" type="checkbox" value="1" @checked(old('notify_budget_warning', $prefs['notify_budget_warning'] ?? true)) />
          </div>
         </div>
        </div>
@@ -291,10 +440,13 @@
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
          <div class="flex items-center gap-2.5">
-          <a href="#" class="kt-btn kt-btn-outline text-center">
-           {{ __('View invoices') }}
-          </a>
+          <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="notify_invoice" type="checkbox" value="1" @checked(old('notify_invoice', $prefs['notify_invoice'] ?? true)) />
          </div>
+         @if ($currentFamily)
+          <a href="{{ route('families.expenses.index', $currentFamily) }}" class="kt-btn kt-btn-outline text-center shrink-0">
+           {{ __('View expenses') }}
+          </a>
+         @endif
         </div>
        </div>
 
@@ -324,7 +476,7 @@
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
          <div class="flex items-center gap-2.5">
-          <input checked class="kt-switch kt-switch-sm" name="notify_feedback" type="checkbox" value="1" />
+          <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="notify_feedback" type="checkbox" value="1" @checked(old('notify_feedback', $prefs['notify_feedback'] ?? true)) />
          </div>
         </div>
        </div>
@@ -355,7 +507,7 @@
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
          <div class="flex items-center gap-2.5">
-          <input checked class="kt-switch kt-switch-sm" name="notify_collaboration" type="checkbox" value="1" />
+          <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="notify_collaboration" type="checkbox" value="1" @checked(old('notify_collaboration', $prefs['notify_collaboration'] ?? true)) />
          </div>
         </div>
        </div>
@@ -386,10 +538,13 @@
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
          <div class="flex items-center gap-2.5">
-          <a href="#" class="kt-btn kt-btn-outline">
-           {{ __('Show meetings') }}
-          </a>
+          <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="notify_meeting_reminder" type="checkbox" value="1" @checked(old('notify_meeting_reminder', $prefs['notify_meeting_reminder'] ?? true)) />
          </div>
+         @if ($currentFamily)
+          <a href="{{ route('families.projects.index', $currentFamily) }}" class="kt-btn kt-btn-outline shrink-0">
+           {{ __('View projects') }}
+          </a>
+         @endif
         </div>
        </div>
 
@@ -419,14 +574,115 @@
         </div>
         <div class="flex items-center gap-2 lg:gap-5">
          <div class="flex items-center gap-2.5">
-          <input checked class="kt-switch kt-switch-sm" name="notify_status_change" type="checkbox" value="1" />
+          <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="notify_status_change" type="checkbox" value="1" @checked(old('notify_status_change', $prefs['notify_status_change'] ?? true)) />
          </div>
         </div>
        </div>
       </div>
      </div>
+    </div>
+    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_faq" aria-labelledby="notif_tab_btn_faq">
+     @if ($canManageNotificationPage)
+      <div class="kt-card border-primary/25 shadow-sm">
+       <div class="kt-card-header flex flex-col items-stretch gap-0 px-5 py-4 lg:px-8 lg:py-5 border-b border-border/80">
+        <h3 class="kt-card-title text-base lg:text-lg">
+         {{ __('Manage FAQ (Super Admin)') }}
+        </h3>
+        <p class="text-sm text-secondary-foreground font-normal mt-2 max-w-3xl leading-relaxed pe-2">
+         {{ __('Create, reorder, publish or remove questions shown to all users in the FAQ section below.') }}
+        </p>
+       </div>
+       <div class="kt-card-content flex flex-col gap-6 lg:gap-8 px-5 py-6 lg:px-8 lg:py-8">
+        <form method="post" action="{{ route('settings.notifications.faqs.store') }}" class="flex flex-col gap-5 p-5 lg:p-6 rounded-xl border border-border bg-muted/25 shadow-sm">
+         @csrf
+         <p class="text-base font-semibold text-mono pb-3 mb-0 border-b border-border/70">{{ __('Add FAQ entry') }}</p>
+         <div class="flex flex-col gap-2">
+          <label id="lbl_new_faq_question" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Question') }}</label>
+          <div id="quill_new_faq_question" class="faq-quill-editor faq-quill-question rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_new_faq_question" aria-labelledby="lbl_new_faq_question"></div>
+          <textarea id="hidden_new_faq_question" name="question" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ old('question') }}</textarea>
+          <p id="new_faq_question_hint" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
+           {{ __('Rich text for the accordion title: bold, color, headings, links, etc. Empty text is not allowed.') }}
+          </p>
+         </div>
+         <div class="flex flex-col gap-2">
+          <label id="lbl_new_faq_answer" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Answer') }}</label>
+          <div id="quill_new_faq_answer" class="faq-quill-editor faq-quill-answer rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_new_faq_answer" aria-labelledby="lbl_new_faq_answer"></div>
+          <textarea id="hidden_new_faq_answer" name="answer" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ old('answer') }}</textarea>
+          <p id="new_faq_answer_hint" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
+           {{ __('Rich text: lists, numbered lists, headings, colors, links, and more. Content is sanitised when saved.') }}
+          </p>
+         </div>
+         <div class="flex flex-wrap items-end gap-6 pt-1">
+          <div class="flex flex-col gap-2 min-w-[8rem]">
+           <label class="text-sm font-medium text-foreground ps-0.5" for="new_faq_sort">{{ __('Sort order') }}</label>
+           <input id="new_faq_sort" type="number" name="sort_order" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ old('sort_order', 0) }}" min="0" />
+          </div>
+          <label class="kt-label text-sm font-medium text-foreground items-center gap-2.5 pb-1">
+           {{ __('Published') }}
+           <input class="kt-switch kt-switch-sm shrink-0" name="is_active" type="checkbox" value="1" @checked(old('is_active', true)) />
+          </label>
+         </div>
+         <div class="pt-2">
+          <button type="submit" class="kt-btn kt-btn-primary">{{ __('Add FAQ') }}</button>
+         </div>
+        </form>
 
-     {{-- FAQ --}}
+        @foreach ($notificationFaqs as $faq)
+         @php
+          $faqUseOld = (string) old('_faq_id') === (string) $faq->id;
+         @endphp
+         <div class="rounded-xl border border-border bg-card/80 p-5 lg:p-7 flex flex-col gap-5 shadow-sm">
+          <form method="post" action="{{ route('settings.notifications.faqs.update', $faq) }}" class="flex flex-col gap-4">
+           @csrf
+           @method('PUT')
+           <input type="hidden" name="_faq_id" value="{{ $faq->id }}" />
+           <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-dashed border-border/90">
+            <span class="text-sm font-semibold text-muted-foreground tracking-tight">{{ __('Entry #:id', ['id' => $faq->id]) }}</span>
+            <label class="kt-label text-sm font-medium text-foreground items-center gap-2.5">
+             {{ __('Published') }}
+             <input class="kt-switch kt-switch-sm shrink-0" name="is_active" type="checkbox" value="1" @checked($faqUseOld ? (bool) old('is_active') : $faq->is_active) />
+            </label>
+           </div>
+           @php
+            $faqQuestionVal = $faqUseOld ? old('question', $faq->question) : $faq->question;
+            $faqAnswerVal = $faqUseOld ? old('answer', $faq->answer) : $faq->answer;
+           @endphp
+           <div class="flex flex-col gap-2">
+            <label id="lbl_faq_q_{{ $faq->id }}" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Question') }}</label>
+            <div id="quill_faq_q_{{ $faq->id }}" class="faq-quill-editor faq-quill-question rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_faq_q_{{ $faq->id }}" aria-labelledby="lbl_faq_q_{{ $faq->id }}"></div>
+            <textarea id="hidden_faq_q_{{ $faq->id }}" name="question" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ $faqQuestionVal }}</textarea>
+            <p id="faq_q_hint_{{ $faq->id }}" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
+             {{ __('Rich text for the accordion title. Empty text is not allowed.') }}
+            </p>
+           </div>
+           <div class="flex flex-col gap-2">
+            <label id="lbl_faq_a_{{ $faq->id }}" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Answer') }}</label>
+            <div id="quill_faq_a_{{ $faq->id }}" class="faq-quill-editor faq-quill-answer rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_faq_a_{{ $faq->id }}" aria-labelledby="lbl_faq_a_{{ $faq->id }}"></div>
+            <textarea id="hidden_faq_a_{{ $faq->id }}" name="answer" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ $faqAnswerVal }}</textarea>
+            <p id="faq_a_hint_{{ $faq->id }}" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
+             {{ __('Rich answer text; sanitised when saved.') }}
+            </p>
+           </div>
+           <div class="flex flex-col gap-2 max-w-xs">
+            <label class="text-sm font-medium text-foreground ps-0.5" for="faq_sort_{{ $faq->id }}">{{ __('Sort order') }}</label>
+            <input id="faq_sort_{{ $faq->id }}" type="number" name="sort_order" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ $faqUseOld ? old('sort_order', $faq->sort_order) : $faq->sort_order }}" min="0" />
+           </div>
+           <div class="flex flex-wrap items-center gap-3 pt-4 mt-1 border-t border-border/70">
+            <button type="submit" class="kt-btn kt-btn-primary">{{ __('Save') }}</button>
+           </div>
+          </form>
+          <form method="post" action="{{ route('settings.notifications.faqs.destroy', $faq) }}" class="inline" onsubmit="return confirm(@json(__('Delete this FAQ entry?')))">
+           @csrf
+           @method('DELETE')
+           <button type="submit" class="kt-btn kt-btn-outline text-destructive border-destructive/35 hover:bg-destructive/10 px-4 py-2.5">{{ __('Delete') }}</button>
+          </form>
+         </div>
+        @endforeach
+       </div>
+      </div>
+     @endif
+
+     {{-- FAQ (visible to all users) --}}
      <div class="kt-card">
       <div class="kt-card-header">
        <h3 class="kt-card-title">
@@ -434,146 +690,135 @@
        </h3>
       </div>
       <div class="kt-card-content py-3">
-       <div data-kt-accordion="true" data-kt-accordion-expand-all="true">
-        <div class="kt-accordion-item not-last:border-b border-b-border" data-kt-accordion-item="true">
-         <button aria-controls="faq_1_content" class="kt-accordion-toggle py-4" data-kt-accordion-toggle="#faq_1_content">
-          <span class="text-base text-mono">
-           {{ __('How are notification emails batched?') }}
-          </span>
-          <span class="kt-accordion-active:hidden inline-flex">
-           <i class="ki-filled ki-plus text-muted-foreground text-sm"></i>
-          </span>
-          <span class="kt-accordion-active:inline-flex hidden">
-           <i class="ki-filled ki-minus text-muted-foreground text-sm"></i>
-          </span>
-         </button>
-         <div class="kt-accordion-content hidden" id="faq_1_content">
-          <div class="text-secondary-foreground text-base pb-4">
-           {{ __('FamLedger groups low‑priority notifications into summary emails to avoid inbox noise, while critical alerts (like failed payments or budget breaches) are sent immediately.') }}
+       @if ($notificationFaqsPublic->isEmpty())
+        <p class="text-sm text-secondary-foreground px-2">{{ __('No FAQ entries yet.') }}</p>
+       @else
+        <div data-kt-accordion="true" data-kt-accordion-expand-all="true">
+         @foreach ($notificationFaqsPublic as $faq)
+          <div class="kt-accordion-item not-last:border-b border-b-border" data-kt-accordion-item="true">
+           <div role="button" tabindex="0" aria-controls="faq_content_{{ $faq->id }}" class="kt-accordion-toggle py-4 flex flex-wrap items-center justify-between gap-3 text-start w-full cursor-pointer select-none" data-kt-accordion-toggle="#faq_content_{{ $faq->id }}">
+            <div class="faq-rich-content text-base text-mono min-w-0 flex-1 [&_p]:mb-1 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ps-5 [&_ol]:list-decimal [&_ol]:ps-5 [&_a]:text-primary [&_a]:underline">
+             {!! Purify::config('notification_faq')->clean($faq->question) !!}
+            </div>
+            <span class="kt-accordion-active:hidden inline-flex shrink-0">
+             <i class="ki-filled ki-plus text-muted-foreground text-sm"></i>
+            </span>
+            <span class="kt-accordion-active:inline-flex hidden shrink-0">
+             <i class="ki-filled ki-minus text-muted-foreground text-sm"></i>
+            </span>
+           </div>
+           <div class="kt-accordion-content hidden" id="faq_content_{{ $faq->id }}">
+            <div class="faq-rich-content text-secondary-foreground text-base pb-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ps-5 [&_ol]:list-decimal [&_ol]:ps-5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-base [&_a]:text-primary [&_a]:underline [&_blockquote]:border-s-2 [&_blockquote]:border-border [&_blockquote]:ps-3 [&_blockquote]:italic">
+             {!! Purify::config('notification_faq')->clean($faq->answer) !!}
+            </div>
+           </div>
           </div>
-         </div>
+         @endforeach
         </div>
-        <div class="kt-accordion-item not-last:border-b border-b-border" data-kt-accordion-item="true">
-         <button aria-controls="faq_2_content" class="kt-accordion-toggle py-4" data-kt-accordion-toggle="#faq_2_content">
-          <span class="text-base text-mono">
-           {{ __('Can I disable all notifications temporarily?') }}
-          </span>
-          <span class="kt-accordion-active:hidden inline-flex">
-           <i class="ki-filled ki-plus text-muted-foreground text-sm"></i>
-          </span>
-          <span class="kt-accordion-active:inline-flex hidden">
-           <i class="ki-filled ki-minus text-muted-foreground text-sm"></i>
-          </span>
-         </button>
-         <div class="kt-accordion-content hidden" id="faq_2_content">
-          <div class="text-secondary-foreground text-base pb-4">
-           {{ __('Use the “Do not disturb” card on the right to pause all notifications for a period of time without changing your saved preferences.') }}
-          </div>
-         </div>
-        </div>
-        <div class="kt-accordion-item not-last:border-b border-b-border" data-kt-accordion-item="true">
-         <button aria-controls="faq_3_content" class="kt-accordion-toggle py-4" data-kt-accordion-toggle="#faq_3_content">
-          <span class="text-base text-mono">
-           {{ __('Do notification settings apply per family or per account?') }}
-          </span>
-          <span class="kt-accordion-active:hidden inline-flex">
-           <i class="ki-filled ki-plus text-muted-foreground text-sm"></i>
-          </span>
-          <span class="kt-accordion-active:inline-flex hidden">
-           <i class="ki-filled ki-minus text-muted-foreground text-sm"></i>
-          </span>
-         </button>
-         <div class="kt-accordion-content hidden" id="faq_3_content">
-          <div class="text-secondary-foreground text-base pb-4">
-           {{ __('Most settings are per account, but some alerts (like family budget thresholds) apply only to the currently active family.') }}
-          </div>
-         </div>
-        </div>
-        <div class="kt-accordion-item not-last:border-b border-b-border" data-kt-accordion-item="true">
-         <button aria-controls="faq_4_content" class="kt-accordion-toggle py-4" data-kt-accordion-toggle="#faq_4_content">
-          <span class="text-base text-mono">
-           {{ __('Will changes here affect existing email rules in my inbox?') }}
-          </span>
-          <span class="kt-accordion-active:hidden inline-flex">
-           <i class="ki-filled ki-plus text-muted-foreground text-sm"></i>
-          </span>
-          <span class="kt-accordion-active:inline-flex hidden">
-           <i class="ki-filled ki-minus text-muted-foreground text-sm"></i>
-          </span>
-         </button>
-         <div class="kt-accordion-content hidden" id="faq_4_content">
-          <div class="text-secondary-foreground text-base pb-4">
-           {{ __('No. FamLedger only controls what we send; any filters or rules in your email client will continue to work as you configured them.') }}
-          </div>
-         </div>
-        </div>
-        <div class="kt-accordion-item not-last:border-b border-b-border" data-kt-accordion-item="true">
-         <button aria-controls="faq_5_content" class="kt-accordion-toggle py-4" data-kt-accordion-toggle="#faq_5_content">
-          <span class="text-base text-mono">
-           {{ __('Can owners enforce minimum alerts for all members?') }}
-          </span>
-          <span class="kt-accordion-active:hidden inline-flex">
-           <i class="ki-filled ki-plus text-muted-foreground text-sm"></i>
-          </span>
-          <span class="kt-accordion-active:inline-flex hidden">
-           <i class="ki-filled ki-minus text-muted-foreground text-sm"></i>
-          </span>
-         </button>
-         <div class="kt-accordion-content hidden" id="faq_5_content">
-          <div class="text-secondary-foreground text-base pb-4">
-           {{ __('Primary owners can require certain high‑risk alerts (for example, large withdrawals) to remain enabled for all members.') }}
-          </div>
-         </div>
-        </div>
-        <div class="kt-accordion-item not-last:border-b border-b-border" data-kt-accordion-item="true">
-         <button aria-controls="faq_6_content" class="kt-accordion-toggle py-4" data-kt-accordion-toggle="#faq_6_content">
-          <span class="text-base text-mono">
-           {{ __('Where can I see a history of notifications sent?') }}
-          </span>
-          <span class="kt-accordion-active:hidden inline-flex">
-           <i class="ki-filled ki-plus text-muted-foreground text-sm"></i>
-          </span>
-          <span class="kt-accordion-active:inline-flex hidden">
-           <i class="ki-filled ki-minus text-muted-foreground text-sm"></i>
-          </span>
-         </button>
-         <div class="kt-accordion-content hidden" id="faq_6_content">
-          <div class="text-secondary-foreground text-base pb-4">
-           {{ __('The audit log (under Settings → Audit log) will gradually surface more notification activity as that feature is expanded.') }}
-          </div>
-         </div>
-        </div>
-       </div>
-      </div>
-     </div>
-
-     {{-- Contact support --}}
-     <div class="kt-card">
-      <div class="kt-card-content px-10 py-7.5 lg:pr-12.5">
-       <div class="flex flex-wrap md:flex-nowrap items-center gap-6 md:gap-10">
-        <div class="flex flex-col items-start gap-3">
-         <h2 class="text-xl font-medium text-mono">
-          {{ __('Contact support') }}
-         </h2>
-         <p class="text-sm text-foreground leading-5.5 mb-2.5">
-          {{ __('Need assistance with alerts or delivery issues? Contact our support team for prompt, personalised help.') }}
-         </p>
-        </div>
-        <img alt="image" class="dark:hidden max-h-[150px]" src="{{ asset('assets/media/illustrations/31.svg') }}" />
-        <img alt="image" class="light:hidden max-h-[150px]" src="{{ asset('assets/media/illustrations/31-dark.svg') }}" />
-       </div>
-      </div>
-      <div class="kt-card-footer justify-center">
-       <a class="kt-link kt-link-underlined kt-link-dashed" href="#">
-        {{ __('Contact support') }}
-       </a>
+       @endif
       </div>
      </div>
     </div>
-   </div>
+    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_contact" aria-labelledby="notif_tab_btn_contact">
+     @if ($canManageNotificationPage)
+      <div class="kt-card border-primary/25 shadow-sm">
+       <div class="kt-card-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 lg:px-8 lg:py-5 border-b border-border/80">
+        <h3 class="kt-card-title text-base lg:text-lg mb-0">
+         {{ __('Contact support') }}
+        </h3>
+        @can('contact_messages_view')
+         <a href="{{ route('admin.contact-messages.index') }}" class="inline-flex items-center gap-2 text-sm text-primary font-medium hover:underline shrink-0">
+          <i class="ki-filled ki-message-text text-base"></i>
+          {{ __('Contact messages') }}
+         </a>
+        @endcan
+       </div>
+       <div class="kt-card-content flex flex-col gap-6 lg:gap-8 px-5 py-6 lg:px-8 lg:py-8">
+        <form method="post" action="{{ route('settings.notifications.support-contacts.store') }}" class="flex flex-col gap-5 p-5 lg:p-6 rounded-xl border border-border bg-muted/25 shadow-sm">
+         @csrf
+         <input type="hidden" name="_support_from" value="create" />
+         <input type="hidden" name="sort_order" value="0" />
+         <p class="text-base font-semibold text-mono pb-3 mb-0 border-b border-border/70">{{ __('Add contact entry') }}</p>
+         <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-foreground ps-0.5" for="new_support_title">{{ __('Title') }}</label>
+          <input id="new_support_title" type="text" name="title" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ old('_support_contact_id') ? '' : old('title', '') }}" maxlength="255" required autocomplete="off" />
+         </div>
+         <div class="flex flex-col gap-2">
+          <label id="lbl_new_support_body" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Description') }}</label>
+          <div id="quill_new_support_body" class="faq-quill-editor faq-quill-answer rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_new_support_body" aria-labelledby="lbl_new_support_body"></div>
+          <textarea id="hidden_new_support_body" name="body" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ old('_support_contact_id') ? '' : old('body', '') }}</textarea>
+         </div>
+         <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-foreground ps-0.5" for="new_support_link_url">{{ __('Button / link URL') }}</label>
+          <input id="new_support_link_url" type="text" name="link_url" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ old('_support_contact_id') ? '' : old('link_url', '') }}" maxlength="2048" />
+         </div>
+         <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-foreground ps-0.5" for="new_support_link_label">{{ __('Button label') }}</label>
+          <input id="new_support_link_label" type="text" name="link_label" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ old('_support_contact_id') ? '' : old('link_label', '') }}" maxlength="255" />
+         </div>
+         <label class="kt-label text-sm font-medium text-foreground items-center gap-2.5">
+          {{ __('Published') }}
+          <input type="hidden" name="is_active" value="0" />
+          <input class="kt-switch kt-switch-sm shrink-0" name="is_active" type="checkbox" value="1" @checked(old('_support_contact_id') ? true : old('is_active') !== '0') />
+         </label>
+         <div class="pt-2">
+          <button type="submit" class="kt-btn kt-btn-primary">{{ __('Add contact entry') }}</button>
+         </div>
+        </form>
 
-   <div class="col-span-1">
-    <div class="flex flex-col gap-5 lg:gap-7.5">
+        @foreach ($notificationSupportContacts as $supportContact)
+         @php
+          $supportUseOld = (string) old('_support_contact_id') === (string) $supportContact->id;
+         @endphp
+         <div class="rounded-xl border border-border bg-card/80 p-5 lg:p-7 flex flex-col gap-5 shadow-sm">
+          <form method="post" action="{{ route('settings.notifications.support-contacts.update', $supportContact) }}" class="flex flex-col gap-4">
+           @csrf
+           @method('PUT')
+           <input type="hidden" name="_support_contact_id" value="{{ $supportContact->id }}" />
+           <input type="hidden" name="sort_order" value="{{ $supportUseOld ? old('sort_order', $supportContact->sort_order) : $supportContact->sort_order }}" />
+           <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-dashed border-border/90">
+            <span class="text-sm font-semibold text-muted-foreground tracking-tight">{{ __('Entry #:id', ['id' => $supportContact->id]) }}</span>
+            <label class="kt-label text-sm font-medium text-foreground items-center gap-2.5">
+             {{ __('Published') }}
+             <input type="hidden" name="is_active" value="0" />
+             <input class="kt-switch kt-switch-sm shrink-0" name="is_active" type="checkbox" value="1" @checked($supportUseOld ? (old('is_active') === '1' || old('is_active') === 1 || old('is_active') === true) : $supportContact->is_active) />
+            </label>
+           </div>
+           <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-foreground ps-0.5" for="support_title_{{ $supportContact->id }}">{{ __('Title') }}</label>
+            <input id="support_title_{{ $supportContact->id }}" type="text" name="title" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ $supportUseOld ? old('title', $supportContact->title) : $supportContact->title }}" maxlength="255" required autocomplete="off" />
+           </div>
+           <div class="flex flex-col gap-2">
+            <label id="lbl_support_body_{{ $supportContact->id }}" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Description') }}</label>
+            <div id="quill_support_body_{{ $supportContact->id }}" class="faq-quill-editor faq-quill-answer rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_support_body_{{ $supportContact->id }}" aria-labelledby="lbl_support_body_{{ $supportContact->id }}"></div>
+            <textarea id="hidden_support_body_{{ $supportContact->id }}" name="body" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ $supportUseOld ? old('body', $supportContact->body) : $supportContact->body }}</textarea>
+           </div>
+           <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-foreground ps-0.5" for="support_link_url_{{ $supportContact->id }}">{{ __('Button / link URL') }}</label>
+            <input id="support_link_url_{{ $supportContact->id }}" type="text" name="link_url" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ $supportUseOld ? old('link_url', $supportContact->link_url) : $supportContact->link_url }}" maxlength="2048" />
+           </div>
+           <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-foreground ps-0.5" for="support_link_label_{{ $supportContact->id }}">{{ __('Button label') }}</label>
+            <input id="support_link_label_{{ $supportContact->id }}" type="text" name="link_label" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ $supportUseOld ? old('link_label', $supportContact->link_label) : $supportContact->link_label }}" maxlength="255" />
+           </div>
+           <div class="flex flex-wrap items-center gap-3 pt-4 mt-1 border-t border-border/70">
+            <button type="submit" class="kt-btn kt-btn-primary">{{ __('Save') }}</button>
+           </div>
+          </form>
+          <form method="post" action="{{ route('settings.notifications.support-contacts.destroy', $supportContact) }}" class="inline" onsubmit="return confirm(@json(__('Delete this contact entry?')))">
+           @csrf
+           @method('DELETE')
+           <button type="submit" class="kt-btn kt-btn-outline text-destructive border-destructive/35 hover:bg-destructive/10 px-4 py-2.5">{{ __('Delete') }}</button>
+          </form>
+         </div>
+        @endforeach
+       </div>
+      </div>
+     @else
+      <p class="text-sm text-secondary-foreground px-0.5">{{ __('Contact support is managed by a Super Admin and appears on the public FamLedger page.') }}</p>
+     @endif
+    </div>
+    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_dnd" aria-labelledby="notif_tab_btn_dnd">
      {{-- Do not disturb --}}
      <div class="kt-card">
       <div class="kt-card-header">
@@ -581,23 +826,88 @@
         {{ __('Do not disturb') }}
        </h3>
       </div>
-      <div class="kt-card-content flex flex-col gap-2.5">
-       <p class="text-sm text-secondary-foreground">
-        {{ __('Activate “Do not disturb” to temporarily silence all notifications and focus without interruptions during specified hours or tasks.') }}
+      <div class="kt-card-content flex flex-col gap-3.5">
+       @if ($dndOn)
+        <div class="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-secondary-foreground">
+         {{ __('Do not disturb is on until :time.', ['time' => \Illuminate\Support\Carbon::parse($prefs['dnd_until'])->timezone(config('app.timezone'))->format('Y-m-d H:i')]) }}
+        </div>
+       @endif
+       <p class="text-sm text-secondary-foreground whitespace-pre-wrap">
+        {{ $notificationPageContent->dnd_intro }}
        </p>
-       <div>
-        <a class="kt-link kt-link-underlined kt-link-dashed" href="#">
-         {{ __('Learn more') }}
-        </a>
+       <label class="kt-label">
+        {{ __('Enable scheduled quiet hours') }}
+        <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="dnd_enabled" type="checkbox" value="1" @checked(old('dnd_enabled', $prefs['dnd_enabled'] ?? false)) />
+       </label>
+       <div class="flex flex-col gap-1">
+        <label class="text-xs font-medium text-secondary-foreground" for="dnd_until">{{ __('Quiet until (optional)') }}</label>
+        <input
+         form="notification_settings_form"
+         id="dnd_until"
+         type="datetime-local"
+         name="dnd_until"
+         class="kt-input text-sm"
+         value="{{ $dndUntilInput }}"
+        />
+        @error('dnd_until')
+         <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
+        @enderror
        </div>
+       @if ($notificationPageContent->dnd_learn_more_url)
+        <div>
+         <a class="kt-link kt-link-underlined kt-link-dashed" href="{{ $notificationPageContent->dnd_learn_more_url }}">
+          {{ $notificationPageContent->dnd_learn_more_label ?: __('Learn more') }}
+         </a>
+        </div>
+       @endif
       </div>
-      <div class="kt-card-footer justify-center">
-       <a class="kt-btn kt-btn-outline" href="#">
+      <div class="kt-card-footer flex flex-col gap-2">
+       <button type="submit" form="notification_settings_form" name="action" value="snooze_8" class="kt-btn kt-btn-outline w-full justify-center">
         <i class="ki-filled ki-notification-bing"></i>
-        {{ __('Pause notifications') }}
-       </a>
+        {{ __('Pause notifications (8 hours)') }}
+       </button>
+       @if ($dndOn || ($prefs['dnd_enabled'] ?? false))
+        <button type="submit" form="notification_settings_form" name="action" value="dnd_clear" class="kt-btn kt-btn-sm kt-btn-ghost w-full justify-center">
+         {{ __('Turn off do not disturb') }}
+        </button>
+       @endif
       </div>
      </div>
+
+     @if ($canManageNotificationPage)
+      <div class="kt-card border-primary/25 shadow-sm">
+       <div class="kt-card-header flex flex-col items-stretch gap-0 px-5 py-4 lg:px-8 lg:py-5 border-b border-border/80">
+        <h3 class="kt-card-title text-base lg:text-lg">
+         {{ __('Edit Do not disturb copy (Super Admin)') }}
+        </h3>
+        <p class="text-sm text-secondary-foreground font-normal mt-2 max-w-3xl leading-relaxed pe-2">
+         {{ __('Intro text and optional “learn more” link shown above to all users on this tab.') }}
+        </p>
+       </div>
+       <div class="kt-card-content flex flex-col gap-6 px-5 py-6 lg:px-8 lg:py-8">
+        <form method="post" action="{{ route('settings.notifications.page-content.update') }}" class="grid gap-5 lg:gap-6 max-w-3xl w-full">
+         @csrf
+         @method('PUT')
+         <input type="hidden" name="page_content_section" value="dnd" />
+         <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-foreground ps-0.5" for="dnd_intro">{{ __('Intro paragraph') }}</label>
+          <textarea id="dnd_intro" name="dnd_intro" class="kt-input text-sm w-full min-h-[6.5rem] px-4 py-3.5 leading-relaxed" rows="3" required>{{ old('dnd_intro', $notificationPageContent->dnd_intro) }}</textarea>
+         </div>
+         <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-foreground ps-0.5" for="dnd_learn_more_url">{{ __('Learn more URL') }}</label>
+          <input id="dnd_learn_more_url" type="text" name="dnd_learn_more_url" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ old('dnd_learn_more_url', $notificationPageContent->dnd_learn_more_url) }}" maxlength="2048" />
+         </div>
+         <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-foreground ps-0.5" for="dnd_learn_more_label">{{ __('Learn more label') }}</label>
+          <input id="dnd_learn_more_label" type="text" name="dnd_learn_more_label" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ old('dnd_learn_more_label', $notificationPageContent->dnd_learn_more_label) }}" maxlength="255" />
+         </div>
+         <div class="pt-2">
+          <button type="submit" class="kt-btn kt-btn-primary px-6">{{ __('Save Do not disturb copy') }}</button>
+         </div>
+        </form>
+       </div>
+      </div>
+     @endif
 
      {{-- Educational cards --}}
      <div class="kt-card">
@@ -618,13 +928,13 @@
           </div>
          </div>
         </div>
-        <a class="text-base font-semibold text-mono hover:text-primary" href="#">
+        <a class="text-base font-semibold text-mono hover:text-primary" href="{{ route('settings.notifications') }}">
          {{ __('Streamlined alerts setup: custom notification preferences') }}
         </a>
         <p class="text-sm text-secondary-foreground">
          {{ __('Tailor your alert preferences so you only receive the notifications that matter most to your family and budgets.') }}
         </p>
-        <a class="kt-link kt-link-underlined kt-link-dashed" href="#">
+        <a class="kt-link kt-link-underlined kt-link-dashed" href="{{ route('settings.index') }}">
          {{ __('Learn more') }}
         </a>
        </div>
@@ -645,13 +955,13 @@
           </div>
          </div>
         </div>
-        <a class="text-base font-semibold text-mono hover:text-primary" href="#">
+        <a class="text-base font-semibold text-mono hover:text-primary" href="{{ route('profile.edit') }}">
          {{ __('Effective communication: instant notification tools') }}
         </a>
         <p class="text-sm text-secondary-foreground">
          {{ __('Ensure timely communication with instant alerts across email, mobile, Slack and desktop.') }}
         </p>
-        <a class="kt-link kt-link-underlined kt-link-dashed" href="#">
+        <a class="kt-link kt-link-underlined kt-link-dashed" href="{{ route('profile.edit') }}">
          {{ __('Learn more') }}
         </a>
        </div>
@@ -672,13 +982,13 @@
           </div>
          </div>
         </div>
-        <a class="text-base font-semibold text-mono hover:text-primary" href="#">
+        <a class="text-base font-semibold text-mono hover:text-primary" href="{{ route('dashboard') }}">
          {{ __('Personalised updates: smart alert system') }}
         </a>
         <p class="text-sm text-secondary-foreground">
          {{ __('Control how you receive updates with a smart alert system tuned to your financial routines.') }}
         </p>
-        <a class="kt-link kt-link-underlined kt-link-dashed" href="#">
+        <a class="kt-link kt-link-underlined kt-link-dashed" href="{{ route('dashboard') }}">
          {{ __('Learn more') }}
         </a>
        </div>
@@ -688,6 +998,142 @@
     </div>
    </div>
   </div>
+  <div class="flex flex-wrap items-center justify-end gap-2.5 pt-2">
+   <button type="submit" form="notification_settings_form" class="kt-btn kt-btn-primary">
+    <i class="ki-filled ki-check text-base"></i>
+    {{ __('Save preferences') }}
+   </button>
+  </div>
  </div>
 @endsection
+
+@push('scripts')
+ @if ($canManageNotificationPage)
+  <script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+ @endif
+ <script>
+  document.addEventListener('DOMContentLoaded', function () {
+   var tabBar = document.getElementById('notification_settings_tabs');
+   if (!tabBar) return;
+
+   var buttons = tabBar.querySelectorAll('[data-notif-tab-target]');
+   var panelIds = ['notif_tab_channels', 'notif_tab_other', 'notif_tab_faq', 'notif_tab_contact', 'notif_tab_dnd'];
+   var panelIdSet = {};
+   panelIds.forEach(function (id) { panelIdSet[id] = true; });
+
+   function showPanel(panelId) {
+    var id = typeof panelId === 'string' ? panelId.trim() : '';
+    if (!panelIdSet[id]) {
+     id = 'notif_tab_channels';
+    }
+    panelIds.forEach(function (pid) {
+     var panel = document.getElementById(pid);
+     if (!panel) return;
+     var on = pid === id;
+     panel.toggleAttribute('hidden', !on);
+     panel.classList.toggle('active', on);
+     if (on) {
+      panel.style.setProperty('display', 'flex', 'important');
+      panel.style.setProperty('flex-direction', 'column', 'important');
+     } else {
+      panel.style.setProperty('display', 'none', 'important');
+     }
+    });
+    buttons.forEach(function (btn) {
+     var target = (btn.getAttribute('data-notif-tab-target') || '').trim();
+     var on = target === id;
+     btn.classList.toggle('active', on);
+     btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+   }
+
+   buttons.forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+     e.preventDefault();
+     e.stopPropagation();
+     if (typeof e.stopImmediatePropagation === 'function') {
+      e.stopImmediatePropagation();
+     }
+     var target = btn.getAttribute('data-notif-tab-target');
+     if (target) showPanel(target);
+    }, true);
+   });
+
+   function readNotificationsHashTab() {
+    var h = (window.location.hash || '').replace(/^#/, '').trim();
+    return panelIdSet[h] ? h : null;
+   }
+
+   var initialTab = @json(session('open_notifications_tab'));
+   @if (old('_support_from') === 'create' || old('_support_contact_id'))
+    if (!initialTab) initialTab = 'notif_tab_contact';
+   @elseif (old('page_content_section') === 'dnd')
+    if (!initialTab) initialTab = 'notif_tab_dnd';
+   @endif
+   var hashTab = readNotificationsHashTab();
+   if (hashTab) {
+    initialTab = hashTab;
+   }
+   showPanel(initialTab || 'notif_tab_channels');
+
+   window.addEventListener('hashchange', function () {
+    var t = readNotificationsHashTab();
+    if (t) {
+     showPanel(t);
+    }
+   });
+
+   var faqAccordion = document.querySelector('#notif_tab_faq [data-kt-accordion="true"]');
+   if (faqAccordion) {
+    faqAccordion.querySelectorAll('[data-kt-accordion-toggle][role="button"]').forEach(function (toggle) {
+     toggle.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+       e.preventDefault();
+       toggle.click();
+      }
+     });
+    });
+   }
+
+   @if ($canManageNotificationPage)
+   if (typeof Quill !== 'undefined') {
+    var toolbarOptions = [
+     [{ header: [1, 2, 3, false] }],
+     ['bold', 'italic', 'underline', 'strike'],
+     [{ color: [] }, { background: [] }],
+     [{ list: 'ordered' }, { list: 'bullet' }],
+     [{ indent: '-1' }, { indent: '+1' }],
+     ['link'],
+     ['clean'],
+    ];
+    document.querySelectorAll('[data-faq-quill]').forEach(function (el) {
+     var syncId = el.getAttribute('data-sync');
+     var ta = syncId ? document.getElementById(syncId) : null;
+     if (!ta) return;
+     try {
+      var quill = new Quill(el, {
+       theme: 'snow',
+       modules: { toolbar: toolbarOptions },
+      });
+      if (ta.value && ta.value.trim() !== '') {
+       quill.root.innerHTML = ta.value;
+      }
+      function sync() {
+       ta.value = quill.root.innerHTML;
+      }
+      quill.on('text-change', sync);
+      sync();
+      var form = ta.closest('form');
+      if (form) {
+       form.addEventListener('submit', sync);
+      }
+     } catch (err) {
+      console.warn('Quill init failed for editor', el.id || syncId, err);
+     }
+    });
+   }
+   @endif
+  });
+ </script>
+@endpush
 

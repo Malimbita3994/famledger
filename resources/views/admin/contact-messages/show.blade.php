@@ -16,6 +16,12 @@
                 <p class="text-sm text-muted-foreground mt-0.5">
                     <a href="mailto:{{ $contact_message->email }}" class="text-primary hover:underline">{{ $contact_message->email }}</a>
                 </p>
+                @if ($contact_message->phone)
+                    <p class="text-sm text-muted-foreground mt-1">
+                        <span class="font-medium text-foreground">Phone:</span>
+                        <a href="tel:{{ preg_replace('/\s+/', '', $contact_message->phone) }}" class="text-primary hover:underline">{{ $contact_message->phone }}</a>
+                    </p>
+                @endif
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm text-muted-foreground">
@@ -48,8 +54,8 @@
 
         <div class="border-t border-border pt-5">
             <h2 class="text-xs font-semibold tracking-wide text-muted-foreground uppercase mb-3">Message</h2>
-            <div class="rounded-2xl border border-border bg-white text-sm sm:text-[15px] leading-relaxed text-slate-800 p-5 sm:p-6 whitespace-pre-wrap shadow-sm">
-                {{ $contact_message->message }}
+            <div class="contact-message-rich rounded-2xl border border-border bg-white text-sm sm:text-[15px] leading-relaxed text-slate-800 p-5 sm:p-6 shadow-sm [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ps-5 [&_ol]:list-decimal [&_ol]:ps-5 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-s-2 [&_blockquote]:border-border [&_blockquote]:ps-3 [&_blockquote]:italic">
+                {!! \Stevebauman\Purify\Facades\Purify::config('notification_faq')->clean($contact_message->message) !!}
             </div>
         </div>
     </div>

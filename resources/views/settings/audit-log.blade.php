@@ -4,8 +4,8 @@
 @section('page_title', __('Audit log'))
 
 @section('content')
- <div class="pb-5">
-  <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
+ <div class="audit-log-page min-w-0 w-full max-w-full overflow-x-hidden pb-5">
+  <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3 min-w-0 pb-5">
    <div class="flex items-center flex-wrap gap-1 lg:gap-5">
     <h1 class="font-medium text-lg text-mono">
      {{ __('Audit log') }}
@@ -35,7 +35,6 @@
     </a>
    </div>
   </div>
- </div>
 
  <style>
   .audit-filter-row {
@@ -63,14 +62,113 @@
 
   .audit-summary-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Full-width summary row: show four tiles from tablet up */
+  @media (min-width: 768px) {
+      .audit-summary-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+  }
+
+  .audit-log-table-wrap {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+  }
+
+  .audit-log-table {
+      width: 100%;
+      table-layout: fixed;
+  }
+
+  .audit-log-table th,
+  .audit-log-table td {
+      vertical-align: top;
+  }
+
+  .audit-log-col-desc {
+      word-break: break-word;
+      overflow-wrap: anywhere;
   }
  </style>
 
- <div class="kt-container-fixed pb-6">
-  <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 lg:gap-7.5">
-   <div class="col-span-2">
-    <div class="flex flex-col gap-5 lg:gap-7.5">
+ <div class="kt-container-fixed pb-6 min-w-0 max-w-full flex flex-col gap-5 lg:gap-7.5">
+  {{-- Summary metrics first (full width) --}}
+  <div class="kt-card min-w-0 max-w-full overflow-hidden shrink-0">
+   <div class="kt-card-header">
+    <h3 class="kt-card-title">
+     {{ __('Summary (last 30 days)') }}
+    </h3>
+   </div>
+   <div class="kt-card-content px-4 py-4 min-w-0">
+    <div class="audit-summary-grid grid gap-3 min-w-0">
+     <button
+      type="button"
+      class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
+      data-title="{{ __('Total events') }}"
+      data-value="128"
+      data-description="{{ __('Total number of audit events recorded across the selected scope in the last 30 days.') }}"
+     >
+      <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
+       {{ __('Total events') }}
+      </span>
+      <span class="text-sm font-semibold text-mono">
+       128
+      </span>
+     </button>
+     <button
+      type="button"
+      class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
+      data-title="{{ __('Critical changes') }}"
+      data-value="4"
+      data-description="{{ __('Important configuration and permission changes that may require review.') }}"
+     >
+      <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
+       {{ __('Critical changes') }}
+      </span>
+      <span class="text-sm font-semibold text-destructive">
+       4
+      </span>
+     </button>
+     <button
+      type="button"
+      class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
+      data-title="{{ __('Member updates') }}"
+      data-value="9"
+      data-description="{{ __('Invitations, role changes and member removals performed in the last 30 days.') }}"
+     >
+      <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
+       {{ __('Member updates') }}
+      </span>
+      <span class="text-sm font-semibold text-mono">
+       9
+      </span>
+     </button>
+     <button
+      type="button"
+      class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
+      data-title="{{ __('Budget & wallet changes') }}"
+      data-value="21"
+      data-description="{{ __('Budget adjustments, wallet openings and key balance changes over the last 30 days.') }}"
+     >
+      <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
+       {{ __('Budget & wallet changes') }}
+      </span>
+      <span class="text-sm font-semibold text-mono">
+       21
+      </span>
+     </button>
+    </div>
+   </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 lg:gap-7.5 min-w-0 min-h-0">
+   <div class="col-span-2 min-w-0 max-w-full">
+    <div class="flex flex-col gap-5 lg:gap-7.5 min-w-0">
      {{-- Scope & filters (Super Admin / Auditor: whole system or a family you belong to) --}}
      <div class="kt-card audit-filter-card">
       <div class="kt-card-header flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center">
@@ -115,8 +213,8 @@
      </div>
 
      {{-- Audit table (desktop / tablet) --}}
-     <div class="kt-card">
-      <div class="kt-card-header items-center justify-between gap-3">
+     <div class="kt-card min-w-0 max-w-full overflow-hidden">
+      <div class="kt-card-header items-center justify-between gap-3 flex-wrap min-w-0">
        <h3 class="kt-card-title text-sm">
         @if(request('family_id') && isset($families))
          @php $selectedFamily = $families->firstWhere('id', (int) request('family_id')); @endphp
@@ -125,25 +223,35 @@
          {{ __('Recent activity (platform-wide)') }}
         @endif
        </h3>
-       <div class="flex items-center gap-2">
-        <button type="button" class="kt-btn kt-btn-xs kt-btn-outline">
+       <div class="flex items-center gap-2 flex-wrap">
+        <a
+         href="{{ route('settings.audit-log.export-pdf', array_filter(request()->only(['family_id', 'type', 'from', 'to']))) }}"
+         class="kt-btn kt-btn-xs kt-btn-outline inline-flex items-center gap-1"
+        >
+         <i class="ki-filled ki-file-down text-sm"></i>
+         {{ __('Export PDF') }}
+        </a>
+        <a
+         href="{{ route('settings.audit-log.export-csv', array_filter(request()->only(['family_id', 'type', 'from', 'to']))) }}"
+         class="kt-btn kt-btn-xs kt-btn-outline inline-flex items-center gap-1"
+        >
          <i class="ki-filled ki-notification-status text-sm"></i>
          {{ __('Export CSV') }}
-        </button>
+        </a>
        </div>
       </div>
-      <div class="kt-card-content px-0 pb-3">
-       <div class="kt-scrollable-x-auto hidden md:block">
-        <table class="kt-table align-middle text-xs text-secondary-foreground">
+      <div class="kt-card-content px-0 pb-3 min-w-0">
+       <div class="audit-log-table-wrap kt-scrollable-x-auto hidden md:block">
+        <table class="audit-log-table kt-table align-middle text-xs text-secondary-foreground">
          <thead>
           <tr class="bg-accent/40">
-           <th class="px-4 py-2 text-start font-medium min-w-40">{{ __('When') }}</th>
-           <th class="px-4 py-2 text-start font-medium min-w-40">{{ __('Who') }}</th>
-           <th class="px-4 py-2 text-start font-medium min-w-32">{{ __('Family') }}</th>
-           <th class="px-4 py-2 text-start font-medium min-w-32">{{ __('Type') }}</th>
-           <th class="px-4 py-2 text-start font-medium min-w-44">{{ __('Area') }}</th>
-           <th class="px-4 py-2 text-start font-medium min-w-64">{{ __('Action / Description') }}</th>
-           <th class="px-4 py-2 text-end font-medium min-w-20">{{ __('IP') }}</th>
+           <th class="px-4 py-2 text-start font-medium w-[11%]">{{ __('When') }}</th>
+           <th class="px-4 py-2 text-start font-medium w-[14%]">{{ __('Who') }}</th>
+           <th class="px-4 py-2 text-start font-medium w-[10%]">{{ __('Family') }}</th>
+           <th class="px-4 py-2 text-start font-medium w-[9%]">{{ __('Type') }}</th>
+           <th class="px-4 py-2 text-start font-medium w-[11%]">{{ __('Area') }}</th>
+           <th class="px-4 py-2 text-start font-medium w-[35%]">{{ __('Action / Description') }}</th>
+           <th class="px-4 py-2 text-end font-medium w-[10%] whitespace-nowrap">{{ __('IP') }}</th>
           </tr>
          </thead>
          <tbody>
@@ -180,12 +288,12 @@
            <td class="px-4 py-2 align-top">
             <span class="kt-badge kt-badge-xs kt-badge-outline kt-badge-primary">{{ $log->area }}</span>
            </td>
-           <td class="px-4 py-2 align-top">
+           <td class="px-4 py-2 align-top audit-log-col-desc">
             <span class="text-xs font-medium text-foreground">{{ $log->action }}</span>
             <span class="text-[11px] text-muted-foreground block mt-0.5">{{ $log->description ?? '—' }}</span>
            </td>
-           <td class="px-4 py-2 align-top text-end">
-            <span class="text-[11px] text-muted-foreground">{{ $log->ip ?? '—' }}</span>
+           <td class="px-4 py-2 align-top text-end whitespace-nowrap">
+            <span class="text-[11px] text-muted-foreground font-mono">{{ $log->ip ?? '—' }}</span>
            </td>
           </tr>
           @empty
@@ -320,79 +428,10 @@
     </div>
    </div>
 
-   <div class="col-span-1">
-    <div class="flex flex-col gap-5 lg:gap-7.5">
-     {{-- Summary card --}}
-     <div class="kt-card">
-      <div class="kt-card-header">
-       <h3 class="kt-card-title">
-        {{ __('Summary (last 30 days)') }}
-       </h3>
-      </div>
-      <div class="kt-card-content px-4 py-4">
-       <div class="audit-summary-grid grid gap-3">
-        <button
-         type="button"
-         class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
-         data-title="{{ __('Total events') }}"
-         data-value="128"
-         data-description="{{ __('Total number of audit events recorded across the selected scope in the last 30 days.') }}"
-        >
-         <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
-          {{ __('Total events') }}
-         </span>
-         <span class="text-sm font-semibold text-mono">
-          128
-         </span>
-        </button>
-        <button
-         type="button"
-         class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
-         data-title="{{ __('Critical changes') }}"
-         data-value="4"
-         data-description="{{ __('Important configuration and permission changes that may require review.') }}"
-        >
-         <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
-          {{ __('Critical changes') }}
-         </span>
-         <span class="text-sm font-semibold text-destructive">
-          4
-         </span>
-        </button>
-        <button
-         type="button"
-         class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
-         data-title="{{ __('Member updates') }}"
-         data-value="9"
-         data-description="{{ __('Invitations, role changes and member removals performed in the last 30 days.') }}"
-        >
-         <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
-          {{ __('Member updates') }}
-         </span>
-         <span class="text-sm font-semibold text-mono">
-          9
-         </span>
-        </button>
-        <button
-         type="button"
-         class="audit-summary-card min-w-0 rounded-xl border border-border bg-muted/40 px-3.5 py-3 flex flex-col gap-1 text-left cursor-pointer hover:bg-muted/70 transition-colors"
-         data-title="{{ __('Budget & wallet changes') }}"
-         data-value="21"
-         data-description="{{ __('Budget adjustments, wallet openings and key balance changes over the last 30 days.') }}"
-        >
-         <span class="text-[11px] text-secondary-foreground uppercase tracking-wide">
-          {{ __('Budget & wallet changes') }}
-         </span>
-         <span class="text-sm font-semibold text-mono">
-          21
-         </span>
-        </button>
-       </div>
-      </div>
-     </div>
-
+   <div class="col-span-1 min-w-0 max-w-full">
+    <div class="flex flex-col gap-5 lg:gap-7.5 min-w-0">
      {{-- Tips card --}}
-     <div class="kt-card">
+     <div class="kt-card min-w-0 max-w-full overflow-hidden">
       <div class="kt-card-content px-6 py-6 flex flex-col gap-4">
        <div class="flex items-start gap-3">
         <div class="relative size-[40px] shrink-0">

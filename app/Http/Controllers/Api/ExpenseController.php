@@ -22,7 +22,10 @@ class ExpenseController extends Controller
             ->with(['wallet:id,name,currency_code', 'category:id,name'])
             ->orderByDesc('expense_date');
         if ($request->filled('wallet_id')) {
-            $query->where('wallet_id', $request->wallet_id);
+            $wallet = $family->wallets()->whereKey($request->wallet_id)->first();
+            if ($wallet) {
+                $query->where('wallet_id', $wallet->id);
+            }
         }
         $perPage = min((int) $request->get('per_page', 20), 50);
         $expenses = $query->paginate($perPage);
@@ -65,27 +68,39 @@ class ExpenseController extends Controller
             'expense_date' => ['required', 'date'],
             'description' => ['nullable', 'string', 'max:500'],
             'merchant' => ['nullable', 'string', 'max:255'],
-            'paid_by' => ['nullable', Rule::in($family->members()->pluck('users.id')->toArray())],
+            'paid_by' => [
+                'nullable',
+                Rule::exists('users', 'id'),
+                Rule::in($family->members()->pluck('users.id')->toArray()),
+            ],
             'payment_method' => ['nullable', 'string', 'max:50', Rule::in(array_keys(Expense::paymentMethods()))],
             'reference' => ['nullable', 'string', 'max:100'],
+            'is_recurring' => ['nullable', 'boolean'],
             'project_id' => ['nullable', Rule::exists('projects', 'id')->where('family_id', $family->id)],
+            'family_liability_id' => ['nullable', Rule::exists('family_liabilities', 'id')->where('family_id', $family->id)],
             'budget_id' => ['nullable', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
         ]);
+
+        if ($wallet->status !== 'active') {
+            return response()->json(['message' => 'Selected wallet is inactive.'], 422);
+        }
 
         $expense = $family->expenses()->create([
             'wallet_id' => $validated['wallet_id'],
             'category_id' => $validated['category_id'],
             'subcategory' => $validated['subcategory'] ?? null,
             'project_id' => $validated['project_id'] ?? null,
+            'family_liability_id' => $validated['family_liability_id'] ?? null,
             'budget_id' => $validated['budget_id'] ?? null,
             'amount' => $validated['amount'],
             'currency_code' => strtoupper($validated['currency_code']),
             'expense_date' => $validated['expense_date'],
             'description' => $validated['description'] ?? null,
             'merchant' => $validated['merchant'] ?? null,
-            'paid_by' => $validated['paid_by'] ?? null,
+            'paid_by' => $validated['paid_by'] ?? auth()->id(),
             'payment_method' => $validated['payment_method'] ?? null,
             'reference' => $validated['reference'] ?? null,
+            'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
             'created_by' => auth()->id(),
         ]);
 

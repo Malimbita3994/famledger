@@ -9,8 +9,27 @@
         <div>
             <h1 class="font-medium text-lg text-mono">Contact messages</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Messages from the landing page “Talk to the FamLedger team” form.</p>
+            <p class="text-xs text-muted-foreground mt-1">
+                Total in database: <span class="font-medium text-foreground">{{ $totalContactMessages }}</span>
+                @if (request()->filled('search') || request()->filled('read'))
+                    <span class="text-muted-foreground">(list below is filtered)</span>
+                @endif
+            </p>
         </div>
     </div>
+
+    @php
+        $hasListFilters = request()->filled('search') || request()->filled('read');
+    @endphp
+    @if ($messages->isEmpty() && $hasListFilters && $totalContactMessages > 0)
+        <div class="mb-6 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-amber-900 dark:text-amber-100 text-sm">
+            <p class="font-medium">No rows match your current filters.</p>
+            <p class="mt-1 text-amber-800/90 dark:text-amber-200/90">
+                There {{ $totalContactMessages === 1 ? 'is' : 'are' }} <strong>{{ $totalContactMessages }}</strong> message(s) saved, but none match this search or read/unread filter.
+                <a href="{{ route('admin.contact-messages.index') }}" class="text-primary font-medium hover:underline ml-1">Show all messages</a>
+            </p>
+        </div>
+    @endif
 
     @if (session('success'))
         <div class="mb-6 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 text-green-800 dark:text-green-200">{{ session('success') }}</div>
@@ -18,7 +37,7 @@
 
     <div class="mb-4 flex flex-wrap items-center gap-2">
         <form method="get" class="flex flex-nowrap items-center gap-2 flex-wrap">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, email or message" class="kt-input w-48 sm:w-64 min-w-0 shrink-0" />
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, email, phone or message" class="kt-input w-48 sm:w-64 min-w-0 shrink-0" />
             <select name="read" class="kt-select !w-[140px] shrink-0" style="width: 140px;">
                 <option value="">All</option>
                 <option value="unread" {{ request('read') === 'unread' ? 'selected' : '' }}>Unread</option>
@@ -36,6 +55,7 @@
                     <tr>
                         <th class="min-w-[140px]">Name</th>
                         <th class="min-w-[180px]">Email</th>
+                        <th class="min-w-[120px]">Phone</th>
                         <th class="min-w-[200px]">Message</th>
                         <th class="min-w-[120px]">Date</th>
                         <th class="min-w-[80px]">Read</th>
@@ -56,7 +76,8 @@
                             <span>{{ $msg->name }}</span>
                         </td>
                         <td><a href="mailto:{{ $msg->email }}" class="text-primary hover:underline">{{ $msg->email }}</a></td>
-                        <td class="text-sm text-muted-foreground">{{ Str::limit($msg->message, 60) }}</td>
+                        <td class="text-sm text-muted-foreground">{{ $msg->phone ? Str::limit($msg->phone, 24) : '—' }}</td>
+                        <td class="text-sm text-muted-foreground">{{ Str::limit(str_replace('&nbsp;', ' ', strip_tags($msg->message)), 60) }}</td>
                         <td class="text-sm">{{ $msg->created_at->format('M j, Y H:i') }}</td>
                         <td>
                             @if ($msg->read_at)
@@ -71,7 +92,15 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center text-muted-foreground py-8">No contact messages yet.</td>
+                        <td colspan="7" class="text-center text-muted-foreground py-8">
+                            @if ($hasListFilters && $totalContactMessages > 0)
+                                No messages match these filters.
+                            @elseif ($totalContactMessages === 0)
+                                No contact messages yet. Submit the form on the public landing page (Talk to the FamLedger team).
+                            @else
+                                No messages on this page.
+                            @endif
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -90,6 +119,9 @@
                             <a href="mailto:{{ $msg->email }}" class="text-xs text-primary hover:underline truncate">
                                 {{ $msg->email }}
                             </a>
+                            @if ($msg->phone)
+                                <span class="text-xs text-muted-foreground truncate">{{ $msg->phone }}</span>
+                            @endif
                         </div>
                         <span class="shrink-0">
                             @if ($msg->read_at)
@@ -100,7 +132,7 @@
                         </span>
                     </div>
                     <div class="text-[11px] text-muted-foreground">
-                        {{ Str::limit($msg->message, 90) }}
+                        {{ Str::limit(str_replace('&nbsp;', ' ', strip_tags($msg->message)), 90) }}
                     </div>
                     <div class="flex items-center justify-between text-[11px] text-muted-foreground">
                         <span>{{ $msg->created_at->format('M j, Y H:i') }}</span>
@@ -110,7 +142,15 @@
                     </div>
                 </div>
             @empty
-                <div class="text-center text-muted-foreground py-8 text-sm">No contact messages yet.</div>
+                <div class="text-center text-muted-foreground py-8 text-sm">
+                    @if ($hasListFilters && $totalContactMessages > 0)
+                        No messages match these filters.
+                    @elseif ($totalContactMessages === 0)
+                        No contact messages yet. Use the landing page contact form to create one.
+                    @else
+                        No messages on this page.
+                    @endif
+                </div>
             @endforelse
         </div>
 

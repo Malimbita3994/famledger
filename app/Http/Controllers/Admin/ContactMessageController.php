@@ -17,6 +17,7 @@ class ContactMessageController extends Controller
             $query->where(function ($qry) use ($q) {
                 $qry->where('name', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%")
                     ->orWhere('message', 'like', "%{$q}%");
             });
         }
@@ -31,7 +32,9 @@ class ContactMessageController extends Controller
 
         $messages = $query->paginate(15)->withQueryString();
 
-        return view('admin.contact-messages.index', compact('messages'));
+        $totalContactMessages = ContactMessage::query()->count();
+
+        return view('admin.contact-messages.index', compact('messages', 'totalContactMessages'));
     }
 
     public function show(ContactMessage $contact_message)

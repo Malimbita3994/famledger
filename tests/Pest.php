@@ -1,5 +1,13 @@
 <?php
 
+use App\Models\Family;
+use App\Models\FamilyRole;
+use App\Models\User;
+use App\Models\Wallet;
+use Database\Seeders\ExpenseCategorySeeder;
+use Database\Seeders\FamilyRoleSeeder;
+use Database\Seeders\IncomeCategorySeeder;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -41,7 +49,51 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Seed roles + default income/expense categories (required for transaction forms).
+ */
+function seedFinanceCatalog(): void
 {
-    // ..
+    (new FamilyRoleSeeder)->run();
+    (new IncomeCategorySeeder)->run();
+    (new ExpenseCategorySeeder)->run();
+}
+
+/**
+ * @return array{user: User, family: Family, wallet: Wallet}
+ */
+function createFamilyWithMember(?User $user = null): array
+{
+    seedFinanceCatalog();
+
+    $user = $user ?? User::factory()->create();
+
+    $family = Family::create([
+        'name' => 'Test Family',
+        'currency_code' => 'USD',
+        'created_by' => $user->id,
+        'status' => 'active',
+    ]);
+
+    $roleId = FamilyRole::where('name', 'Owner')->firstOrFail()->id;
+
+    $family->members()->attach($user->id, [
+        'role_id' => $roleId,
+        'status' => 'active',
+        'is_primary' => true,
+    ]);
+
+    $wallet = Wallet::create([
+        'family_id' => $family->id,
+        'name' => 'Main',
+        'type' => 'cash',
+        'currency_code' => 'USD',
+        'initial_balance' => 0,
+        'is_shared' => true,
+        'status' => 'active',
+        'created_by' => $user->id,
+        'is_primary' => true,
+    ]);
+
+    return compact('user', 'family', 'wallet');
 }

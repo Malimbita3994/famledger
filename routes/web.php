@@ -1,39 +1,57 @@
 <?php
 
-use App\Http\Controllers\DashboardController as MainDashboardController;
-use App\Http\Controllers\FamilyController;
-use App\Http\Controllers\FamilyMemberController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\BudgetController;
-use App\Http\Controllers\ExpenseController;
-use App\Http\Controllers\IncomeController;
-use App\Http\Controllers\ReconciliationController;
-use App\Http\Controllers\SavingsGoalController;
-use App\Http\Controllers\PropertyController;
-use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\ProjectFundingController;
+use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\PropertyConfigController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\TransferController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\WalletController;
-use App\Http\Controllers\ReportController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\PropertyConfigController;
-use App\Http\Controllers\WealthController;
-use App\Http\Controllers\FamilyLiabilityController;
-use App\Http\Controllers\FamilyInvitationController;
 use App\Http\Controllers\AuditTrailController;
-use App\Http\Controllers\InviteJoinController;
-use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DashboardController as MainDashboardController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\FamilyController;
+use App\Http\Controllers\FamilyInvitationController;
+use App\Http\Controllers\FamilyLiabilityController;
+use App\Http\Controllers\FamilyMemberController;
+use App\Http\Controllers\IncomeController;
+use App\Http\Controllers\InviteJoinController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectFundingController;
+use App\Http\Controllers\PropertyController;
+use App\Http\Controllers\ReconciliationController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SavingsGoalController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransferController;
+use App\Http\Controllers\WalletController;
+use App\Http\Controllers\WealthController;
+use App\Models\NotificationFaq;
+use App\Models\NotificationSupportContact;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('marketing.landing');
+    if (config('services.contact_captcha.driver') === 'math') {
+        if (! session()->has('contact_math_a')) {
+            session([
+                'contact_math_a' => random_int(1, 9),
+                'contact_math_b' => random_int(1, 9),
+            ]);
+        }
+    }
+
+    $useRecaptcha = config('services.contact_captcha.driver') === 'recaptcha';
+
+    return view('marketing.landing', [
+        'landingFaqs' => NotificationFaq::query()->active()->ordered()->get(),
+        'landingSupportContacts' => NotificationSupportContact::query()->active()->ordered()->get(),
+        'contactCaptchaDriver' => config('services.contact_captcha.driver'),
+        'recaptchaSiteKey' => $useRecaptcha ? config('services.recaptcha.site_key') : null,
+    ]);
 })->name('landing');
 
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
@@ -42,9 +60,9 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::get('invite/join', [InviteJoinController::class, 'show'])->name('invite.join');
 Route::post('invite/join', [InviteJoinController::class, 'accept'])->name('invite.accept');
 
-Route::get('/dashboard', [MainDashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
+Route::get('/dashboard', [MainDashboardController::class, 'index'])->middleware(['auth', 'sync.current.family'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'sync.current.family'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -82,13 +100,25 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/settings/property/attributes/{attribute}/options', [PropertyConfigController::class, 'storeOption'])->name('settings.property.attributes.options.store');
         Route::delete('/settings/property/options/{option}', [PropertyConfigController::class, 'destroyOption'])->name('settings.property.attributes.options.destroy');
+
+        // Notifications page: FAQ & contact / DND copy (shown to all users on /settings/notifications)
+        Route::post('/settings/notifications/faqs', [SettingsController::class, 'storeNotificationFaq'])->name('settings.notifications.faqs.store');
+        Route::put('/settings/notifications/faqs/{notification_faq}', [SettingsController::class, 'updateNotificationFaq'])->name('settings.notifications.faqs.update');
+        Route::delete('/settings/notifications/faqs/{notification_faq}', [SettingsController::class, 'destroyNotificationFaq'])->name('settings.notifications.faqs.destroy');
+        Route::post('/settings/notifications/support-contacts', [SettingsController::class, 'storeNotificationSupportContact'])->name('settings.notifications.support-contacts.store');
+        Route::put('/settings/notifications/support-contacts/{notification_support_contact}', [SettingsController::class, 'updateNotificationSupportContact'])->name('settings.notifications.support-contacts.update');
+        Route::delete('/settings/notifications/support-contacts/{notification_support_contact}', [SettingsController::class, 'destroyNotificationSupportContact'])->name('settings.notifications.support-contacts.destroy');
+        Route::put('/settings/notifications/page-content', [SettingsController::class, 'updateNotificationPageContent'])->name('settings.notifications.page-content.update');
     });
 
     Route::get('/settings/notifications', [SettingsController::class, 'notifications'])->name('settings.notifications');
+    Route::put('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
 
     // Global audit log: Super Admin and Auditor only (all platform activity)
     Route::middleware('role:Super Admin|Auditor')->group(function () {
         Route::get('/settings/audit-log', [SettingsController::class, 'auditLog'])->name('settings.audit-log');
+        Route::get('/settings/audit-log/export-pdf', [SettingsController::class, 'auditLogExportPdf'])->name('settings.audit-log.export-pdf');
+        Route::get('/settings/audit-log/export-csv', [SettingsController::class, 'auditLogExportCsv'])->name('settings.audit-log.export-csv');
     });
 
     // Family Management (CRUD)
@@ -142,6 +172,7 @@ Route::middleware('auth')->group(function () {
 
         // Transactions (Income + Expenses in one page)
         Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
+        Route::post('transactions', [TransactionController::class, 'store'])->name('transactions.store');
 
         // Transfers (move money between wallets; total wealth unchanged)
         Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');

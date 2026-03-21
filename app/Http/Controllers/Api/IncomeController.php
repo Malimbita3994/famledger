@@ -21,7 +21,10 @@ class IncomeController extends Controller
             ->with(['wallet:id,name,currency_code', 'category:id,name'])
             ->orderByDesc('received_date');
         if ($request->filled('wallet_id')) {
-            $query->where('wallet_id', $request->wallet_id);
+            $wallet = $family->wallets()->whereKey($request->wallet_id)->first();
+            if ($wallet) {
+                $query->where('wallet_id', $wallet->id);
+            }
         }
         $perPage = min((int) $request->get('per_page', 20), 50);
         $incomes = $query->paginate($perPage);

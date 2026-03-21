@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Services\AuditLogger;
 use App\Models\AuditLog;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +29,12 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        // Match sidebar "current family" so login (and other app events) get audit_logs.family_id
+        $primaryFamily = $request->user()->families()->first();
+        if ($primaryFamily) {
+            $request->session()->put('current_family_id', $primaryFamily->id);
+        }
 
         try {
             AuditLogger::application(AuditLog::ACTION_LOGIN, 'Signed in to FamLedger', [

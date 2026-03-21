@@ -1,0 +1,142 @@
+/**
+ * FamLedger reusable contact form modal (Bootstrap 3 + Quill + math or optional reCAPTCHA).
+ * Scope: .famledger-contact-form-modal
+ */
+
+.famledger-contact-form-modal .modal-dialog.landing-contact-modal-wide {
+  width: auto;
+  max-width: min(96vw, 720px);
+  margin: 10px auto;
+}
+
+@media (min-width: 768px) {
+  .famledger-contact-form-modal .modal-dialog.landing-contact-modal-wide {
+    margin: 24px auto;
+  }
+}
+
+.famledger-contact-form-modal .modal-body {
+  max-height: none;
+  overflow: visible;
+  padding-top: 16px;
+}
+
+@media (max-height: 700px) {
+  .famledger-contact-form-modal .modal-body {
+    max-height: min(82vh, 620px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+.famledger-contact-form-modal .landing-contact-field-row {
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+.famledger-contact-form-modal .landing-contact-field-row > [class*="col-"] {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.famledger-contact-form-modal .landing-contact-field-row .form-group {
+  margin-bottom: 12px;
+}
+
+/* Do not use id="contact-form" on this form — some global themes strip input borders */
+.famledger-contact-form-modal .form-control {
+  font-size: 16px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: none;
+  border-bottom: 1px solid #ddd;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  height: auto;
+  min-height: 48px;
+}
+
+.famledger-contact-form-modal .form-control:focus {
+  border-color: #009ef7;
+  border-bottom-color: #009ef7;
+}
+
+.famledger-contact-form-modal .landing-contact-quill-wrap {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  min-height: 120px;
+  margin-top: 6px;
+}
+
+.famledger-contact-form-modal .landing-contact-quill-wrap .ql-toolbar {
+  border: 0;
+  border-bottom: 1px solid #e8e8e8;
+  flex-wrap: wrap;
+  padding: 6px 4px;
+}
+
+.famledger-contact-form-modal .landing-contact-quill-wrap .ql-container {
+  border: 0;
+  min-height: 88px;
+  font-size: 16px;
+}
+
+.famledger-contact-form-modal .landing-contact-quill-wrap .ql-editor {
+  min-height: 88px;
+  max-height: 160px;
+  overflow-y: auto;
+  cursor: text;
+}
+
+.famledger-contact-form-modal .landing-contact-quill-wrap .ql-editor.ql-blank::before {
+  font-style: normal;
+  color: #999;
+}
+
+@media (max-width: 480px) {
+  .famledger-contact-form-modal .landing-contact-quill-wrap .ql-toolbar button {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.famledger-contact-form-modal .modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.famledger-contact-form-modal .landing-recaptcha-wrap {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  min-height: 78px;
+}
+
+@media (max-width: 400px) {
+  .famledger-contact-form-modal .landing-recaptcha-wrap iframe {
+    transform: scale(0.92);
+    transform-origin: center top;
+  }
+}
+
+.famledger-contact-form-modal .landing-contact-math-input {
+  max-width: 140px;
+}
+
+.famledger-contact-form-modal .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

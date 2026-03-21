@@ -17,8 +17,11 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_SUSPENDED = 'suspended';
+
     public const STATUS_LOCKED = 'locked';
+
     public const STATUS_PENDING = 'pending';
 
     /**
@@ -35,6 +38,7 @@ class User extends Authenticatable
         'status',
         'last_login_at',
         'created_by',
+        'notification_preferences',
     ];
 
     /**
@@ -58,7 +62,46 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_login_at' => 'datetime',
+            'notification_preferences' => 'array',
         ];
+    }
+
+    /**
+     * Default notification preference keys (merged with stored JSON).
+     *
+     * @return array<string, mixed>
+     */
+    public static function defaultNotificationPreferences(): array
+    {
+        return [
+            'team_wide_alerts' => true,
+            'family_wide_alerts' => true,
+            'channel_email_enabled' => true,
+            'channel_mobile_enabled' => false,
+            'channel_slack_enabled' => false,
+            'slack_webhook_url' => null,
+            'channel_desktop_enabled' => true,
+            'notify_task_assigned' => true,
+            'notify_budget_warning' => true,
+            'notify_invoice' => true,
+            'notify_feedback' => true,
+            'notify_collaboration' => true,
+            'notify_meeting_reminder' => true,
+            'notify_status_change' => true,
+            'dnd_enabled' => false,
+            'dnd_until' => null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function mergedNotificationPreferences(): array
+    {
+        return array_merge(
+            self::defaultNotificationPreferences(),
+            $this->notification_preferences ?? []
+        );
     }
 
     public static function statuses(): array

@@ -22,6 +22,7 @@ class ContactMessageController extends Controller
             $query->where(function ($qry) use ($q) {
                 $qry->where('name', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%")
                     ->orWhere('message', 'like', "%{$q}%");
             });
         }
@@ -65,6 +66,7 @@ class ContactMessageController extends Controller
             'id' => $contact_message->id,
             'name' => $contact_message->name,
             'email' => $contact_message->email,
+            'phone' => $contact_message->phone,
             'message' => $contact_message->message,
             'read_at' => $contact_message->read_at?->toIso8601String(),
             'created_at' => $contact_message->created_at?->toIso8601String(),

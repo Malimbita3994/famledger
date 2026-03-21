@@ -63,7 +63,7 @@ class AuditTrailController extends Controller
             $query->whereDate('created_at', '<=', $request->input('to'));
         }
 
-        $perPage = min((int) $request->get('per_page', 50), 100);
+        $perPage = min((int) $request->get('per_page', 25), 100);
         $logs = $query->paginate($perPage);
 
         $items = $logs->getCollection()->map(function (AuditLog $log) {

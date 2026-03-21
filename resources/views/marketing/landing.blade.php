@@ -24,6 +24,10 @@
      <link rel="stylesheet" href="{{ asset('metronic/assets/css/owl.theme.default.min.css') }}">
      <link rel="stylesheet" href="{{ asset('metronic/assets/css/font-awesome.min.css') }}">
 
+     {{-- Same-origin Quill avoids Edge “Tracking Prevention blocked access to storage” on third-party CDNs --}}
+     <link rel="stylesheet" href="{{ asset('vendor/quill/quill.snow.css') }}">
+     <link rel="stylesheet" href="{{ asset('css/famledger-contact-form-modal.css') }}">
+
      <!-- MAIN CSS -->
      <link rel="stylesheet" href="{{ asset('metronic/assets/css/tooplate-style.css') }}">
 
@@ -99,10 +103,207 @@
      #footer .social-icon li a {
        color: #ffffff;
         }
+
+     /* Contact success: no third-party modal (avoids full-page dim / stuck backdrops) */
+     .famledger-contact-success-banner {
+       position: fixed;
+       top: 16px;
+       right: 16px;
+       left: 16px;
+       max-width: 420px;
+       margin-left: auto;
+       z-index: 100000;
+       display: flex;
+       align-items: flex-start;
+       gap: 12px;
+       padding: 14px 16px;
+       border-radius: 12px;
+       border: 1px solid #d1fae5;
+       background: #fff;
+       box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.2);
+       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+       font-size: 0.9375rem;
+       font-weight: 600;
+       color: #0f172a;
+       animation: famledger-banner-in 0.35s ease-out;
+     }
+     @keyframes famledger-banner-in {
+       from { opacity: 0; transform: translateY(-8px); }
+       to { opacity: 1; transform: translateY(0); }
+     }
+     .famledger-contact-success-banner .famledger-contact-success-dismiss {
+       flex-shrink: 0;
+       margin-left: auto;
+       border: none;
+       background: linear-gradient(135deg, #059669, #22c55e);
+       color: #fff;
+       font-weight: 600;
+       font-size: 0.75rem;
+       padding: 6px 14px;
+       border-radius: 999px;
+       cursor: pointer;
+     }
+     .famledger-contact-success-banner .famledger-contact-success-dismiss:hover {
+       filter: brightness(1.05);
+     }
+
+     /* Landing FAQ */
+     #faq .panel-group .panel {
+       border-radius: 6px;
+       border-color: #e0e0e0;
+       box-shadow: none;
+       margin-bottom: 12px;
+     }
+     #faq .panel-heading {
+       background: #fafafa;
+       border-radius: 6px 6px 0 0;
+     }
+     #faq .panel-title a {
+       display: block;
+       font-weight: 600;
+       color: #333;
+       text-decoration: none;
+       padding: 4px 0;
+     }
+     #faq .panel-title a:hover,
+     #faq .panel-title a:focus {
+       color: #009EF7;
+     }
+     #faq .panel-body {
+       line-height: 1.65;
+       color: #555;
+     }
+     /* Dynamic FAQ (rich text from admin) */
+     .landing-faq-q p { display: inline; margin: 0; }
+     .landing-faq-q h1, .landing-faq-q h2, .landing-faq-q h3, .landing-faq-q h4 {
+       display: inline;
+       font-size: inherit;
+       font-weight: 600;
+       margin: 0;
+     }
+     .landing-faq-a p { margin: 0 0 0.75em; }
+     .landing-faq-a p:last-child { margin-bottom: 0; }
+     .landing-faq-a ul, .landing-faq-a ol { margin: 0.5em 0 0.75em 1.25em; padding-left: 1em; }
+     .landing-faq-a a { color: #009EF7; text-decoration: underline; }
+     .landing-faq-a blockquote {
+       margin: 0.75em 0;
+       padding-left: 1em;
+       border-left: 3px solid #e0e0e0;
+       font-style: italic;
+     }
+
+     /* Published contact support (from admin, same source as in-app notifications settings) */
+     #contact .landing-support-options {
+       margin-bottom: 40px;
+     }
+     #contact .landing-support-options h2 {
+       font-weight: 600;
+       margin-bottom: 24px;
+       color: #333;
+     }
+     #contact .landing-support-card {
+       border-radius: 6px;
+       border-color: #e0e0e0;
+       box-shadow: none;
+       margin-bottom: 16px;
+     }
+     #contact .landing-support-card .panel-body {
+       line-height: 1.65;
+       color: #555;
+       padding: 22px 24px;
+     }
+     #contact .landing-support-card h3 {
+       margin-top: 0;
+       margin-bottom: 12px;
+       font-weight: 600;
+       color: #222;
+       font-size: 1.25rem;
+     }
+     .landing-support-body p { margin: 0 0 0.75em; }
+     .landing-support-body p:last-child { margin-bottom: 0; }
+     .landing-support-body ul, .landing-support-body ol { margin: 0.5em 0 0.75em 1.25em; padding-left: 1em; }
+     .landing-support-body a { color: #009EF7; text-decoration: underline; }
+     .landing-support-body blockquote {
+       margin: 0.75em 0;
+       padding-left: 1em;
+       border-left: 3px solid #e0e0e0;
+       font-style: italic;
+     }
+     #contact .landing-support-link {
+       margin-top: 18px;
+       margin-bottom: 0;
+     }
+     #contact .landing-support-link-url {
+       display: block;
+       margin-top: 10px;
+       word-break: break-all;
+       font-size: 0.95em;
+       color: #009EF7;
+     }
+
+     /* Contact modal (Bootstrap 3) — support CTA with #contact opens this instead of navigating */
+     #landingContactModal .modal-content {
+       border-radius: 10px;
+       border: 1px solid #e0e0e0;
+       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+     }
+     #landingContactModal .modal-header {
+       border-bottom: 1px solid #eee;
+       padding: 18px 22px;
+     }
+     #landingContactModal .modal-title {
+       font-weight: 600;
+       color: #222;
+     }
+     #landingContactModal .modal-body {
+       padding: 20px 22px 8px;
+     }
+     #landingContactModal .modal-body .form-group {
+       margin-bottom: 16px;
+     }
+     #landingContactModal .modal-body label {
+       font-weight: 600;
+       color: #444;
+       font-size: 13px;
+       margin-bottom: 6px;
+     }
+     #landingContactModal .modal-footer {
+       border-top: 1px solid #eee;
+       padding: 14px 22px 18px;
+     }
+     #landingContactModal .modal-footer .section-btn {
+       border: 0;
+     }
+     button.landing-support-modal-btn.section-btn {
+       font-family: inherit;
+       cursor: pointer;
+     }
+     .landing-support-modal-hint {
+       margin-top: 12px;
+       margin-bottom: 0;
+       font-size: 13px;
+       color: #777;
+     }
+
+     /* Single contact area: hero heading + typing, then support cards or fallback CTA */
+     #contact .landing-contact-hero {
+       margin-bottom: 8px;
+     }
+     #contact .landing-contact-hero h1 {
+       margin-bottom: 0.25rem;
+     }
+
     </style>
 
 </head>
 <body>
+
+     @if (session()->has('contact_success_toast'))
+     <div id="famledger-contact-success-banner" class="famledger-contact-success-banner" role="status" aria-live="polite">
+          <span>{{ session('contact_success_toast') }}</span>
+          <button type="button" class="famledger-contact-success-dismiss">{{ __('Great, thanks') }}</button>
+     </div>
+     @endif
 
      <!-- PRE LOADER -->
      <section class="preloader">
@@ -138,11 +339,9 @@
                          <li><a href="#home" class="smoothScroll">Home</a></li>
                          <li><a href="#feature" class="smoothScroll">Features</a></li>
                          <li><a href="#about" class="smoothScroll">About us</a></li>
+                         <li><a href="#faq" class="smoothScroll">FAQ</a></li>
                          {{-- Pricing hidden for now --}}
                          <li><a href="#contact" class="smoothScroll">Contact</a></li>
-                    </ul>
-                    <ul class="nav navbar-nav navbar-right">
-                         <li><a href="#contact">Say hello - <span>info@famledger.com</span></a></li>
                     </ul>
                </div>
 
@@ -416,53 +615,154 @@
      </section>   
 
 
-     <!-- CONTACT -->
+     <!-- FAQ -->
+     <section id="faq" data-stellar-background-ratio="0.5">
+          <div class="container">
+               <div class="row">
+                    <div class="col-md-12 col-sm-12 scroll-reveal">
+                         <div class="section-title">
+                              <h1>Frequently asked questions</h1>
+                         </div>
+                    </div>
+
+                    <div class="col-md-offset-1 col-md-10 col-sm-12 scroll-reveal scroll-reveal-delay-1">
+                         @if ($landingFaqs->isEmpty())
+                              <p class="text-center" style="padding: 24px 12px; color: #666; line-height: 1.6;">
+                                   {{ __('No frequently asked questions are published yet. Please check back later, or reach out via the contact section below.') }}
+                              </p>
+                         @else
+                              <div class="panel-group" id="faq-accordion" role="tablist" aria-multiselectable="true">
+                                   @foreach ($landingFaqs as $faq)
+                                        <div class="panel panel-default">
+                                             <div class="panel-heading" role="tab" id="faqHeading{{ $faq->id }}">
+                                                  <h4 class="panel-title">
+                                                       <a
+                                                            role="button"
+                                                            data-toggle="collapse"
+                                                            data-parent="#faq-accordion"
+                                                            href="#faqCollapse{{ $faq->id }}"
+                                                            class="{{ $loop->first ? '' : 'collapsed' }}"
+                                                            aria-expanded="{{ $loop->first ? 'true' : 'false' }}"
+                                                            aria-controls="faqCollapse{{ $faq->id }}"
+                                                       >
+                                                            <span class="landing-faq-q">{!! Purify::config('notification_faq')->clean($faq->question) !!}</span>
+                                                       </a>
+                                                  </h4>
+                                             </div>
+                                             <div
+                                                  id="faqCollapse{{ $faq->id }}"
+                                                  class="panel-collapse collapse{{ $loop->first ? ' in' : '' }}"
+                                                  role="tabpanel"
+                                                  aria-labelledby="faqHeading{{ $faq->id }}"
+                                             >
+                                                  <div class="panel-body landing-faq-a">
+                                                       {!! Purify::config('notification_faq')->clean($faq->answer) !!}
+                                                  </div>
+                                             </div>
+                                        </div>
+                                   @endforeach
+                              </div>
+                         @endif
+                    </div>
+               </div>
+          </div>
+     </section>
+
+
+     <!-- CONTACT (single area: hero + optional support cards; form only in modal) -->
      <section id="contact" data-stellar-background-ratio="0.5">
           <div class="container">
                <div class="row">
 
                     <div class="col-md-offset-1 col-md-10 col-sm-12 scroll-reveal">
-                         @if (session('success'))
-                              <div class="alert alert-success" style="margin-bottom:20px;">{{ session('success') }}</div>
-                         @endif
-                         <form id="contact-form" role="form" action="{{ route('contact.store') }}" method="post">
-                              @csrf
-                              <div class="section-title">
-                                   <h1>Talk to the FamLedger team</h1>
-                                   <h2 style="font-weight:600; line-height:1.4; margin-top:0.4rem;">
-                                        <span id="contact-typing-text" style="color:#009EF7;"></span>
-                                        <span class="border-r-2 ml-1 animate-blink" style="border-color:#009EF7;">|</span>
-                                   </h2>
-                              </div>
+                         <div class="section-title landing-contact-hero text-center">
+                              <h1>Talk to the FamLedger team</h1>
+                              <h2 style="font-weight:600; line-height:1.4; margin-top:0.4rem; font-size: clamp(1rem, 2.5vw, 1.35rem);">
+                                   <span id="contact-typing-text" style="color:#009EF7;"></span>
+                                   <span class="border-r-2 ml-1 animate-blink" style="border-color:#009EF7;">|</span>
+                              </h2>
+                         </div>
 
-                              <div class="col-md-4 col-sm-4">
-                                   <input type="text" class="form-control" placeholder="Full name" name="name" value="{{ old('name') }}" required>
-                              </div>
-                              <div class="col-md-4 col-sm-4">
-                                   <input type="email" class="form-control" placeholder="Email address" name="email" value="{{ old('email') }}" required>
-                              </div>
-                              <div class="col-md-4 col-sm-4">
-                                   <input type="submit" class="form-control" name="send message" value="Request a demo">
-                              </div>
-                              <div class="col-md-12 col-sm-12">
-                                   <textarea class="form-control" rows="8" placeholder="Your message" name="message" required>{{ old('message') }}</textarea>
-                              </div>
-                              @if ($errors->any())
-                                   <div class="col-md-12 col-sm-12">
-                                        <div class="alert alert-danger">
-                                             @foreach ($errors->all() as $err)
-                                                  <div>{{ $err }}</div>
-                                             @endforeach
+                         @if ($landingSupportContacts->isNotEmpty())
+                              <div class="landing-support-options scroll-reveal scroll-reveal-delay-1" style="margin-top: 24px;">
+                                   @foreach ($landingSupportContacts as $supportContact)
+                                        @php
+                                             $cUrl = $supportContact->link_url ? trim((string) $supportContact->link_url) : '';
+                                             $cFragment = '';
+                                             if ($cUrl !== '') {
+                                                 if (str_starts_with($cUrl, '#')) {
+                                                     $cFragment = ltrim($cUrl, '#');
+                                                 } else {
+                                                     $cFragment = (string) (parse_url($cUrl, PHP_URL_FRAGMENT) ?? '');
+                                                 }
+                                             }
+                                             $supportLinkOpensModal = ($cFragment === 'contact');
+                                             $cOpenNew = $cUrl !== '' && ! $supportLinkOpensModal && \Illuminate\Support\Str::startsWith($cUrl, ['http://', 'https://', 'mailto:']);
+                                        @endphp
+                                        <div class="panel panel-default landing-support-card">
+                                             <div class="panel-body">
+                                                  <h3>{{ $supportContact->title }}</h3>
+                                                  <div class="landing-support-body">
+                                                       {!! Purify::config('notification_faq')->clean($supportContact->body) !!}
+                                                  </div>
+                                                  @if ($cUrl !== '')
+                                                       <div class="landing-support-link">
+                                                            @if ($supportLinkOpensModal)
+                                                                 <button
+                                                                      type="button"
+                                                                      class="section-btn hero-cta landing-support-modal-btn"
+                                                                      style="display: inline-block;"
+                                                                      data-toggle="modal"
+                                                                      data-target="#landingContactModal"
+                                                                 >
+                                                                      {{ $supportContact->link_label ?: __('Contact support') }}
+                                                                 </button>
+                                                                 <p class="landing-support-modal-hint">{{ __('Opens a form here—no new tab.') }}</p>
+                                                            @else
+                                                                 <a
+                                                                      href="{{ $cUrl }}"
+                                                                      class="section-btn hero-cta"
+                                                                      style="display: inline-block;"
+                                                                      @if ($cOpenNew) target="_blank" rel="noopener noreferrer" @endif
+                                                                 >
+                                                                      {{ $supportContact->link_label ?: __('Open link') }}
+                                                                 </a>
+                                                                 <a
+                                                                      href="{{ $cUrl }}"
+                                                                      class="landing-support-link-url"
+                                                                      @if ($cOpenNew) target="_blank" rel="noopener noreferrer" @endif
+                                                                 >
+                                                                      {{ $cUrl }}
+                                                                 </a>
+                                                            @endif
+                                                       </div>
+                                                  @endif
+                                             </div>
                                         </div>
-                                   </div>
-                              @endif
-                         </form>
+                                   @endforeach
+                              </div>
+                         @else
+                              <div class="text-center scroll-reveal scroll-reveal-delay-1" style="padding: 12px 12px 48px;">
+                                   <p style="max-width: 560px; margin: 0 auto 24px; color: #666; line-height: 1.65;">
+                                        {{ __('Questions about pricing, onboarding, or support? Tap below to send us a message—we’ll get back to you soon.') }}
+                                   </p>
+                                   <button type="button" class="section-btn hero-cta landing-support-modal-btn" data-toggle="modal" data-target="#landingContactModal">
+                                        {{ __('Contact us') }}
+                                   </button>
+                                   <p class="landing-support-modal-hint">{{ __('Opens a form here—no new tab.') }}</p>
+                              </div>
+                         @endif
                     </div>
 
                 </div>
             </div>
         </section>
 
+     <x-contact-form-modal
+         :captcha-driver="$contactCaptchaDriver"
+         :recaptcha-site-key="$recaptchaSiteKey"
+         :open-on-load="$errors->any() && old('_contact_form_source') === 'modal'"
+     />
 
      <!-- FOOTER -->
      <footer id="footer" data-stellar-background-ratio="0.5">
@@ -495,6 +795,68 @@
      <script src="{{ asset('metronic/assets/js/owl.carousel.min.js') }}" defer></script>
      <script src="{{ asset('metronic/assets/js/smoothscroll.js') }}" defer></script>
      <script src="{{ asset('metronic/assets/js/custom.js') }}" defer></script>
+     <script src="{{ asset('vendor/quill/quill.min.js') }}" defer></script>
+     <script src="{{ asset('js/famledger-contact-form-modal.js') }}" defer></script>
+
+     @if (filled($recaptchaSiteKey))
+     <script>
+      window.__recaptchaSiteKey = @json($recaptchaSiteKey);
+     </script>
+     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+     @endif
+
+     <script>
+      document.addEventListener('DOMContentLoaded', function () {
+       function famledgerClearBootstrapModalArtifacts() {
+        try {
+         if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+          window.jQuery('.modal').modal('hide');
+          window.jQuery('.modal-backdrop').remove();
+          window.jQuery('body').removeClass('modal-open').css('padding-right', '');
+         } else {
+          document.querySelectorAll('.modal-backdrop').forEach(function (n) {
+           n.parentNode && n.parentNode.removeChild(n);
+          });
+          document.body.classList.remove('modal-open');
+          document.body.style.paddingRight = '';
+         }
+        } catch (e) {}
+       }
+       function famledgerClearModalBackdropsOnly() {
+        try {
+         if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+          window.jQuery('.modal-backdrop').remove();
+          window.jQuery('body').removeClass('modal-open').css('padding-right', '');
+         } else {
+          document.querySelectorAll('.modal-backdrop').forEach(function (n) {
+           n.parentNode && n.parentNode.removeChild(n);
+          });
+          document.body.classList.remove('modal-open');
+          document.body.style.paddingRight = '';
+         }
+        } catch (e) {}
+       }
+       @if ($errors->any() && old('_contact_form_source') === 'modal')
+        famledgerClearModalBackdropsOnly();
+       @else
+        famledgerClearBootstrapModalArtifacts();
+       @endif
+       var banner = document.getElementById('famledger-contact-success-banner');
+       if (banner) {
+        var dismiss = banner.querySelector('.famledger-contact-success-dismiss');
+        var remove = function () {
+         if (banner && banner.parentNode) {
+          banner.parentNode.removeChild(banner);
+         }
+         famledgerClearBootstrapModalArtifacts();
+        };
+        if (dismiss) {
+         dismiss.addEventListener('click', remove);
+        }
+        window.setTimeout(remove, 9000);
+       }
+      });
+     </script>
 
      <script>
     const texts = [
@@ -599,6 +961,7 @@
        } else {
          revealEls.forEach(function(el) { el.classList.add("scroll-reveal-visible"); });
        }
+
      });
      </script>
 

@@ -35,4 +35,22 @@ return [
         ],
     ],
 
+    /*
+    | Public contact form spam protection.
+    | - math (default): simple “a + b” question, session-based (no third parties).
+    | - recaptcha: Google v2 checkbox (set RECAPTCHA_* keys).
+    | - none: no check (local dev only).
+    */
+    'contact_captcha' => [
+        'driver' => env('CONTACT_CAPTCHA_DRIVER', 'math'),
+    ],
+
+    /*
+    | Google reCAPTCHA v2 — only used when contact_captcha.driver is "recaptcha".
+    */
+    'recaptcha' => [
+        'site_key' => env('RECAPTCHA_SITE_KEY'),
+        'secret' => env('RECAPTCHA_SECRET_KEY'),
+    ],
+
 ];

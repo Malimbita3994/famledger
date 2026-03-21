@@ -65,7 +65,7 @@ class AuditTrailController extends Controller
             $query->whereDate('created_at', '<=', $request->input('to'));
         }
 
-        $logs = $query->paginate(50)->withQueryString();
+        $logs = $query->paginate(25)->withQueryString();
 
         // Member dropdown: Super Admin and Auditor see all users; Owner/Co-owner see only this family's members
         if (auth()->user()->hasRole('Super Admin') || auth()->user()->hasRole('Auditor')) {
@@ -132,7 +132,7 @@ class AuditTrailController extends Controller
         ]);
         $pdf->setPaper('a4', 'landscape');
 
-        $filename = 'audit-trail-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf';
+        $filename = 'audit-trail-'.$family->id.'-'.now()->format('Y-m-d').'.pdf';
 
         return $pdf->download($filename);
     }
