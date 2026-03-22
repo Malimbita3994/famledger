@@ -15,6 +15,8 @@
      <meta name="author" content="FamLedger">
      <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
+     @include('partials.famledger-favicon')
+
      <link rel="preload" href="{{ asset('metronic/assets/css/tooplate-style.css') }}" as="style">
      <link rel="preload" href="{{ asset('images/background.png') }}" as="image">
      <link rel="preload" href="{{ asset('images/logo.png') }}" as="image">

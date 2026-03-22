@@ -30,8 +30,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <meta content="FamLedger" property="og:title"/>
   <meta content="" property="og:description"/>
   <meta content="{{ asset('metronic/assets/media/app/og-image.png') }}" property="og:image"/>
-  <link href="{{ asset('metronic/assets/media/app/apple-touch-icon.png') }}" rel="apple-touch-icon" sizes="180x180"/>
-  <link rel="icon" type="image/svg+xml" href="{{ asset('metronic/assets/media/brand-logos/logo.svg') }}"/>
+  @include('partials.famledger-favicon')
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/vendors/apexcharts/apexcharts.css') }}" rel="stylesheet"/>
   <link href="{{ asset('metronic/assets/vendors/keenicons/styles.bundle.css') }}" rel="stylesheet"/>

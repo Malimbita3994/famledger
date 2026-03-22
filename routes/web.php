@@ -34,6 +34,26 @@ use App\Models\NotificationFaq;
 use App\Models\NotificationSupportContact;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/favicon.ico', function () {
+    $png = public_path('images/logo.png');
+    if (is_file($png)) {
+        return response()->file($png, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    $svg = public_path('metronic/assets/media/app/logo-32.svg');
+    if (is_file($svg)) {
+        return response()->file($svg, [
+            'Content-Type' => 'image/svg+xml',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    abort(404);
+})->name('favicon');
+
 Route::get('/', function () {
     if (config('services.contact_captcha.driver') === 'math') {
         if (! session()->has('contact_math_a')) {
