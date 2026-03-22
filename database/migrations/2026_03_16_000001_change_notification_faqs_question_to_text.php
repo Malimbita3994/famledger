@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('notification_faqs')) {
+            return;
+        }
+
         Schema::table('notification_faqs', function (Blueprint $table) {
             $table->text('question')->change();
         });
@@ -15,6 +19,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasTable('notification_faqs')) {
+            return;
+        }
+
         Schema::table('notification_faqs', function (Blueprint $table) {
             $table->string('question', 500)->change();
         });

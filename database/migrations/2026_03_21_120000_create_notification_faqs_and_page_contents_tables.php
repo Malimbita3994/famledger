@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('notification_faqs', function (Blueprint $table) {
             $table->id();
-            $table->string('question', 500);
+            $table->text('question');
             $table->text('answer');
             $table->unsignedInteger('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
