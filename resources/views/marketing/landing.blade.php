@@ -1976,8 +1976,7 @@
                                                        @foreach ($landingFaqGroups as $groupKey => $_groupFaqs)
                                                             @php
                                                                  $navLabel = $groupKey !== '' ? $groupKey : __('General');
-                                                                 $slugBase = \Illuminate\Support\Str::slug(\Illuminate\Support\Str::ascii($navLabel));
-                                                                 $navAnchor = 'faq-'.($slugBase !== '' ? $slugBase : 'group').'-'.$loop->iteration;
+                                                                 $navAnchor = 'faq-'.$loop->iteration;
                                                             @endphp
                                                             <li>
                                                                  <a
@@ -1998,8 +1997,7 @@
                                              @foreach ($landingFaqGroups as $groupKey => $groupFaqs)
                                                   @php
                                                        $groupTitle = $groupKey !== '' ? $groupKey : __('General');
-                                                       $slugBase = \Illuminate\Support\Str::slug(\Illuminate\Support\Str::ascii($groupTitle));
-                                                       $groupAnchor = 'faq-'.($slugBase !== '' ? $slugBase : 'group').'-'.$loop->iteration;
+                                                       $groupAnchor = 'faq-'.$loop->iteration;
                                                   @endphp
                                                   <div
                                                        id="{{ $groupAnchor }}"
@@ -2384,6 +2382,31 @@
          }
        }
 
+       /* Main nav / logo: localScroll prevents default and does not update the URL by default,
+          so the hash could stay e.g. #faq-4 after switching sections. Sync hash here. */
+       (function () {
+         function landingPathNoHash() {
+           return window.location.pathname + window.location.search;
+         }
+         document.addEventListener(
+           "click",
+           function (e) {
+             var a = e.target.closest && e.target.closest('a[href^="#"]');
+             if (!a) return;
+             if (!a.classList.contains("smoothScroll") && !a.classList.contains("navbar-brand")) {
+               return;
+             }
+             var href = a.getAttribute("href") || "";
+             if (href.length < 2 || href === "#") return;
+             if (window.history && window.history.replaceState) {
+               window.history.replaceState(null, "", landingPathNoHash() + href);
+             }
+             window.dispatchEvent(new Event("hashchange"));
+           },
+           true
+         );
+       })();
+
        /* FAQ: show one topic group at a time (sidebar); no-op when only one group */
        (function () {
          var faqLayout = document.querySelector("#faq .landing-faq-layout");
@@ -2397,6 +2420,22 @@
            var el = document.getElementById(raw);
            if (el && faqLayout.contains(el) && el.hasAttribute("data-landing-faq-group")) {
              return raw;
+           }
+           /* Legacy URLs: faq-{slug}-{n} (e.g. #faq-support-4) → canonical faq-{n} */
+           var legacy = raw.match(/^faq-(.+)-(\d+)$/);
+           if (legacy) {
+             var canonical = "faq-" + legacy[2];
+             el = document.getElementById(canonical);
+             if (el && faqLayout.contains(el) && el.hasAttribute("data-landing-faq-group")) {
+               if (window.history && window.history.replaceState) {
+                 window.history.replaceState(
+                   null,
+                   "",
+                   window.location.pathname + window.location.search + "#" + canonical
+                 );
+               }
+               return canonical;
+             }
            }
            return null;
          }
