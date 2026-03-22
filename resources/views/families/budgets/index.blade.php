@@ -4,7 +4,7 @@
 @section('page_title', 'Budgets')
 
 @section('content')
-<div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
+<div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12 w-full max-w-full min-w-0">
     <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
@@ -35,10 +35,21 @@
         <style>
             .budget-summary-grid {
                 display: grid;
-                grid-template-columns: repeat(4, minmax(0, 1fr));
+                grid-template-columns: repeat(1, minmax(0, 1fr));
                 gap: 0.75rem;
                 width: 100%;
+                max-width: 100%;
                 margin-bottom: 1.5rem;
+            }
+            @media (min-width: 640px) {
+                .budget-summary-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
+            @media (min-width: 1024px) {
+                .budget-summary-grid {
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                }
             }
             .budget-summary-grid-card {
                 transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
@@ -77,7 +88,7 @@
         </div>
     @endif
 
-    <div class="kt-card kt-card-grid min-w-full">
+    <div class="kt-card kt-card-grid w-full min-w-0 max-w-full">
         <div class="kt-card-content p-0">
             @if ($budgets->isEmpty())
                 <div class="py-12 text-center text-muted-foreground">

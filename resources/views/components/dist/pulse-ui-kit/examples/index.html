@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pulse · Build calmer dashboards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../pulse-ui.css">
+</head>
+<body class="pulse-body-landing">
+  <div class="pulse-landing">
+    <header class="pulse-landing__nav" aria-label="Primary">
+      <a class="pulse-landing__logo" href="index.html">
+        <span class="pulse-landing__logo-icon" aria-hidden="true">
+          <span id="lottie-landing-app-icon"></span>
+        </span>
+        <span class="pulse-landing__logo-wordmark">Pulse</span>
+      </a>
+      <div class="pulse-landing__nav-actions">
+        <a class="pulse-landing__link" href="dashboard.html#overview">Product</a>
+        <a class="pulse-landing__link" href="dashboard.html#login">Sign in</a>
+        <a class="pulse-landing__btn pulse-landing__btn--primary" href="dashboard.html#overview">Open app</a>
+      </div>
+    </header>
+
+    <main class="pulse-landing__hero">
+      <div class="pulse-landing__copy">
+        <h1>Operational clarity, without the noise.</h1>
+        <p>
+          Pulse brings metrics, activity, and motion into one calm workspace. Explore the live sample app or ship your own data on top of the same kit.
+        </p>
+        <div class="pulse-landing__ctas">
+          <a class="pulse-landing__btn pulse-landing__btn--primary" href="dashboard.html#overview">Launch dashboard</a>
+          <a class="pulse-landing__btn pulse-landing__btn--ghost" href="dashboard.html#analytics">View analytics demo</a>
+        </div>
+      </div>
+
+      <div
+        id="landing-lottie-block"
+        class="pulse-landing__lottie-wrap"
+        aria-label="Product illustration"
+      >
+        <div class="pulse-landing__lottie-stage">
+          <div id="lottie-landing" role="img" aria-label="Landing animation (Landing Page.json)"></div>
+          <p class="pulse-landing__lottie-err" id="lottie-landing-err">
+            Could not load the landing animation. For <code>file://</code>, keep <code>landing-page-lottie-data.js</code> merged into <code>pulse-ui.js</code>, or open over <code>http://localhost</code> so <code>Landing Page.json</code> can load.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="pulse-landing__foot" role="contentinfo">
+      <div class="pulse-landing__foot-inner">
+        <div class="pulse-landing__foot-lottie" aria-hidden="true">
+          <div id="lottie-landing-footer"></div>
+        </div>
+        <p class="pulse-landing__foot-copy">Pulse UI kit · Sample landing · Hero from Landing Page.json</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../min.js"></script>
+  <script src="../pulse-ui.js"></script>
+  <script>
+    PulseUI.initLandingPageLottie();
+    PulseUI.initSidebarAppIcon({ containerId: "lottie-landing-app-icon" });
+    PulseUI.initFooterLottie({ containerId: "lottie-landing-footer" });
+  </script>
+</body>
+</html>

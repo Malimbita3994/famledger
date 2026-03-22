@@ -9,6 +9,7 @@ class NotificationFaq extends Model
     protected $fillable = [
         'question',
         'answer',
+        'group_label',
         'sort_order',
         'is_active',
     ];

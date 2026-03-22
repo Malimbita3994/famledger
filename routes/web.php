@@ -46,8 +46,14 @@ Route::get('/', function () {
 
     $useRecaptcha = config('services.contact_captcha.driver') === 'recaptcha';
 
+    $landingFaqs = NotificationFaq::query()->active()->ordered()->get();
+    $landingFaqGroups = $landingFaqs->groupBy(function (NotificationFaq $faq) {
+        return trim((string) ($faq->group_label ?? ''));
+    })->sortBy(fn ($items) => $items->min('sort_order'));
+
     return view('marketing.landing', [
-        'landingFaqs' => NotificationFaq::query()->active()->ordered()->get(),
+        'landingFaqs' => $landingFaqs,
+        'landingFaqGroups' => $landingFaqGroups,
         'landingSupportContacts' => NotificationSupportContact::query()->active()->ordered()->get(),
         'contactCaptchaDriver' => config('services.contact_captcha.driver'),
         'recaptchaSiteKey' => $useRecaptcha ? config('services.recaptcha.site_key') : null,
@@ -328,6 +334,8 @@ Route::middleware(['auth', 'sync.current.family'])->group(function () {
         // Contact messages (landing page "Talk to the FamLedger team")
         Route::get('contact-messages', [ContactMessageController::class, 'index'])
             ->name('contact-messages.index');
+        Route::get('contact-messages/{contact_message}/modal', [ContactMessageController::class, 'modal'])
+            ->name('contact-messages.modal');
         Route::get('contact-messages/{contact_message}', [ContactMessageController::class, 'show'])
             ->name('contact-messages.show');
         Route::patch('contact-messages/{contact_message}/read-status', [ContactMessageController::class, 'updateReadStatus'])

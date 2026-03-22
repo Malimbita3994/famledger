@@ -1,0 +1,53 @@
+Pulse UI kit — dashboard (local only, no CDN)
+=============================================
+
+Distribution / reuse
+--------------------
+  Run:  python build-dist.py
+  Output folder:  dist/pulse-ui-kit/  (README, CSS, JS, examples/, source/lottie/)
+  npm:  package.json at repo root references dist/pulse-ui-kit for `npm pack` / private registry.
+
+Run the full app with these local files (no CDN):
+
+  0. index.html       — marketing landing (hero + Landing Page.json; app icon; Footer.json via PulseUI.initFooterLottie on #lottie-landing-footer).
+  1. dashboard.html   — complete markup: login shell, dashboard frame, all pages.
+  2. pulse-ui.css     — tokens, layout, motion, components (dashboard + landing).
+  3. pulse-ui.js      — embedded Lottie data (__LOTTIE_DASHBOARD__, __LOTTIE_INPUT_FIELD__, __LOTTIE_LANDING_PAGE__, __LOTTIE_APP_ICON__, __LOTTIE_LOGIN_SCREEN__, __LOTTIE_FOOTER__)
+                        + PulseUI runtime (router, header, fields, loaders).
+  4. min.js           — lottie-web 5.12.2 build you saved locally (same folder as the HTML).
+  5. profile-lottie-data.js + profile.js — header user menu + Profile.json Lottie (dashboard.html only).
+
+file:// in an embedded preview (iframe)
+----------------------------------------
+  For file:// URLs the router avoids history.replaceState and keeps the hash route in memory
+  (avoids console noise in embedded previews and iframe/opaque-origin cases). Sidebar + login still work.
+  For normal address-bar URLs and http://localhost, real hash/history is used.
+
+  If anything still misbehaves, open the HTML in a normal browser tab or run:
+    python -m http.server 8080
+  then open http://localhost:8080/dashboard.html
+
+Regenerate pulse-ui.js after JSON changes
+-----------------------------------------
+  Source JSON (edit then re-embed):
+
+    Data Dashboard.json              → dashboard-lottie-data.js (window.__LOTTIE_DASHBOARD__)
+    Input Field - UX in Motion.json  → input-field-lottie-data.js (window.__LOTTIE_INPUT_FIELD__)
+    Landing Page.json                → landing-page-lottie-data.js (window.__LOTTIE_LANDING_PAGE__)
+    icon.json                        → icon-lottie-data.js (window.__LOTTIE_APP_ICON__, dashboard sidebar)
+    Login Screen.json                → login-screen-lottie-data.js (window.__LOTTIE_LOGIN_SCREEN__, #login view)
+    Footer.json                      → footer-lottie-data.js (window.__LOTTIE_FOOTER__, app footer strip)
+    Profile.json                     → profile-lottie-data.js (window.__LOTTIE_PROFILE__, dashboard header)
+
+  Merge into pulse-ui.js: run merge-pulse-ui.py (order: dashboard, input-field, landing, icon, login-screen, footer, pulse-ui.runtime.js).
+
+  pulse-ui.runtime.js is the logic-only copy of PulseUI (no embedded JSON).
+
+Smaller integration (no embedded Lottie)
+----------------------------------------
+  Use pulse-ui.runtime.js + the *-lottie-data.js scripts (dashboard, input-field, landing, icon, login-screen, footer) before min.js, then PulseUI.init() or initLandingPageLottie() on the landing page.
+
+PulseUI.init(options)
+---------------------
+  See JSDoc in pulse-ui.runtime.js / pulse-ui.js footer. Pass false to skip modules
+  or objects to override ids / URLs.

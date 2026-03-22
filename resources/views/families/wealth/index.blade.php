@@ -125,13 +125,42 @@
         </div>
     </div>
 
-    {{-- Spacer between allocation row and trend card --}}
+    {{-- Spacer between allocation row and charts --}}
     <div class="mt-4"></div>
 
-    {{-- Wealth trend --}}
+    @if (!empty($wealthCharts['hasData']))
+    <div class="grid gap-5 lg:gap-7.5 lg:grid-cols-2 mb-6">
+        <div class="kt-card rounded-2xl border border-border shadow-sm bg-card">
+            <div class="kt-card-header border-b border-border flex flex-col gap-1 items-start">
+                <h3 class="kt-card-title text-sm">Net wealth trend</h3>
+                <p class="text-xs text-muted-foreground font-normal">
+                    Daily snapshots from this page. When there are at least two points, the dashed line extends a simple linear trend
+                    {{ !empty($wealthCharts['projection']['enabled']) ? '(' . (int) $wealthCharts['projection']['daysAhead'] . ' days ahead)' : '' }}
+                    — illustrative only, not a forecast of future results.
+                </p>
+            </div>
+            <div class="kt-card-content p-4 lg:p-5">
+                <div id="famledger_wealth_net_chart" class="min-h-[300px] w-full"></div>
+            </div>
+        </div>
+        <div class="kt-card rounded-2xl border border-border shadow-sm bg-card">
+            <div class="kt-card-header border-b border-border flex flex-col gap-1 items-start">
+                <h3 class="kt-card-title text-sm">Composition over time</h3>
+                <p class="text-xs text-muted-foreground font-normal">
+                    Stacked wallets, properties and project funds. Net wealth in the left chart already reflects liabilities.
+                </p>
+            </div>
+            <div class="kt-card-content p-4 lg:p-5">
+                <div id="famledger_wealth_composition_chart" class="min-h-[320px] w-full"></div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Wealth trend table --}}
     <div class="kt-card rounded-2xl border border-border shadow-sm bg-card">
         <div class="kt-card-header border-b border-border flex items-center justify-between gap-3">
-            <h3 class="kt-card-title text-sm">Wealth trend</h3>
+            <h3 class="kt-card-title text-sm">Snapshot history</h3>
             <span class="text-xs text-muted-foreground">Historical daily snapshots. Cards above are always based on live balances.</span>
         </div>
         <div class="kt-card-content p-0">
@@ -173,12 +202,174 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Lightweight auto-refresh so wealth stays in sync with new transactions.
+            var wc = @json($wealthCharts ?? ['hasData' => false]);
+
+            if (typeof ApexCharts !== 'undefined' && wc.hasData) {
+                var currency = wc.currency || '';
+                function famledgerWealthCompactAxis(v) {
+                    v = Number(v) || 0;
+                    var a = Math.abs(v);
+                    if (a >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+                    if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+                    if (a >= 1e3) return (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+                    return (v % 1 === 0 ? String(v) : v.toFixed(1));
+                }
+                function famledgerWealthTooltip(v) {
+                    return (v == null || v === '') ? '—' : (Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 }) + (currency ? ' ' + currency : ''));
+                }
+
+                var netEl = document.getElementById('famledger_wealth_net_chart');
+                if (netEl) {
+                    var proj = wc.projection || {};
+                    var netCategories = proj.enabled ? proj.fullCategories : wc.categories;
+                    var netSeries = proj.enabled
+                        ? [
+                            { name: 'Net wealth', data: proj.netActual },
+                            { name: 'Trend projection', data: proj.netForecast },
+                        ]
+                        : [{ name: 'Net wealth', data: wc.netWealth }];
+
+                    new ApexCharts(netEl, {
+                        series: netSeries,
+                        chart: {
+                            type: 'line',
+                            height: 300,
+                            width: '100%',
+                            toolbar: { show: true, tools: { download: true } },
+                            zoom: { enabled: true },
+                            redrawOnParentResize: true,
+                            animations: { enabled: true },
+                        },
+                        colors: proj.enabled ? ['#009EF7', '#94a3b8'] : ['#009EF7'],
+                        stroke: {
+                            curve: 'smooth',
+                            width: proj.enabled ? [3, 2] : [3],
+                            dashArray: proj.enabled ? [0, 6] : [0],
+                        },
+                        dataLabels: { enabled: false },
+                        xaxis: {
+                            categories: netCategories,
+                            labels: {
+                                rotate: netCategories.length > 8 ? -35 : 0,
+                                rotateAlways: netCategories.length > 8,
+                                hideOverlappingLabels: true,
+                                style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
+                            },
+                            axisBorder: { show: false },
+                            axisTicks: { show: false },
+                        },
+                        yaxis: {
+                            labels: {
+                                style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
+                                formatter: famledgerWealthCompactAxis,
+                            },
+                            axisBorder: { show: false },
+                            axisTicks: { show: false },
+                        },
+                        grid: {
+                            borderColor: 'var(--color-border)',
+                            strokeDashArray: 4,
+                            xaxis: { lines: { show: false } },
+                            yaxis: { lines: { show: true } },
+                            padding: { top: 8, right: 12, left: 8, bottom: 4 },
+                        },
+                        legend: {
+                            position: 'top',
+                            horizontalAlign: 'end',
+                            fontSize: '11px',
+                            labels: { colors: 'var(--color-muted-foreground)' },
+                        },
+                        tooltip: {
+                            theme: 'dark',
+                            shared: true,
+                            intersect: false,
+                            y: { formatter: famledgerWealthTooltip },
+                        },
+                        markers: {
+                            size: proj.enabled ? [4, 0] : [4],
+                            strokeWidth: 2,
+                            hover: { sizeOffset: 2 },
+                        },
+                    }).render();
+                }
+
+                var compEl = document.getElementById('famledger_wealth_composition_chart');
+                if (compEl) {
+                    new ApexCharts(compEl, {
+                        series: [
+                            { name: 'Wallets', data: wc.wallet },
+                            { name: 'Properties', data: wc.property },
+                            { name: 'Projects', data: wc.project },
+                        ],
+                        chart: {
+                            type: 'area',
+                            height: 320,
+                            width: '100%',
+                            stacked: true,
+                            toolbar: { show: true, tools: { download: true } },
+                            zoom: { enabled: true },
+                            redrawOnParentResize: true,
+                        },
+                        colors: ['#009EF7', '#22c55e', '#f59e0b'],
+                        stroke: {
+                            curve: 'smooth',
+                            width: [2, 2, 2],
+                        },
+                        fill: {
+                            type: 'gradient',
+                            gradient: {
+                                opacityFrom: 0.45,
+                                opacityTo: 0.06,
+                            },
+                        },
+                        dataLabels: { enabled: false },
+                        xaxis: {
+                            categories: wc.categories,
+                            labels: {
+                                rotate: wc.categories.length > 8 ? -35 : 0,
+                                rotateAlways: wc.categories.length > 8,
+                                hideOverlappingLabels: true,
+                                style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
+                            },
+                            axisBorder: { show: false },
+                            axisTicks: { show: false },
+                        },
+                        yaxis: {
+                            labels: {
+                                style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
+                                formatter: famledgerWealthCompactAxis,
+                            },
+                            axisBorder: { show: false },
+                            axisTicks: { show: false },
+                        },
+                        grid: {
+                            borderColor: 'var(--color-border)',
+                            strokeDashArray: 4,
+                            xaxis: { lines: { show: false } },
+                            yaxis: { lines: { show: true } },
+                            padding: { top: 8, right: 12, left: 8, bottom: 4 },
+                        },
+                        legend: {
+                            position: 'top',
+                            horizontalAlign: 'end',
+                            fontSize: '11px',
+                            labels: { colors: 'var(--color-muted-foreground)' },
+                        },
+                        tooltip: {
+                            theme: 'dark',
+                            shared: true,
+                            intersect: false,
+                            y: { formatter: famledgerWealthTooltip },
+                        },
+                    }).render();
+                }
+            }
+
             setInterval(function () {
                 if (document.visibilityState === 'visible') {
                     window.location.reload();
                 }
-            }, 300000); // 5 minutes
+            }, 300000);
         });
     </script>
 @endpush

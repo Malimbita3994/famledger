@@ -25,6 +25,21 @@
     var recaptchaContainerId = modalEl.getAttribute("data-recaptcha-container-id");
     var captchaDriver = (modalEl.getAttribute("data-captcha-driver") || "math").toLowerCase();
     var openOnLoad = modalEl.getAttribute("data-open-on-load") === "1";
+    var modalVariant = modalEl.getAttribute("data-modal-variant") || "form";
+
+    if (modalVariant === "view") {
+      if (!window.jQuery || typeof window.jQuery.fn.modal !== "function") {
+        return;
+      }
+      var $mView = window.jQuery(modalEl);
+      $mView.on("shown.bs.modal", function () {
+        clearClientErrors();
+      });
+      if (openOnLoad) {
+        $mView.modal("show");
+      }
+      return;
+    }
 
     var quillInstance = null;
     var recaptchaWidgetId = null;

@@ -85,6 +85,13 @@ class ExpenseController extends Controller
             return response()->json(['message' => 'Selected wallet is inactive.'], 422);
         }
 
+        if (! $wallet->canAffordDebit((float) $validated['amount'])) {
+            return response()->json([
+                'message' => 'Insufficient funds in the selected wallet. Available: '
+                    .number_format($wallet->balance, 2).' '.$wallet->currency_code,
+            ], 422);
+        }
+
         $expense = $family->expenses()->create([
             'wallet_id' => $validated['wallet_id'],
             'category_id' => $validated['category_id'],

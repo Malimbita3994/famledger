@@ -79,7 +79,7 @@ class ContactMessageController extends Controller
 
         $state = $request->input('state', 'read');
         if ($state === 'unread') {
-            $contact_message->update(['read_at' => null]);
+            $contact_message->markAsUnread();
         } else {
             $contact_message->markAsRead();
         }

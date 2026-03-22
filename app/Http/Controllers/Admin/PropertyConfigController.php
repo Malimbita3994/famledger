@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\PropertyAttribute;
 use App\Models\PropertyAttributeOption;
 use App\Models\PropertyCategory;
+use App\Support\CurrentFamilyResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PropertyConfigController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $categories = PropertyCategory::orderBy('name')->get();
 
@@ -22,9 +23,13 @@ class PropertyConfigController extends Controller
             ->orderBy('name')
             ->get();
 
+        $currentFamily = CurrentFamilyResolver::family($request);
+
         return view('settings.property', [
             'categories' => $categories,
             'attributes' => $attributes,
+            'currentFamily' => $currentFamily,
+            'canManageProperty' => CurrentFamilyResolver::canManageProperties($request, $currentFamily),
         ]);
     }
 
@@ -154,4 +159,3 @@ class PropertyConfigController extends Controller
         return redirect()->route('settings.property.index')->with('success', 'Attribute option deleted.');
     }
 }
-

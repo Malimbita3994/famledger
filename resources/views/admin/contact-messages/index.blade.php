@@ -3,24 +3,106 @@
 @section('title', 'Contact messages')
 @section('page_title', 'Contact messages')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/famledger-bootstrap3-modal-slim.css') }}">
+<link rel="stylesheet" href="{{ asset('css/famledger-contact-form-modal.css') }}">
+<style>
+    .famledger-contact-form-modal--view.modal { z-index: 10050 !important; }
+    body > .modal-backdrop.in { z-index: 10040 !important; }
+</style>
+{{-- Metronic’s bundled CSS omits utilities like grid-cols-4; use explicit flex so four stats stay one row. --}}
+<style>
+    .famledger-contact-stats-row {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+    @media (min-width: 640px) {
+        .famledger-contact-stats-row {
+            gap: 1rem;
+        }
+    }
+    .famledger-contact-stats-row > .kt-card {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="font-medium text-lg text-mono">Contact messages</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Messages from the landing page “Talk to the FamLedger team” form.</p>
-            <p class="text-xs text-muted-foreground mt-1">
-                Total in database: <span class="font-medium text-foreground">{{ $totalContactMessages }}</span>
-                @if (request()->filled('search') || request()->filled('read'))
-                    <span class="text-muted-foreground">(list below is filtered)</span>
-                @endif
-            </p>
+            @if (request()->filled('search') || request()->filled('read'))
+                <p class="text-xs text-muted-foreground mt-1">
+                    <span class="text-amber-700 dark:text-amber-300 font-medium">List below is filtered</span>
+                    — stats above are for all messages in the database.
+                </p>
+            @endif
         </div>
     </div>
 
     @php
         $hasListFilters = request()->filled('search') || request()->filled('read');
+        $totalContactMessages = $contactStats['total'];
     @endphp
+
+    <div class="famledger-contact-stats-row">
+        <a href="{{ route('admin.contact-messages.index') }}" class="kt-card p-3 hover:border-primary transition-colors">
+            <div class="flex items-center justify-between gap-2 min-w-0">
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-muted-foreground truncate">Total messages</p>
+                    <p class="text-xl font-bold tabular-nums mt-1">{{ number_format($contactStats['total']) }}</p>
+                    <p class="text-xs text-muted-foreground mt-1 truncate">All time</p>
+                </div>
+                <span class="rounded-full size-10 flex items-center justify-center bg-primary/10 text-primary shrink-0">
+                    <i class="ki-filled ki-sms text-lg"></i>
+                </span>
+            </div>
+        </a>
+        <a href="{{ route('admin.contact-messages.index', ['read' => 'unread']) }}" class="kt-card p-3 hover:border-warning transition-colors">
+            <div class="flex items-center justify-between gap-2 min-w-0">
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-muted-foreground truncate">Unread</p>
+                    <p class="text-xl font-bold tabular-nums mt-1 text-warning-600">{{ number_format($contactStats['unread']) }}</p>
+                    <p class="text-xs text-muted-foreground mt-1 truncate">Needs attention</p>
+                </div>
+                <span class="rounded-full size-10 flex items-center justify-center bg-warning-500/10 text-warning-600 shrink-0">
+                    <i class="ki-filled ki-notification-bing text-lg"></i>
+                </span>
+            </div>
+        </a>
+        <a href="{{ route('admin.contact-messages.index', ['read' => 'read']) }}" class="kt-card p-3 hover:border-emerald-500/40 transition-colors">
+            <div class="flex items-center justify-between gap-2 min-w-0">
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-muted-foreground truncate">Read</p>
+                    <p class="text-xl font-bold tabular-nums mt-1 text-emerald-600">{{ number_format($contactStats['read']) }}</p>
+                    <p class="text-xs text-muted-foreground mt-1 truncate">Marked as read</p>
+                </div>
+                <span class="rounded-full size-10 flex items-center justify-center bg-emerald-500/10 text-emerald-600 shrink-0">
+                    <i class="ki-filled ki-check-circle text-lg"></i>
+                </span>
+            </div>
+        </a>
+        <div class="kt-card p-3">
+            <div class="flex items-center justify-between gap-2 min-w-0">
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-muted-foreground truncate">Last 7 days</p>
+                    <p class="text-xl font-bold tabular-nums mt-1">{{ number_format($contactStats['last_7_days']) }}</p>
+                    <p class="text-xs text-muted-foreground mt-1 truncate">New submissions</p>
+                </div>
+                <span class="rounded-full size-10 flex items-center justify-center bg-blue-500/10 text-blue-600 shrink-0">
+                    <i class="ki-filled ki-calendar-tick text-lg"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+
     @if ($messages->isEmpty() && $hasListFilters && $totalContactMessages > 0)
         <div class="mb-6 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-amber-900 dark:text-amber-100 text-sm">
             <p class="font-medium">No rows match your current filters.</p>
@@ -87,7 +169,11 @@
                             @endif
                         </td>
                         <td>
-                            <a href="{{ route('admin.contact-messages.show', $msg) }}" class="kt-btn kt-btn-ghost kt-btn-sm">View</a>
+                            <button
+                                type="button"
+                                class="kt-btn kt-btn-ghost kt-btn-sm"
+                                data-famledger-contact-message-modal-url="{{ route('admin.contact-messages.modal', $msg, false) }}"
+                            >{{ __('View') }}</button>
                         </td>
                     </tr>
                     @empty
@@ -136,9 +222,11 @@
                     </div>
                     <div class="flex items-center justify-between text-[11px] text-muted-foreground">
                         <span>{{ $msg->created_at->format('M j, Y H:i') }}</span>
-                        <a href="{{ route('admin.contact-messages.show', $msg) }}" class="kt-btn kt-btn-xs kt-btn-outline">
-                            View
-                        </a>
+                        <button
+                            type="button"
+                            class="kt-btn kt-btn-xs kt-btn-outline"
+                            data-famledger-contact-message-modal-url="{{ route('admin.contact-messages.modal', $msg, false) }}"
+                        >{{ __('View') }}</button>
                     </div>
                 </div>
             @empty
@@ -158,3 +246,23 @@
     </div>
 </div>
 @endsection
+
+@push('famledger_bootstrap_modals')
+{{-- Injection point only; modal markup is moved to document.body after load (a11y: avoids aria-hidden ancestor of focused dialog). --}}
+<div id="famledger-admin-contact-modal-container"></div>
+@endpush
+
+@push('scripts')
+<script>
+window.FAMLEDGER_CONTACT_MESSAGES_INDEX = {
+    container: '#famledger-admin-contact-modal-container',
+    indexUrl: @json(route('admin.contact-messages.index', [], false)),
+    openOnLoadId: @json($openContactMessageId),
+    modalUrlTemplate: @json($contactModalUrlTemplate),
+};
+</script>
+<script src="{{ asset('metronic/assets/js/jquery.js') }}"></script>
+<script src="{{ asset('metronic/assets/js/bootstrap.min.js') }}"></script>
+<script src="{{ asset('js/famledger-contact-form-modal.js') }}"></script>
+<script src="{{ asset('js/admin-contact-messages-modal.js') }}"></script>
+@endpush

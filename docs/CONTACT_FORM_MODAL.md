@@ -12,6 +12,14 @@ The marketing contact modal (Quill message + spam protection) is packaged for re
 | `public/css/famledger-contact-form-modal.css` | Scoped styles (`.famledger-contact-form-modal`) |
 | `public/js/famledger-contact-form-modal.js` | Quill + captcha (math or reCAPTCHA) for Bootstrap 3 modals |
 
+## Admin: same modal on the **list** page (no separate detail page)
+
+On **`/admin/contact-messages`**, **View** loads the message in the same **`<x-contact-form-modal variant="view" />`** via **AJAX** (`GET /admin/contact-messages/{id}/modal`), injects HTML into `#famledger-admin-contact-modal-container` (stacked in `layouts/metronic.blade.php` outside `<main>`), **moves** `#adminContactMessageModal` to **`document.body`** (avoids an `aria-hidden` wrapper around a focused dialog), then runs `FamLedgerContactFormModal.init()` and opens the Bootstrap modal. **Opening the modal does not change read status** (the table is not re-rendered until you reload); use **Mark as read** so the form POST redirects and the list refreshes. Deep links **`/admin/contact-messages/{id}`** still run **`show`**, mark the message read, then redirect to the index with **`?open={id}`** (full page load = list is up to date).
+
+Assets on the index: **`famledger-bootstrap3-modal-slim.css`**, **`famledger-contact-form-modal.css`**, **jQuery**, **`bootstrap.min.js`**, **`famledger-contact-form-modal.js`**, **`admin-contact-messages-modal.js`**. Do **not** load full **`bootstrap.min.css`** on Metronic (it breaks the shell). Delete/mark-read forms inside the modal redirect back to the index (often with **`?open=`** to refresh the modal).
+
+**Host mismatch:** Modal fetch URLs and form `action`s use **relative** `route(..., false)` so posting from `http://127.0.0.1:8000` does not target `APP_URL` (e.g. `http://localhost:8000`), which would drop the session cookie and break CSRF (**Mark as read** would fail silently or show 419).
+
 ## Configuration (`.env`)
 
 | Variable | Values | Notes |

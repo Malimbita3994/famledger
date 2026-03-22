@@ -106,6 +106,20 @@ class Wallet extends Model
         $outgoing = isset($this->attributes['outgoing_transfers_sum_amount'])
             ? (float) $this->attributes['outgoing_transfers_sum_amount']
             : (float) $this->outgoingTransfers()->sum('amount');
+
         return (float) $this->initial_balance + $income - $expense + $incoming - $outgoing;
+    }
+
+    /**
+     * Whether this debit can be applied without pushing balance below zero
+     * (ignored when famledger.allow_negative_wallet_balance is true).
+     */
+    public function canAffordDebit(float $amount): bool
+    {
+        if (config('famledger.allow_negative_wallet_balance', false)) {
+            return true;
+        }
+
+        return round((float) $this->balance, 2) >= round($amount, 2);
     }
 }

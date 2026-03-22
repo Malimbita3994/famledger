@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Budget;
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
 use App\Models\Family;
-use App\Models\IncomeCategory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -80,7 +78,7 @@ class TransactionController extends Controller
             ->fromSub($base, 't')
             ->orderByDesc('date')
             ->orderByDesc('id')
-            ->paginate(20)
+            ->paginate(10)
             ->withQueryString();
 
         $wallets = $family->wallets()
@@ -101,30 +99,82 @@ class TransactionController extends Controller
 
         $balance = $totalIncome - $totalExpenses;
 
-        // Transaction count (for subtitle)
-        $transactionCount = DB::table('incomes')->where('family_id', $family->id)->when($walletId, fn ($q) => $q->where('wallet_id', $walletId))->count()
-            + DB::table('expenses')->where('family_id', $family->id)->when($walletId, fn ($q) => $q->where('wallet_id', $walletId))->count();
+        $chartCurrency = $family->currency_code ?? config('currencies.default', 'TZS');
+        $now = Carbon::now();
+        $chartMonthKeys = [];
+        $chartMonthLabels = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $d = $now->copy()->subMonths($i)->startOfMonth();
+            $chartMonthKeys[] = $d->format('Y-m-d');
+            $chartMonthLabels[] = $d->format('M');
+        }
+        $chartStart = $chartMonthKeys[0];
+        $chartEnd = $now->copy()->endOfMonth()->toDateString();
 
-        $incomeCategories = IncomeCategory::defaults();
-        $expenseCategories = ExpenseCategory::defaults();
-        $mainWallet = $family->mainWallet();
-        $members = $family->members()->orderBy('name')->get(['users.id', 'users.name']);
-        $projects = $family->projects()->whereIn('status', ['planning', 'active'])->orderBy('name')->get(['id', 'name']);
-        $budgets = $family->budgets()
-            ->where('status', 'active')
-            ->where('type', '!=', Budget::TYPE_FAMILY)
-            ->orderBy('name')
-            ->get(['id', 'name', 'type', 'amount', 'currency_code']);
-        $liabilities = $family->liabilities()->orderBy('name')->get();
+        $incomeBucket = array_fill_keys($chartMonthKeys, 0.0);
+        $expenseBucket = array_fill_keys($chartMonthKeys, 0.0);
+        $incomeCountBucket = array_fill_keys($chartMonthKeys, 0);
+        $expenseCountBucket = array_fill_keys($chartMonthKeys, 0);
 
-        $canRecordIncome = $mainWallet && $mainWallet->status === 'active';
-        $canRecordExpense = $wallets->isNotEmpty();
+        $incomeRows = DB::table('incomes')
+            ->where('family_id', $family->id)
+            ->when($walletId, fn ($q) => $q->where('wallet_id', $walletId))
+            ->where('received_date', '>=', $chartStart)
+            ->where('received_date', '<=', $chartEnd)
+            ->get(['received_date', 'amount']);
+
+        foreach ($incomeRows as $row) {
+            $k = Carbon::parse($row->received_date)->startOfMonth()->format('Y-m-d');
+            if (isset($incomeBucket[$k])) {
+                $incomeBucket[$k] += (float) $row->amount;
+                $incomeCountBucket[$k]++;
+            }
+        }
+
+        $expenseRows = DB::table('expenses')
+            ->where('family_id', $family->id)
+            ->when($walletId, fn ($q) => $q->where('wallet_id', $walletId))
+            ->where('expense_date', '>=', $chartStart)
+            ->where('expense_date', '<=', $chartEnd)
+            ->get(['expense_date', 'amount']);
+
+        foreach ($expenseRows as $row) {
+            $k = Carbon::parse($row->expense_date)->startOfMonth()->format('Y-m-d');
+            if (isset($expenseBucket[$k])) {
+                $expenseBucket[$k] += (float) $row->amount;
+                $expenseCountBucket[$k]++;
+            }
+        }
+
+        $chartIncomeByMonth = array_map(fn ($v) => round($v, 2), array_values($incomeBucket));
+        $chartExpenseByMonth = array_map(fn ($v) => round($v, 2), array_values($expenseBucket));
+        $chartIncomeCountByMonth = array_values($incomeCountBucket);
+        $chartExpenseCountByMonth = array_values($expenseCountBucket);
+
+        $expenseByCategory = DB::table('expenses')
+            ->leftJoin('expense_categories', 'expenses.category_id', '=', 'expense_categories.id')
+            ->where('expenses.family_id', $family->id)
+            ->when($walletId, fn ($q) => $q->where('expenses.wallet_id', $walletId))
+            ->where('expenses.expense_date', '>=', $chartStart)
+            ->where('expenses.expense_date', '<=', $chartEnd)
+            ->select(
+                DB::raw('COALESCE(expense_categories.name, \'Uncategorized\') as cat_name'),
+                DB::raw('SUM(expenses.amount) as total')
+            )
+            ->groupBy(DB::raw('COALESCE(expense_categories.name, \'Uncategorized\')'))
+            ->orderByDesc('total')
+            ->limit(8)
+            ->get();
+
+        $chartCategoryNames = $expenseByCategory->pluck('cat_name')->values()->all();
+        $chartCategoryTotals = $expenseByCategory->pluck('total')->map(fn ($v) => round((float) $v, 2))->values()->all();
 
         return view('families.transactions.index', compact(
             'family', 'transactions', 'wallets', 'type',
-            'totalIncome', 'totalExpenses', 'balance', 'transactionCount',
-            'incomeCategories', 'expenseCategories', 'mainWallet', 'members', 'projects', 'budgets', 'liabilities',
-            'canRecordIncome', 'canRecordExpense'
+            'totalIncome', 'totalExpenses', 'balance',
+            'chartMonthLabels', 'chartIncomeByMonth', 'chartExpenseByMonth',
+            'chartIncomeCountByMonth', 'chartExpenseCountByMonth',
+            'chartCategoryNames', 'chartCategoryTotals', 'chartCurrency',
         ));
     }
 
@@ -230,6 +280,17 @@ class TransactionController extends Controller
                 ->route('families.transactions.index', $family)
                 ->withInput($request->except(['_token', '_method']))
                 ->withErrors(['currency_code' => 'Currency must match the selected wallet.']);
+        }
+
+        if (! $wallet->canAffordDebit((float) $validated['amount'])) {
+            $message = 'Insufficient funds in the selected wallet. Available balance is '
+                .number_format($wallet->balance, 2).' '.strtoupper($wallet->currency_code).'.';
+
+            return redirect()
+                ->route('families.transactions.index', $family)
+                ->withInput($request->except(['_token', '_method']))
+                ->withErrors(['amount' => $message])
+                ->with('error', $message);
         }
 
         $family->expenses()->create([

@@ -71,34 +71,44 @@
     }
     </style>
 
-    {{-- Summary / hero --}}
-    <div class="kt-card mb-5 lg:mb-7.5">
-        <div class="kt-card-content py-6 lg:py-8">
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2 mb-1">
-                        <h2 class="text-xl lg:text-2xl font-semibold text-foreground truncate">{{ $wallet->name }}</h2>
-                        <span class="kt-badge {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-[30px] shrink-0">
-                            <span class="kt-badge-dot size-1.5"></span>
-                            {{ ucfirst($wallet->status) }}
+    {{-- Summary: meta sizes to content; balance sits in a growing tint so no dead center gap --}}
+    <div class="kt-card mb-5 lg:mb-7.5 overflow-hidden">
+        <div class="flex flex-col lg:flex-row lg:items-stretch">
+            <div class="shrink-0 min-w-0 p-5 sm:p-6 lg:p-8 flex gap-4 sm:gap-5 items-start">
+                <div class="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/15">
+                    <i class="ki-filled ki-wallet text-xl sm:text-2xl"></i>
+                </div>
+                <div class="min-w-0 flex flex-col gap-2.5 sm:gap-3">
+                    <div class="space-y-1">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                            <h2 class="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">{{ $wallet->name }}</h2>
+                            <span class="kt-badge {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-full shrink-0 text-[11px]">
+                                <span class="kt-badge-dot size-1.5"></span>
+                                {{ ucfirst($wallet->status) }}
+                            </span>
+                        </div>
+                        @if ($wallet->is_primary)
+                            <p class="text-xs text-muted-foreground">Default wallet for family income and primary balances.</p>
+                        @endif
+                    </div>
+                    <div class="flex flex-wrap gap-x-2 gap-y-2">
+                        <span class="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground shadow-sm">
+                            <i class="ki-filled ki-chart-simple text-muted-foreground text-[13px]"></i>
+                            {{ $walletTypes[$wallet->type] ?? $wallet->type }}
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground shadow-sm">
+                            <i class="ki-filled ki-people text-muted-foreground text-[13px]"></i>
+                            {{ $wallet->is_shared ? 'Shared · family' : 'Personal' }}
                         </span>
                     </div>
-                    <p class="text-sm text-muted-foreground">
-                        {{ $walletTypes[$wallet->type] ?? $wallet->type }} · {{ $wallet->currency_code }}
-                        @if($wallet->is_shared)
-                            · Shared with family
-                        @else
-                            · Personal wallet
-                        @endif
-                    </p>
-                    @if ($wallet->description)
-                        <p class="text-secondary-foreground text-sm leading-relaxed max-w-2xl mt-2">{{ Str::limit($wallet->description, 160) }}</p>
-                    @endif
                 </div>
-                <div class="text-right">
-                    <p class="text-sm text-muted-foreground">Current balance</p>
-                    <p class="text-2xl lg:text-3xl font-semibold tabular-nums">{{ number_format($wallet->balance, 2) }} {{ $wallet->currency_code }}</p>
-                </div>
+            </div>
+            <div class="flex-1 min-w-0 border-t lg:border-t-0 lg:border-s border-border bg-muted/30 dark:bg-muted/15 px-5 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7 flex flex-col justify-center lg:items-end lg:text-end">
+                <p class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1.5">Current balance</p>
+                <p class="text-2xl sm:text-3xl lg:text-[2.125rem] font-bold tabular-nums tracking-tight leading-none {{ (float) $wallet->balance < 0 ? 'text-destructive' : 'text-foreground' }}">
+                    {{ number_format($wallet->balance, 2) }}
+                    <span class="text-base sm:text-lg font-semibold text-muted-foreground ms-1.5 tabular-nums">{{ $wallet->currency_code }}</span>
+                </p>
             </div>
         </div>
     </div>
@@ -111,20 +121,6 @@
                     <h3 class="kt-card-title text-sm">Details</h3>
                 </div>
                 <div class="kt-card-content">
-                    <div class="flex items-center gap-3 mb-5">
-                        <span class="flex items-center justify-center size-10 rounded-full bg-muted text-muted-foreground shrink-0">
-                            <i class="ki-filled ki-wallet text-lg"></i>
-                        </span>
-                        <div class="min-w-0">
-                            <div class="text-sm font-semibold text-foreground truncate">
-                                {{ $wallet->name }}
-                            </div>
-                            <div class="text-xs text-muted-foreground mt-0.5 truncate">
-                                {{ $walletTypes[$wallet->type] ?? $wallet->type }} · {{ $wallet->currency_code }}
-                            </div>
-                        </div>
-                    </div>
-
                     <dl class="wallet-details-grid text-sm">
                         <div class="wallet-details-item flex flex-col gap-0.5 p-3 rounded-lg border border-border bg-muted/40">
                             <dt class="text-xs text-muted-foreground uppercase tracking-wide">Type</dt>
@@ -183,43 +179,53 @@
                         <a href="{{ route('families.expenses.index', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-xs kt-btn-ghost">All expenses</a>
                     </div>
                 </div>
-                <div class="kt-card-content grid gap-6 md:grid-cols-2">
+                <div class="kt-card-content space-y-6">
                     <div>
-                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Income</p>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="flex size-7 items-center justify-center rounded-md bg-success/10 text-success shrink-0">
+                                <i class="ki-filled ki-arrow-down text-sm"></i>
+                            </span>
+                            <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Income</p>
+                        </div>
                         @if($recentIncomes->isEmpty())
-                            <p class="text-xs text-muted-foreground">No income recorded for this wallet yet.</p>
+                            <p class="text-xs text-muted-foreground py-2">No income recorded for this wallet yet.</p>
                         @else
-                            <ul class="space-y-1.5">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 @foreach($recentIncomes as $income)
-                                    <li class="flex items-center justify-between text-sm">
-                                        <div class="flex flex-col">
-                                            <span class="tabular-nums font-medium text-success">+ {{ number_format($income->amount, 2) }} {{ $income->currency_code }}</span>
-                                            <span class="text-xs text-muted-foreground">
-                                                {{ $income->received_date?->format('M j, Y') }} · {{ $income->category->name ?? 'Income' }}
-                                            </span>
-                                        </div>
-                                    </li>
+                                    <div class="rounded-lg border border-border bg-muted/20 dark:bg-muted/10 px-3 py-2.5 min-w-0 flex flex-col gap-1">
+                                        <span class="tabular-nums text-sm font-semibold text-success leading-tight truncate" title="+ {{ number_format($income->amount, 2) }} {{ $income->currency_code }}">
+                                            +{{ number_format($income->amount, 2) }} <span class="text-xs font-medium text-success/80">{{ $income->currency_code }}</span>
+                                        </span>
+                                        <span class="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                                            {{ $income->received_date?->format('M j, Y') }} · {{ $income->category->name ?? 'Income' }}
+                                        </span>
+                                    </div>
                                 @endforeach
-                            </ul>
+                            </div>
                         @endif
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Expenses</p>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="flex size-7 items-center justify-center rounded-md bg-destructive/10 text-destructive shrink-0">
+                                <i class="ki-filled ki-arrow-up text-sm"></i>
+                            </span>
+                            <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Expenses</p>
+                        </div>
                         @if($recentExpenses->isEmpty())
-                            <p class="text-xs text-muted-foreground">No expenses recorded for this wallet yet.</p>
+                            <p class="text-xs text-muted-foreground py-2">No expenses recorded for this wallet yet.</p>
                         @else
-                            <ul class="space-y-1.5">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 @foreach($recentExpenses as $expense)
-                                    <li class="flex items-center justify-between text-sm">
-                                        <div class="flex flex-col">
-                                            <span class="tabular-nums font-medium text-destructive">− {{ number_format($expense->amount, 2) }} {{ $expense->currency_code }}</span>
-                                            <span class="text-xs text-muted-foreground">
-                                                {{ $expense->expense_date?->format('M j, Y') }} · {{ $expense->category->name ?? 'Expense' }}
-                                            </span>
-                                        </div>
-                                    </li>
+                                    <div class="rounded-lg border border-border bg-muted/20 dark:bg-muted/10 px-3 py-2.5 min-w-0 flex flex-col gap-1">
+                                        <span class="tabular-nums text-sm font-semibold text-destructive leading-tight truncate" title="− {{ number_format($expense->amount, 2) }} {{ $expense->currency_code }}">
+                                            −{{ number_format($expense->amount, 2) }} <span class="text-xs font-medium text-destructive/80">{{ $expense->currency_code }}</span>
+                                        </span>
+                                        <span class="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                                            {{ $expense->expense_date?->format('M j, Y') }} · {{ $expense->category->name ?? 'Expense' }}
+                                        </span>
+                                    </div>
                                 @endforeach
-                            </ul>
+                            </div>
                         @endif
                     </div>
                 </div>

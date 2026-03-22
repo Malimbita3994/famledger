@@ -20,9 +20,9 @@ return [
 
     'financial_year' => [
         'start_month' => (int) env('FAMLEDGER_FY_START_MONTH', 1),
-        'start_day'   => (int) env('FAMLEDGER_FY_START_DAY', 1),
-        'end_month'   => (int) env('FAMLEDGER_FY_END_MONTH', 12),
-        'end_day'     => (int) env('FAMLEDGER_FY_END_DAY', 31),
+        'start_day' => (int) env('FAMLEDGER_FY_START_DAY', 1),
+        'end_month' => (int) env('FAMLEDGER_FY_END_MONTH', 12),
+        'end_day' => (int) env('FAMLEDGER_FY_END_DAY', 31),
     ],
 
     /*
@@ -33,5 +33,16 @@ return [
     */
 
     'low_balance_threshold' => (float) env('FAMLEDGER_LOW_BALANCE_THRESHOLD', 100000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Wallet balance floor
+    |--------------------------------------------------------------------------
+    | When false (default), expenses cannot reduce a wallet's derived balance
+    | below zero. Transfers out were already limited the same way.
+    | Set true only if you need overdraft-style tracking (not recommended).
+    */
+
+    'allow_negative_wallet_balance' => (bool) env('FAMLEDGER_ALLOW_NEGATIVE_WALLET_BALANCE', false),
 
 ];

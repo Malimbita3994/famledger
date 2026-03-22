@@ -28,7 +28,50 @@ class WalletController extends Controller
             ->orderBy('name')->get();
         $walletTypes = Wallet::types();
 
-        return view('families.wallets.index', compact('family', 'wallets', 'walletTypes'));
+        $chartCurrencyLabel = '';
+        $chartWalletNames = [];
+        $chartWalletBalances = [];
+        $chartTypeLabels = [];
+        $chartTypeBalances = [];
+        $chartShareLabels = [];
+        $chartShareValues = [];
+
+        if ($wallets->isNotEmpty()) {
+            $chartCurrency = $family->currency_code ? strtoupper($family->currency_code) : null;
+            $walletsForChart = $chartCurrency
+                ? $wallets->where('currency_code', $chartCurrency)->values()
+                : $wallets->values();
+            if ($walletsForChart->isEmpty()) {
+                $walletsForChart = $wallets->values();
+            }
+            $chartCurrencyLabel = (string) ($walletsForChart->first()->currency_code ?? $chartCurrency ?? '');
+
+            $chartWalletNames = $walletsForChart->pluck('name')->values()->all();
+            $chartWalletBalances = $walletsForChart->map(fn (Wallet $w) => round((float) $w->balance, 2))->values()->all();
+
+            $byType = $walletsForChart->groupBy('type')->map(
+                fn ($group) => round((float) $group->sum(fn (Wallet $w) => $w->balance), 2)
+            );
+            $chartTypeLabels = $byType->keys()->map(fn ($type) => $walletTypes[$type] ?? $type)->values()->all();
+            $chartTypeBalances = $byType->values()->all();
+
+            $positiveWallets = $walletsForChart->filter(fn (Wallet $w) => (float) $w->balance > 0)->values();
+            $chartShareLabels = $positiveWallets->pluck('name')->values()->all();
+            $chartShareValues = $positiveWallets->map(fn (Wallet $w) => round((float) $w->balance, 2))->values()->all();
+        }
+
+        return view('families.wallets.index', compact(
+            'family',
+            'wallets',
+            'walletTypes',
+            'chartCurrencyLabel',
+            'chartWalletNames',
+            'chartWalletBalances',
+            'chartTypeLabels',
+            'chartTypeBalances',
+            'chartShareLabels',
+            'chartShareValues',
+        ));
     }
 
     public function create(Family $family)

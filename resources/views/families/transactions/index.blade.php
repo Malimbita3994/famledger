@@ -4,7 +4,7 @@
 @section('page_title', 'Transactions')
 
 @section('content')
-<div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
+<div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12 w-full max-w-full min-w-0">
     <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
@@ -16,12 +16,14 @@
             <p class="text-sm text-muted-foreground mt-0.5">Manage income and expenses from one place. Use filters to narrow by type or wallet.</p>
         </div>
         <div class="flex flex-wrap gap-2">
-            <button type="button" class="kt-btn kt-btn-primary inline-flex items-center gap-2" id="btn_open_add_transaction">
-                <i class="ki-filled ki-plus"></i>
-                Add transaction
-            </button>
-            <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-outline text-xs">Full income form</a>
-            <a href="{{ route('families.expenses.create', $family) }}" class="kt-btn kt-btn-outline text-xs">Full expense form</a>
+            <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
+                <i class="ki-filled ki-arrow-up"></i>
+                {{ __('Add income') }}
+            </a>
+            <a href="{{ route('families.expenses.create', $family) }}" class="kt-btn kt-btn-outline inline-flex items-center gap-2">
+                <i class="ki-filled ki-arrow-down"></i>
+                {{ __('Add expense') }}
+            </a>
         </div>
     </div>
 
@@ -42,10 +44,16 @@
     <style>
         .txn-stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(1, minmax(0, 1fr));
             gap: 0.75rem;
             width: 100%;
+            max-width: 100%;
             margin-bottom: 1.5rem;
+        }
+        @media (min-width: 640px) {
+            .txn-stats-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
         }
     </style>
     <div class="txn-stats-grid">
@@ -63,10 +71,47 @@
         </div>
     </div>
 
-    <div class="kt-card kt-card-grid min-w-full">
-        <div class="kt-card-header flex-wrap gap-3">
-            <h3 class="kt-card-title text-sm">All transactions</h3>
-            <form method="get" class="flex items-center gap-3">
+    {{-- Analytics + table: column gap avoids margin collapse (no visible space with mb-* alone) --}}
+    <div class="flex flex-col gap-8 lg:gap-10 w-full max-w-full min-w-0">
+    <div class="flex flex-col md:flex-row gap-4 lg:gap-5 w-full max-w-full min-w-0">
+        <div class="famledger-chart-card w-full md:flex-1 md:min-w-0 md:basis-0 max-w-full kt-card flex flex-col rounded-xl border border-border shadow-sm min-w-0">
+            <div class="px-4 py-3 border-b border-border shrink-0">
+                <h2 class="text-sm font-semibold text-foreground leading-snug">Income vs expenses</h2>
+                <p class="text-xs text-muted-foreground mt-0.5">
+                    Last 6 months · {{ $chartCurrency }}
+                    @if (request('wallet_id'))
+                        · Wallet filter
+                    @endif
+                </p>
+            </div>
+            <div class="famledger-chart-panel p-3 min-h-[240px]">
+                <div id="famledger_txn_flow_chart" class="w-full max-w-full min-w-0" style="min-height: 220px;"></div>
+            </div>
+        </div>
+        <div class="famledger-chart-card w-full md:flex-1 md:min-w-0 md:basis-0 max-w-full kt-card flex flex-col rounded-xl border border-border shadow-sm min-w-0">
+            <div class="px-4 py-3 border-b border-border shrink-0">
+                <h2 class="text-sm font-semibold text-foreground leading-snug">Expenses by category</h2>
+                <p class="text-xs text-muted-foreground mt-0.5">Same period · top 8</p>
+            </div>
+            <div class="famledger-chart-panel p-3 min-h-[240px]">
+                <div id="famledger_txn_category_chart" class="w-full max-w-full min-w-0" style="min-height: 220px;"></div>
+            </div>
+        </div>
+        <div class="famledger-chart-card w-full md:flex-1 md:min-w-0 md:basis-0 max-w-full kt-card flex flex-col rounded-xl border border-border shadow-sm min-w-0">
+            <div class="px-4 py-3 border-b border-border shrink-0">
+                <h2 class="text-sm font-semibold text-foreground leading-snug">Transaction volume</h2>
+                <p class="text-xs text-muted-foreground mt-0.5">Count of records per month</p>
+            </div>
+            <div class="famledger-chart-panel p-3 min-h-[240px]">
+                <div id="famledger_txn_volume_chart" class="w-full max-w-full min-w-0" style="min-height: 220px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="kt-card kt-card-grid w-full min-w-0 max-w-full shrink-0">
+        <div class="kt-card-header flex-wrap gap-3 min-w-0">
+            <h3 class="kt-card-title text-sm shrink-0">All transactions</h3>
+            <form method="get" class="flex flex-wrap items-center gap-3 min-w-0 max-w-full">
                 <label for="type" class="text-sm text-muted-foreground whitespace-nowrap">Type</label>
                 <select name="type" id="type" class="kt-select kt-select-sm w-auto" onchange="this.form.submit()">
                     <option value="" {{ ($type ?? '') === '' ? 'selected' : '' }}>All</option>
@@ -87,9 +132,16 @@
             @if ($transactions->isEmpty())
                 <div class="py-12 text-center text-muted-foreground">
                     <i class="ki-filled ki-arrows-loop text-4xl mb-2"></i>
-                    <p class="text-sm">No transactions found.</p>
-                    <div class="mt-4 flex items-center justify-center gap-2">
-                        <button type="button" class="kt-btn kt-btn-primary" data-open-add-transaction="1">Add transaction</button>
+                    <p class="text-sm">{{ __('No transactions found.') }}</p>
+                    <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
+                        <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1.5">
+                            <i class="ki-filled ki-arrow-up text-sm"></i>
+                            {{ __('Add income') }}
+                        </a>
+                        <a href="{{ route('families.expenses.create', $family) }}" class="kt-btn kt-btn-outline kt-btn-sm inline-flex items-center gap-1.5">
+                            <i class="ki-filled ki-arrow-down text-sm"></i>
+                            {{ __('Add expense') }}
+                        </a>
                     </div>
                 </div>
             @else
@@ -143,265 +195,234 @@
             @endif
         </div>
     </div>
+    </div>{{-- end analytics + table column --}}
 </div>
-
-@php
-    $openAddTxnModal = $errors->any() && (old('transaction_type') || $errors->has('transaction_type'));
-    $initialTxnTab = old('transaction_type', 'expense');
-@endphp
-
-{{-- Add transaction (income / expense) --}}
-<div class="kt-modal" data-kt-modal="true" id="add_transaction_modal">
-    <div class="kt-modal-content max-w-[640px] top-[8%] max-h-[90vh] flex flex-col">
-        <div class="kt-modal-header shrink-0">
-            <h3 class="kt-modal-title">Add transaction</h3>
-            <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0" data-kt-modal-dismiss="true" aria-label="Close">
-                <i class="ki-filled ki-cross"></i>
-            </button>
-        </div>
-        <div class="kt-modal-body grid gap-4 px-0 py-4 overflow-y-auto">
-            @if ($errors->any())
-                <div class="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-sm text-red-800 dark:text-red-200">
-                    <ul class="list-disc pl-4 space-y-1 m-0">
-                        @foreach ($errors->all() as $err)
-                            <li>{{ $err }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-            <div class="kt-tabs kt-tabs-line justify-between px-1" data-kt-tabs="true" id="add_txn_tabs">
-                <div class="flex items-center gap-1 flex-wrap">
-                    <button type="button" class="kt-tab-toggle py-3 px-2 {{ $initialTxnTab === 'income' ? 'active' : '' }}" data-kt-tab-toggle="#add_txn_panel_income" id="tab_income">Income</button>
-                    <button type="button" class="kt-tab-toggle py-3 px-2 {{ $initialTxnTab === 'expense' ? 'active' : '' }}" data-kt-tab-toggle="#add_txn_panel_expense" id="tab_expense">Expense</button>
-                </div>
-            </div>
-
-            <div class="kt-tab-content px-1 {{ $initialTxnTab === 'income' ? 'active' : '' }}" id="add_txn_panel_income">
-                @if (! $canRecordIncome)
-                    <p class="text-sm text-destructive mb-3">Set up an active <strong>main wallet</strong> before recording income.</p>
-                    <a href="{{ route('families.wallets.index', $family) }}" class="kt-btn kt-btn-outline kt-btn-sm">Manage wallets</a>
-                @else
-                    <form method="post" action="{{ route('families.transactions.store', $family) }}" class="grid gap-4">
-                        @csrf
-                        <input type="hidden" name="transaction_type" value="income" />
-                        <p class="text-sm text-muted-foreground">
-                            Credited to main wallet:
-                            <span class="font-medium text-foreground">{{ $mainWallet->name }} ({{ $mainWallet->currency_code }})</span>
-                        </p>
-                        <div class="grid gap-1.5">
-                            <label for="income_amount" class="kt-form-label">Amount <span class="text-destructive">*</span></label>
-                            <input type="number" name="amount" id="income_amount" value="{{ old('transaction_type') === 'income' ? old('amount') : '' }}" required step="0.01" min="0.01" class="kt-input" />
-                        </div>
-                        <input type="hidden" name="currency_code" value="{{ $mainWallet->currency_code }}" />
-                        <div class="grid gap-1.5">
-                            <label for="income_category_id" class="kt-form-label">Category <span class="text-destructive">*</span></label>
-                            <select name="category_id" id="income_category_id" class="kt-select" required>
-                                <option value="">Select category</option>
-                                @foreach ($incomeCategories as $cat)
-                                    <option value="{{ $cat->id }}" {{ (old('transaction_type') === 'income' && (string) old('category_id') === (string) $cat->id) ? 'selected' : '' }}>{{ $cat->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="grid gap-1.5">
-                            <label for="received_date" class="kt-form-label">Received date <span class="text-destructive">*</span></label>
-                            <input type="date" name="received_date" id="received_date" value="{{ old('transaction_type') === 'income' ? old('received_date', now()->format('Y-m-d')) : now()->format('Y-m-d') }}" required class="kt-input" />
-                        </div>
-                        <div class="grid gap-1.5">
-                            <label for="source" class="kt-form-label">Source</label>
-                            <input type="text" name="source" id="source" value="{{ old('transaction_type') === 'income' ? old('source') : '' }}" class="kt-input" placeholder="e.g. Employer, client" />
-                        </div>
-                        <div class="grid gap-1.5">
-                            <label for="income_notes" class="kt-form-label">Notes</label>
-                            <textarea name="notes" id="income_notes" rows="2" class="kt-input">{{ old('transaction_type') === 'income' ? old('notes') : '' }}</textarea>
-                        </div>
-                        <div class="grid gap-1.5">
-                            <label for="income_liability_id" class="kt-form-label">Linked liability</label>
-                            <select name="family_liability_id" id="income_liability_id" class="kt-select">
-                                <option value="">— None —</option>
-                                @foreach ($liabilities as $liab)
-                                    <option value="{{ $liab->id }}" {{ old('transaction_type') === 'income' && (string) old('family_liability_id') === (string) $liab->id ? 'selected' : '' }}>{{ $liab->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="flex justify-end gap-2 pt-2">
-                            <button type="button" class="kt-btn kt-btn-outline" data-kt-modal-dismiss="true">Cancel</button>
-                            <button type="submit" class="kt-btn kt-btn-primary">Record income</button>
-                        </div>
-                    </form>
-                @endif
-            </div>
-
-            <div class="kt-tab-content px-1 {{ $initialTxnTab === 'expense' ? 'active' : '' }}" id="add_txn_panel_expense">
-                @if (! $canRecordExpense)
-                    <p class="text-sm text-destructive mb-3">Create an active wallet before recording expenses.</p>
-                    <a href="{{ route('families.wallets.create', $family) }}" class="kt-btn kt-btn-outline kt-btn-sm">New wallet</a>
-                @else
-                    <form method="post" action="{{ route('families.transactions.store', $family) }}" class="grid gap-4" id="expense_txn_form">
-                        @csrf
-                        <input type="hidden" name="transaction_type" value="expense" />
-                        <div class="grid gap-1.5">
-                            <label for="exp_wallet_id" class="kt-form-label">Wallet <span class="text-destructive">*</span></label>
-                            <select name="wallet_id" id="exp_wallet_id" class="kt-select" required>
-                                <option value="">Select wallet</option>
-                                @foreach ($wallets as $w)
-                                    <option value="{{ $w->id }}" data-currency="{{ $w->currency_code }}" {{ (old('transaction_type') === 'expense' && (string) old('wallet_id') === (string) $w->id) ? 'selected' : '' }}>
-                                        {{ $w->name }} ({{ $w->currency_code }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <input type="hidden" name="currency_code" id="exp_currency_code" value="{{ old('transaction_type') === 'expense' ? old('currency_code', $wallets->first()->currency_code ?? '') : ($wallets->first()->currency_code ?? '') }}" />
-                        <div class="grid gap-1.5">
-                            <label for="exp_amount" class="kt-form-label">Amount <span class="text-destructive">*</span></label>
-                            <input type="number" name="amount" id="exp_amount" value="{{ old('transaction_type') === 'expense' ? old('amount') : '' }}" required step="0.01" min="0.01" class="kt-input" />
-                        </div>
-                        <div class="grid gap-1.5">
-                            <label for="exp_category_id" class="kt-form-label">Category <span class="text-destructive">*</span></label>
-                            <select name="category_id" id="exp_category_id" class="kt-select" required>
-                                <option value="">Select category</option>
-                                @foreach ($expenseCategories as $cat)
-                                    <option value="{{ $cat->id }}" {{ (old('transaction_type') === 'expense' && (string) old('category_id') === (string) $cat->id) ? 'selected' : '' }}>{{ $cat->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="grid gap-1.5">
-                            <label for="expense_date" class="kt-form-label">Expense date <span class="text-destructive">*</span></label>
-                            <input type="date" name="expense_date" id="expense_date" value="{{ old('transaction_type') === 'expense' ? old('expense_date', now()->format('Y-m-d')) : now()->format('Y-m-d') }}" required class="kt-input" />
-                        </div>
-                        <div class="grid sm:grid-cols-2 gap-4">
-                            <div class="grid gap-1.5">
-                                <label for="exp_description" class="kt-form-label">Description</label>
-                                <input type="text" name="description" id="exp_description" value="{{ old('transaction_type') === 'expense' ? old('description') : '' }}" class="kt-input" />
-                            </div>
-                            <div class="grid gap-1.5">
-                                <label for="merchant" class="kt-form-label">Merchant</label>
-                                <input type="text" name="merchant" id="merchant" value="{{ old('transaction_type') === 'expense' ? old('merchant') : '' }}" class="kt-input" />
-                            </div>
-                        </div>
-                        <div class="grid sm:grid-cols-2 gap-4">
-                            <div class="grid gap-1.5">
-                                <label for="paid_by" class="kt-form-label">Paid by</label>
-                                <select name="paid_by" id="paid_by" class="kt-select">
-                                    @foreach ($members as $member)
-                                        <option value="{{ $member->id }}" {{ old('transaction_type') === 'expense' ? (old('paid_by', auth()->id()) == $member->id ? 'selected' : '') : (auth()->id() == $member->id ? 'selected' : '') }}>{{ $member->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="grid gap-1.5">
-                                <label for="payment_method" class="kt-form-label">Payment method</label>
-                                <select name="payment_method" id="payment_method" class="kt-select">
-                                    <option value="">— Optional —</option>
-                                    @foreach (\App\Models\Expense::paymentMethods() as $value => $label)
-                                        <option value="{{ $value }}" {{ old('transaction_type') === 'expense' && old('payment_method') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid sm:grid-cols-2 gap-4">
-                            <div class="grid gap-1.5">
-                                <label for="budget_id" class="kt-form-label">Budget source</label>
-                                <select name="budget_id" id="budget_id" class="kt-select">
-                                    <option value="">— None —</option>
-                                    @foreach ($budgets as $b)
-                                        <option value="{{ $b->id }}" {{ old('transaction_type') === 'expense' && (string) old('budget_id') === (string) $b->id ? 'selected' : '' }}>
-                                            {{ $b->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="grid gap-1.5">
-                                <label for="project_id" class="kt-form-label">Project</label>
-                                <select name="project_id" id="project_id" class="kt-select">
-                                    <option value="">— None —</option>
-                                    @foreach ($projects as $proj)
-                                        <option value="{{ $proj->id }}" {{ old('transaction_type') === 'expense' && (string) old('project_id') === (string) $proj->id ? 'selected' : '' }}>{{ $proj->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid gap-1.5">
-                            <label for="exp_liability_id" class="kt-form-label">Linked liability</label>
-                            <select name="family_liability_id" id="exp_liability_id" class="kt-select">
-                                <option value="">— None —</option>
-                                @foreach ($liabilities as $liab)
-                                    <option value="{{ $liab->id }}" {{ old('transaction_type') === 'expense' && (string) old('family_liability_id') === (string) $liab->id ? 'selected' : '' }}>{{ $liab->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="grid gap-1.5">
-                            <label for="reference" class="kt-form-label">Reference</label>
-                            <input type="text" name="reference" id="reference" value="{{ old('transaction_type') === 'expense' ? old('reference') : '' }}" class="kt-input" />
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" name="is_recurring" id="is_recurring" value="1" class="kt-checkbox" {{ old('transaction_type') === 'expense' && old('is_recurring') ? 'checked' : '' }} />
-                            <label for="is_recurring" class="text-sm text-muted-foreground">Recurring expense</label>
-                        </div>
-                        <div class="flex justify-end gap-2 pt-2">
-                            <button type="button" class="kt-btn kt-btn-outline" data-kt-modal-dismiss="true">Cancel</button>
-                            <button type="submit" class="kt-btn kt-btn-primary">Record expense</button>
-                        </div>
-                    </form>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
+@endsection
 
 @push('scripts')
 <script>
-(function () {
-    var shouldOpen = @json((bool) $openAddTxnModal);
-    var initialTab = @json($initialTxnTab);
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ApexCharts === 'undefined') return;
 
-    function openAddTransactionModal() {
-        var el = document.getElementById('add_transaction_modal');
-        if (!el) return;
-        if (typeof KTModal !== 'undefined') {
-            var modal = KTModal.getInstance(el) || new KTModal(el);
-            modal.show();
+    var currency = @json($chartCurrency);
+    var monthLabels = @json($chartMonthLabels);
+    var incomeByMonth = @json($chartIncomeByMonth);
+    var expenseByMonth = @json($chartExpenseByMonth);
+    var incomeCountByMonth = @json($chartIncomeCountByMonth);
+    var expenseCountByMonth = @json($chartExpenseCountByMonth);
+    var categoryNames = @json($chartCategoryNames);
+    var categoryTotals = @json($chartCategoryTotals);
+
+    function famledgerCompactAxis(v) {
+        v = Number(v) || 0;
+        var a = Math.abs(v);
+        if (a >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+        if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+        if (a >= 1e3) return (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+        return (v % 1 === 0 ? String(v) : v.toFixed(1));
+    }
+
+    var palette = ['#009EF7', '#38bdf8', '#0ea5e9', '#0369a1', '#22c55e', '#a855f7', '#f97316', '#ef4444', '#14b8a6', '#eab308'];
+
+    var flowEl = document.getElementById('famledger_txn_flow_chart');
+    if (flowEl && monthLabels.length) {
+        new ApexCharts(flowEl, {
+            series: [
+                { name: 'Income', data: incomeByMonth.map(Number) },
+                { name: 'Expenses', data: expenseByMonth.map(Number) },
+            ],
+            chart: {
+                type: 'bar',
+                width: '100%',
+                height: 280,
+                toolbar: { show: false },
+                redrawOnParentResize: true,
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    borderRadius: 3,
+                    columnWidth: '72%',
+                },
+            },
+            colors: ['#22c55e', '#ef4444'],
+            dataLabels: { enabled: false },
+            xaxis: {
+                categories: monthLabels,
+                labels: {
+                    style: { colors: 'var(--color-muted-foreground)', fontSize: '11px' },
+                },
+                axisBorder: { show: false },
+                axisTicks: { show: false },
+            },
+            yaxis: {
+                labels: {
+                    style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
+                    formatter: function (v) {
+                        return famledgerCompactAxis(v);
+                    },
+                },
+            },
+            grid: {
+                borderColor: 'var(--color-border)',
+                strokeDashArray: 4,
+                xaxis: { lines: { show: false } },
+                yaxis: { lines: { show: true } },
+                padding: { top: 4, left: 4, right: 8, bottom: 4 },
+            },
+            legend: {
+                position: 'bottom',
+                horizontalAlign: 'center',
+                offsetY: 4,
+                labels: { colors: 'var(--color-muted-foreground)' },
+            },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function (v) {
+                        return (v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + currency;
+                    },
+                },
+            },
+        }).render();
+    }
+
+    var catEl = document.getElementById('famledger_txn_category_chart');
+    if (catEl) {
+        if (categoryNames.length && categoryTotals.length) {
+            new ApexCharts(catEl, {
+                series: [{ name: 'Expenses', data: categoryTotals.map(Number) }],
+                chart: {
+                    type: 'bar',
+                    width: '100%',
+                    height: 280,
+                    toolbar: { show: false },
+                    redrawOnParentResize: true,
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        borderRadius: 4,
+                        columnWidth: '55%',
+                        distributed: true,
+                    },
+                },
+                colors: palette,
+                dataLabels: {
+                    enabled: categoryNames.length <= 8,
+                    offsetY: -4,
+                    style: { colors: ['var(--color-foreground)'], fontSize: '9px' },
+                    formatter: function (val) {
+                        return (val || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+                    },
+                },
+                xaxis: {
+                    categories: categoryNames,
+                    labels: {
+                        rotate: categoryNames.length > 3 ? -40 : 0,
+                        rotateAlways: categoryNames.length > 3,
+                        hideOverlappingLabels: true,
+                        trim: true,
+                        maxHeight: 70,
+                        style: { colors: 'var(--color-muted-foreground)', fontSize: '9px' },
+                    },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
+                        formatter: function (v) {
+                            return famledgerCompactAxis(v);
+                        },
+                    },
+                },
+                grid: {
+                    borderColor: 'var(--color-border)',
+                    strokeDashArray: 4,
+                    xaxis: { lines: { show: false } },
+                    yaxis: { lines: { show: true } },
+                    padding: { top: 8, left: 4, right: 8, bottom: 4 },
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: {
+                        formatter: function (v) {
+                            return (v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + currency;
+                        },
+                    },
+                },
+                legend: { show: false },
+            }).render();
         } else {
-            el.classList.add('open');
+            catEl.innerHTML = '<div class="flex items-center justify-center h-[200px] text-muted-foreground text-sm text-center px-3">No expenses in this period.</div>';
         }
     }
 
-    function bindOpeners() {
-        var mainBtn = document.getElementById('btn_open_add_transaction');
-        if (mainBtn) mainBtn.addEventListener('click', openAddTransactionModal);
-        document.querySelectorAll('[data-open-add-transaction]').forEach(function (btn) {
-            btn.addEventListener('click', openAddTransactionModal);
-        });
+    var volEl = document.getElementById('famledger_txn_volume_chart');
+    if (volEl && monthLabels.length) {
+        new ApexCharts(volEl, {
+            series: [
+                { name: 'Income', data: incomeCountByMonth.map(Number) },
+                { name: 'Expenses', data: expenseCountByMonth.map(Number) },
+            ],
+            chart: {
+                type: 'bar',
+                width: '100%',
+                height: 280,
+                toolbar: { show: false },
+                redrawOnParentResize: true,
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    borderRadius: 3,
+                    columnWidth: '72%',
+                },
+            },
+            colors: ['#22c55e', '#f97316'],
+            dataLabels: { enabled: false },
+            xaxis: {
+                categories: monthLabels,
+                labels: {
+                    style: { colors: 'var(--color-muted-foreground)', fontSize: '11px' },
+                },
+                axisBorder: { show: false },
+                axisTicks: { show: false },
+            },
+            yaxis: {
+                labels: {
+                    style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
+                    formatter: function (v) {
+                        return (v % 1 === 0 ? v : v.toFixed(1));
+                    },
+                },
+                min: 0,
+                forceNiceScale: true,
+            },
+            grid: {
+                borderColor: 'var(--color-border)',
+                strokeDashArray: 4,
+                xaxis: { lines: { show: false } },
+                yaxis: { lines: { show: true } },
+                padding: { top: 4, left: 4, right: 8, bottom: 4 },
+            },
+            legend: {
+                position: 'bottom',
+                horizontalAlign: 'center',
+                offsetY: 4,
+                labels: { colors: 'var(--color-muted-foreground)' },
+            },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function (v) {
+                        return (v || 0) + ' transactions';
+                    },
+                },
+            },
+        }).render();
     }
-
-    function syncExpenseCurrency() {
-        var sel = document.getElementById('exp_wallet_id');
-        var hidden = document.getElementById('exp_currency_code');
-        if (!sel || !hidden) return;
-        var opt = sel.options[sel.selectedIndex];
-        var cur = opt && opt.getAttribute('data-currency');
-        if (cur) hidden.value = cur;
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        bindOpeners();
-        var wSel = document.getElementById('exp_wallet_id');
-        if (wSel) {
-            wSel.addEventListener('change', syncExpenseCurrency);
-            syncExpenseCurrency();
-        }
-
-        if (shouldOpen) {
-            openAddTransactionModal();
-        }
-
-        // Ensure correct tab is visible when reopening after validation
-        if (initialTab === 'income') {
-            var ti = document.getElementById('tab_income');
-            var te = document.getElementById('tab_expense');
-            if (ti && typeof ti.click === 'function') ti.click();
-        }
-    });
-})();
+});
 </script>
 @endpush
-@endsection
-

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Full dashboard: pulse-ui.css + pulse-ui.js (Lottie embedded) + min.js (lottie-web) + this file. -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pulse · Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../pulse-ui.css">
+
+</head>
+<body>
+  <div id="pulse-login" class="pulse-login" hidden>
+    <div class="pulse-login__shell">
+      <div class="pulse-login__frame">
+        <div class="pulse-login__card">
+          <header class="pulse-login__head">
+            <a class="pulse-login__back" href="#overview">← Back to dashboard</a>
+            <h1 class="pulse-login__welcome">Hi, Welcome back.</h1>
+            <p class="pulse-login__brand-line"><span class="pulse-login__brand-mark">Pulse</span></p>
+          </header>
+          <div class="pulse-login__lottie-band" aria-hidden="true">
+            <div class="pulse-login__lottie-inner">
+              <div id="lottie-login-screen"></div>
+            </div>
+          </div>
+          <form class="pulse-login__form" id="pulse-login-form" novalidate>
+            <div class="pulse-login__field">
+              <label class="pulse-login__label" for="login-email">user name or email</label>
+              <input
+                id="login-email"
+                name="email"
+                class="pulse-login__input"
+                type="email"
+                autocomplete="username"
+                placeholder="username@email.com"
+              />
+            </div>
+            <div class="pulse-login__field pulse-login__field--password">
+              <label class="pulse-login__label" for="login-password">password</label>
+              <div class="pulse-login__input-row">
+                <input
+                  id="login-password"
+                  name="password"
+                  class="pulse-login__input pulse-login__input--has-toggle"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  class="pulse-login__pw-toggle"
+                  id="pulse-login-pw-toggle"
+                  aria-label="Show password"
+                  aria-pressed="false"
+                >
+                  <span class="pulse-login__pw-icon pulse-login__pw-icon--show" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </span>
+                  <span class="pulse-login__pw-icon pulse-login__pw-icon--hide" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  </span>
+                </button>
+              </div>
+            </div>
+            <p class="pulse-login__hint">Demo: use any email and password to enter the app.</p>
+            <button type="submit" class="pulse-login__submit">login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="pulse-app">
+  <div class="page-wrap">
+  <section class="sample-dashboard" id="sample-dashboard" aria-label="Sample dashboard">
+    <div class="sample-dashboard__frame">
+    <div class="sample-dashboard__layout">
+      <div class="sample-dashboard__sidebar-shell">
+        <aside class="sample-dashboard__sidebar" id="dashboard-sidebar-panel" aria-label="Primary navigation">
+          <div class="sample-dashboard__sidebar-icon-wrap">
+            <div
+              class="sample-dashboard__sidebar-icon-lottie"
+              id="lottie-sidebar-app-icon"
+              role="img"
+              aria-label="Pulse app icon"
+            ></div>
+          </div>
+          <div class="sample-dashboard__brand">Pulse</div>
+          <nav class="sample-dashboard__nav" id="dashboard-primary-nav" aria-label="Sections">
+            <a href="#overview" data-page="overview" aria-current="page" style="--stagger: 0">Overview</a>
+            <a href="#analytics" data-page="analytics" style="--stagger: 1">Analytics</a>
+            <a href="#reports" data-page="reports" style="--stagger: 2">Reports</a>
+            <a href="#customers" data-page="customers" style="--stagger: 3">Customers</a>
+            <a href="#billing" data-page="billing" style="--stagger: 4">Billing</a>
+            <a href="#settings" data-page="settings" style="--stagger: 5">Settings</a>
+          </nav>
+          <div class="sample-dashboard__sidebar-foot">Workspace · Pro plan</div>
+        </aside>
+      </div>
+
+      <div class="sample-dashboard__body">
+      <div class="sample-dashboard__topnav-clip">
+        <header class="Header-module--header--41b9b" id="site-header" aria-label="Dashboard">
+          <div class="Header-module--bar--inner">
+            <div class="sample-dashboard__bar-start">
+              <button
+                type="button"
+                id="dashboard-sidebar-toggle"
+                class="sample-dashboard__sidebar-toggle"
+                aria-expanded="true"
+                aria-controls="dashboard-sidebar-panel"
+                title="Collapse sidebar"
+              >
+                <svg class="sample-dashboard__sidebar-toggle-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <path fill="currentColor" d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
+                </svg>
+              </button>
+              <a href="#overview" class="Header-module--logo">Pulse</a>
+            </div>
+            <div class="Header-module--actions">
+              <div class="pulse-profile" id="pulse-profile">
+                <button
+                  type="button"
+                  class="pulse-profile__trigger"
+                  id="pulse-profile-trigger"
+                  aria-expanded="false"
+                  aria-haspopup="menu"
+                  aria-controls="pulse-profile-menu"
+                >
+                  <span class="pulse-profile__avatar" aria-hidden="true">
+                    <span id="lottie-profile-avatar"></span>
+                  </span>
+                  <span class="pulse-profile__chevron" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 10l5 5 5-5H7z"/></svg>
+                  </span>
+                </button>
+                <div
+                  class="pulse-profile__menu"
+                  id="pulse-profile-menu"
+                  role="menu"
+                  aria-labelledby="pulse-profile-trigger"
+                  hidden
+                >
+                  <div class="pulse-profile__menu-head">
+                    <div class="pulse-profile__menu-name">Alex Morgan</div>
+                    <div class="pulse-profile__menu-email">alex.morgan@pulse.demo</div>
+                  </div>
+                  <div class="pulse-profile__menu-actions" role="none">
+                    <a href="#settings" class="pulse-profile__menu-item" role="menuitem">Settings</a>
+                    <a href="index.html" class="pulse-profile__menu-item" role="menuitem">Home</a>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="Header-module--menuBtn" aria-label="Menu">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"></path></svg>
+              </button>
+            </div>
+          </div>
+        </header>
+      </div>
+      <div class="sample-dashboard__content-row">
+      <div class="sample-dashboard__main">
+        <div class="sample-dashboard__main-inner">
+          <div class="sample-dashboard__pages" id="dashboard-pages">
+            <div class="sample-page sample-page--active" id="overview" data-page="overview" role="region" aria-labelledby="overview-heading">
+              <div class="dash-reveal sample-dashboard__top">
+                <div>
+                  <h2 id="overview-heading">Overview</h2>
+                  <p>Last 30 days · Updated moments ago</p>
+                </div>
+                <button type="button" class="sample-dashboard__btn-secondary">Export</button>
+              </div>
+              <div class="dash-reveal sample-dashboard__kpis">
+                <div class="sample-dashboard__kpi sample-dashboard__kpi--live" style="--pulse-metric-stagger: 0"><span>Revenue</span><strong>$48.2k</strong><em>+12.4%</em></div>
+                <div class="sample-dashboard__kpi sample-dashboard__kpi--live" style="--pulse-metric-stagger: 1"><span>Active users</span><strong>3,842</strong><em>+3.1%</em></div>
+                <div class="sample-dashboard__kpi sample-dashboard__kpi--live" style="--pulse-metric-stagger: 2"><span>Conversion</span><strong>4.7%</strong><em>+0.6%</em></div>
+                <div class="sample-dashboard__kpi sample-dashboard__kpi--live" style="--pulse-metric-stagger: 3"><span>Churn</span><strong>1.2%</strong><em style="color:#dc2626">+0.2%</em></div>
+              </div>
+              <div class="dash-reveal">
+                <section class="dashboard-json-block" id="dashboard-json-block" aria-label="Dashboard Lottie animation">
+                  <div class="dashboard-json-block__head">
+                    <span>Data dashboard</span>
+                    <span>Data Dashboard.json</span>
+                  </div>
+                  <div class="dashboard-json-block__stage">
+                    <div id="lottie-dashboard" role="img" aria-label="Data Dashboard animation"></div>
+                    <p class="dashboard-json-block__err" id="lottie-dashboard-err">
+                      Could not load the dashboard animation. Browsers block <code>fetch()</code> on <code>file://</code> pages (CORS / null origin). Keep <code>dashboard-lottie-data.js</code> next to this HTML (built from <code>Data Dashboard.json</code>), or open the page over <code>http://localhost</code> so <code>Data Dashboard.json</code> can be fetched.
+                    </p>
+                  </div>
+                </section>
+              </div>
+              <div class="dash-reveal sample-dashboard__graph-grid" aria-label="Chart samples">
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Bar chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Bar chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Line graph</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Line graph — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Pie chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Pie chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Area chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Area chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Donut chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Donut chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="dash-reveal">
+                <p class="sample-page__lead" style="margin: 0;">
+                  <strong>This week:</strong> Sessions are trending up. Mobile share is <strong style="color: var(--primary-color)">54%</strong> of traffic. Peak hours stay between 10:00–14:00 local.
+                </p>
+              </div>
+              <div class="dash-reveal sample-dashboard__table sample-dashboard__table--saas-motion">
+                <h3>Recent activity</h3>
+                <table>
+                  <thead><tr><th>Event</th><th>User</th><th>When</th></tr></thead>
+                  <tbody>
+                    <tr><td>Invoice paid</td><td>acme.co</td><td>2m ago</td></tr>
+                    <tr><td>New signup</td><td>jordan@…</td><td>18m ago</td></tr>
+                    <tr><td>Report exported</td><td>you</td><td>1h ago</td></tr>
+                    <tr><td>API limit warning</td><td>system</td><td>3h ago</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="sample-page" id="analytics" data-page="analytics" role="region" aria-labelledby="analytics-heading">
+              <div class="dash-reveal sample-dashboard__top">
+                <div>
+                  <h2 id="analytics-heading">Analytics</h2>
+                  <p>Funnels, retention, and channel mix</p>
+                </div>
+                <button type="button" class="sample-dashboard__btn-secondary">Download CSV</button>
+              </div>
+              <div class="dash-reveal sample-dashboard__kpis">
+                <div class="sample-dashboard__kpi sample-dashboard__kpi--live" style="--pulse-metric-stagger: 0"><span>Signup → activate</span><strong>61%</strong><em>+2.1%</em></div>
+                <div class="sample-dashboard__kpi sample-dashboard__kpi--live" style="--pulse-metric-stagger: 1"><span>7-day retention</span><strong>38%</strong><em>−0.4%</em></div>
+                <div class="sample-dashboard__kpi sample-dashboard__kpi--live" style="--pulse-metric-stagger: 2"><span>Organic share</span><strong>71%</strong><em>+5%</em></div>
+                <div class="sample-dashboard__kpi sample-dashboard__kpi--live" style="--pulse-metric-stagger: 3"><span>Avg. session</span><strong>6m 12s</strong><em>+12s</em></div>
+              </div>
+              <div class="dash-reveal sample-dashboard__graph-grid" aria-label="Analytics charts">
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Bar chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Analytics bar chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Line graph</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Analytics line graph — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Pie chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Analytics pie chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Area chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Analytics area chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Donut chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Analytics donut chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="dash-reveal sample-dashboard__table sample-dashboard__table--saas-motion">
+                <h3>Funnel steps (sample)</h3>
+                <table>
+                  <thead><tr><th>Step</th><th>Users</th><th>Conversion</th></tr></thead>
+                  <tbody>
+                    <tr><td>Landing</td><td>12,400</td><td>100%</td></tr>
+                    <tr><td>Started trial</td><td>3,910</td><td>31.5%</td></tr>
+                    <tr><td>Connected data</td><td>2,880</td><td>23.2%</td></tr>
+                    <tr><td>Subscribed</td><td>1,042</td><td>8.4%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="sample-page" id="reports" data-page="reports" role="region" aria-labelledby="reports-heading">
+              <div class="dash-reveal sample-dashboard__top">
+                <div>
+                  <h2 id="reports-heading">Reports</h2>
+                  <p>Scheduled exports and snapshots</p>
+                </div>
+                <button type="button" class="sample-dashboard__btn-secondary">New report</button>
+              </div>
+              <div class="dash-reveal sample-dashboard__graph-grid" aria-label="Report charts">
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Bar chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Reports bar chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Line graph</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Reports line graph — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Pie chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Reports pie chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Area chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Reports area chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Donut chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Reports donut chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="dash-reveal sample-page__grid2">
+                <div class="sample-page__card sample-page__card--live">
+                  <h3>Weekly summary</h3>
+                  <p>Email · Mon 08:00 · PDF + CSV</p>
+                </div>
+                <div class="sample-page__card sample-page__card--live">
+                  <h3>Finance rollup</h3>
+                  <p>Slack · #finance · Last run OK</p>
+                </div>
+                <div class="sample-page__card sample-page__card--live">
+                  <h3>Usage caps</h3>
+                  <p>Webhook · On threshold only</p>
+                </div>
+              </div>
+              <div class="dash-reveal sample-dashboard__table sample-dashboard__table--saas-motion">
+                <h3>Run history</h3>
+                <table>
+                  <thead><tr><th>Report</th><th>Status</th><th>When</th></tr></thead>
+                  <tbody>
+                    <tr><td>Weekly summary</td><td>Delivered</td><td>Today 08:02</td></tr>
+                    <tr><td>Finance rollup</td><td>Delivered</td><td>Yesterday</td></tr>
+                    <tr><td>Executive deck</td><td>Failed (retry)</td><td>Mon</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="sample-page" id="customers" data-page="customers" role="region" aria-labelledby="customers-heading">
+              <div class="dash-reveal sample-dashboard__top">
+                <div>
+                  <h2 id="customers-heading">Customers</h2>
+                  <p>Accounts and health scores</p>
+                </div>
+                <button type="button" class="sample-dashboard__btn-secondary">Add customer</button>
+              </div>
+              <div class="dash-reveal sample-dashboard__graph-grid" aria-label="Customer charts">
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Bar chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Customers bar chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Line graph</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Customers line graph — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Pie chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Customers pie chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Area chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Customers area chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Donut chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Customers donut chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="dash-reveal sample-dashboard__table sample-dashboard__table--saas-motion">
+                <h3>Directory</h3>
+                <table>
+                  <thead><tr><th>Company</th><th>Plan</th><th>MRR</th><th>Health</th></tr></thead>
+                  <tbody>
+                    <tr><td>Acme Design</td><td>Pro</td><td>$420</td><td>Healthy</td></tr>
+                    <tr><td>Northwind Labs</td><td>Enterprise</td><td>$2,800</td><td>At risk</td></tr>
+                    <tr><td>Blue Canoe</td><td>Starter</td><td>$49</td><td>Healthy</td></tr>
+                    <tr><td>Studio 14</td><td>Pro</td><td>$199</td><td>Champion</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="sample-page" id="billing" data-page="billing" role="region" aria-labelledby="billing-heading">
+              <div class="dash-reveal sample-dashboard__top">
+                <div>
+                  <h2 id="billing-heading">Billing</h2>
+                  <p>Invoices, payment method, usage</p>
+                </div>
+                <button type="button" class="sample-dashboard__btn-secondary">Update card</button>
+              </div>
+              <div class="dash-reveal sample-page__grid2">
+                <div class="sample-page__card sample-page__card--live">
+                  <h3>Current plan</h3>
+                  <p><strong>Pro</strong> — $199/mo · Renews Apr 12</p>
+                </div>
+                <div class="sample-page__card sample-page__card--live">
+                  <h3>Usage this period</h3>
+                  <p>API calls 842k / 1M included</p>
+                </div>
+              </div>
+              <div class="dash-reveal sample-dashboard__graph-grid" aria-label="Billing charts">
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Bar chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Billing bar chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Line graph</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Billing line graph — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Pie chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Billing pie chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Area chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Billing area chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+                <div class="sample-dashboard__chart sample-dashboard__chart--lottie sample-dashboard__chart--live">
+                  <h3>Donut chart</h3>
+                  <div class="pulse-graph-lottie-stage pulse-graph-lottie-stage--typed">
+                    <div data-pulse-graph-lottie role="img" aria-label="Billing donut chart — Data Dashboard animation"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="dash-reveal sample-dashboard__table sample-dashboard__table--saas-motion">
+                <h3>Invoices</h3>
+                <table>
+                  <thead><tr><th>ID</th><th>Amount</th><th>Status</th></tr></thead>
+                  <tbody>
+                    <tr><td>INV-1042</td><td>$199.00</td><td>Paid</td></tr>
+                    <tr><td>INV-1011</td><td>$199.00</td><td>Paid</td></tr>
+                    <tr><td>INV-0988</td><td>$199.00</td><td>Open</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="sample-page" id="settings" data-page="settings" role="region" aria-labelledby="settings-heading">
+              <div class="dash-reveal sample-dashboard__top">
+                <div>
+                  <h2 id="settings-heading">Settings</h2>
+                  <p>Workspace preferences and access</p>
+                </div>
+                <button type="button" class="sample-dashboard__btn-secondary">Save changes</button>
+              </div>
+              <div class="dash-reveal">
+                <section class="dashboard-json-block settings-input-lottie" id="settings-input-lottie-block" aria-label="Input field motion sample">
+                  <div class="dashboard-json-block__head">
+                    <span>Input field</span>
+                    <span>UX in Motion · Lottie</span>
+                  </div>
+                  <div class="dashboard-json-block__stage">
+                    <div id="lottie-input-field" role="img" aria-label="Animated input field demonstration"></div>
+                    <p class="dashboard-json-block__err" id="lottie-input-field-err">
+                      Could not load the animation. Place <code>input-field-lottie-data.js</code> next to this file, or serve <code>Input Field - UX in Motion.json</code> over HTTP.
+                    </p>
+                  </div>
+                </section>
+              </div>
+              <div class="dash-reveal sample-dashboard__table sample-dashboard__table--saas-motion">
+                <h3>General</h3>
+                <table>
+                  <tbody>
+                    <tr><td>Workspace name</td><td>Pulse Demo</td></tr>
+                    <tr><td>Default timezone</td><td>UTC−5 (New York)</td></tr>
+                    <tr><td>Email digests</td><td>On · Weekly</td></tr>
+                    <tr><td>API keys</td><td>2 active · Rotate recommended</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="dash-reveal sample-page__grid2">
+                <div class="sample-page__card sample-page__card--live">
+                  <h3>Security</h3>
+                  <p>SSO enabled · 2FA required for admins</p>
+                </div>
+                <div class="sample-page__card sample-page__card--live">
+                  <h3>Data</h3>
+                  <p>Export window 90 days · EU region</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="pulse-app-footer" id="pulse-app-footer" role="contentinfo" aria-label="Application footer">
+        <div class="pulse-app-footer__inner">
+          <div class="pulse-app-footer__lottie" aria-hidden="true">
+            <div id="lottie-footer"></div>
+          </div>
+          <div class="pulse-app-footer__meta">
+            <span class="pulse-app-footer__brand">Pulse</span>
+            <span class="pulse-app-footer__sep" aria-hidden="true">·</span>
+            <span class="pulse-app-footer__note">Sample workspace · Footer.json</span>
+          </div>
+        </div>
+      </footer>
+      </div>
+    </div>
+    </div>
+  </section>
+  </div>
+  </div>
+  <!-- Lottie animations: data is embedded in pulse-ui.js (file:// safe). -->
+  <script src="../min.js"></script>
+  <script src="../pulse-ui.js"></script>
+  <script src="../profile-lottie-data.js"></script>
+  <script src="../profile.js"></script>
+  <script>
+    PulseUI.init();
+    PulseProfile.init();
+  </script>
+</body>
+</html>

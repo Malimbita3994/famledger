@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Family;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class TransferController extends Controller
@@ -32,10 +34,56 @@ class TransferController extends Controller
                 });
             }
         }
-        $transfers = $query->orderByDesc('transfer_date')->orderByDesc('id')->paginate(20);
+        $transfers = $query->orderByDesc('transfer_date')->orderByDesc('id')->paginate(20)->withQueryString();
         $wallets = $family->wallets()->where('status', 'active')->orderBy('name')->get(['id', 'name', 'currency_code']);
 
-        return view('families.transfers.index', compact('family', 'transfers', 'wallets'));
+        $chartCurrency = $family->currency_code ?? config('currencies.default', 'TZS');
+        $now = Carbon::now();
+        $chartMonthKeys = [];
+        $chartMonthLabels = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $d = $now->copy()->subMonths($i)->startOfMonth();
+            $chartMonthKeys[] = $d->format('Y-m-d');
+            $chartMonthLabels[] = $d->format('M');
+        }
+        $chartStart = $chartMonthKeys[0];
+        $chartEnd = $now->copy()->endOfMonth()->toDateString();
+
+        $amountBucket = array_fill_keys($chartMonthKeys, 0.0);
+        $countBucket = array_fill_keys($chartMonthKeys, 0);
+
+        $transferRows = DB::table('transfers')
+            ->where('family_id', $family->id)
+            ->when($request->filled('wallet_id'), function ($q) use ($request) {
+                $wid = $request->input('wallet_id');
+                $q->where(function ($q2) use ($wid) {
+                    $q2->where('from_wallet_id', $wid)->orWhere('to_wallet_id', $wid);
+                });
+            })
+            ->where('transfer_date', '>=', $chartStart)
+            ->where('transfer_date', '<=', $chartEnd)
+            ->get(['transfer_date', 'amount']);
+
+        foreach ($transferRows as $row) {
+            $k = Carbon::parse($row->transfer_date)->startOfMonth()->format('Y-m-d');
+            if (isset($amountBucket[$k])) {
+                $amountBucket[$k] += (float) $row->amount;
+                $countBucket[$k]++;
+            }
+        }
+
+        $chartTransferAmountByMonth = array_map(fn ($v) => round($v, 2), array_values($amountBucket));
+        $chartTransferCountByMonth = array_values($countBucket);
+
+        return view('families.transfers.index', compact(
+            'family',
+            'transfers',
+            'wallets',
+            'chartMonthLabels',
+            'chartTransferAmountByMonth',
+            'chartTransferCountByMonth',
+            'chartCurrency',
+        ));
     }
 
     public function create(Family $family)
@@ -83,10 +131,9 @@ class TransferController extends Controller
             return back()->withInput()->withErrors(['to_wallet_id' => 'Both wallets must use the same currency. Multi-currency transfers are not supported yet.']);
         }
 
-        // Ensure source wallet has enough balance for this transfer
-        $available = $fromWallet->balance;
-        if ($validated['amount'] > $available) {
-            $message = 'Insufficient funds in the source wallet. Available balance is ' . number_format($available, 2) . ' ' . strtoupper($fromWallet->currency_code) . '.';
+        if (! $fromWallet->canAffordDebit((float) $validated['amount'])) {
+            $available = $fromWallet->balance;
+            $message = 'Insufficient funds in the source wallet. Available balance is '.number_format($available, 2).' '.strtoupper($fromWallet->currency_code).'.';
 
             return back()
                 ->withInput()

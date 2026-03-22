@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ExpenseCategorySeeder::class,
             AdminRolesAndPermissionsSeeder::class,
             PropertyConfigSeeder::class,
+            // Optional: replace all landing / in-app FAQs (destructive): FamLedgerLandingFaqSeeder::class,
         ]);
 
         // User::factory(10)->create();

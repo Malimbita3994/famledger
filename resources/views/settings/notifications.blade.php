@@ -151,6 +151,52 @@
     --tw-font-weight: var(--font-weight-semibold);
     font-weight: var(--font-weight-semibold);
    }
+   /* FAQ tab: inner horizontal subtabs (same line style as main settings tabs) */
+   #notif_faq_subtabs_tabs.kt-tabs-line .notif-faq-subtab {
+    display: inline-flex;
+    cursor: pointer;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 2px;
+    border-bottom-color: transparent;
+    padding-block: calc(var(--spacing) * 2);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    color: var(--secondary-foreground);
+    background: transparent;
+   }
+   @media (hover: hover) {
+    #notif_faq_subtabs_tabs.kt-tabs-line .notif-faq-subtab:hover {
+     color: var(--primary);
+    }
+   }
+   #notif_faq_subtabs_tabs.kt-tabs-line .notif-faq-subtab.active,
+   #notif_faq_subtabs_tabs.kt-tabs-line .notif-faq-subtab[aria-selected="true"] {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+   }
+   #notif_faq_subtabs_root .notifications-faq-subpanel[hidden] {
+    display: none !important;
+   }
+   #notif_faq_subtabs_root .notifications-faq-subpanel:not([hidden]) {
+    display: flex !important;
+    flex-direction: column;
+   }
+   /* Public FAQ accordion (read-only): calmer highlights, readable marks */
+   #notif_tab_faq .notif-faq-accordion .faq-rich-content mark {
+    padding: 0.12em 0.35em;
+    border-radius: 0.25rem;
+    background: color-mix(in srgb, var(--primary) 16%, transparent);
+    color: inherit;
+   }
+   .dark #notif_tab_faq .notif-faq-accordion .faq-rich-content mark {
+    background: color-mix(in srgb, var(--primary) 26%, transparent);
+   }
   </style>
   <div class="kt-card">
    <div class="kt-card-content p-5 lg:p-7.5 flex flex-col gap-5" id="notification_settings_tabs_root">
@@ -582,133 +628,90 @@
      </div>
     </div>
     <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_faq" aria-labelledby="notif_tab_btn_faq">
-     @if ($canManageNotificationPage)
-      <div class="kt-card border-primary/25 shadow-sm">
-       <div class="kt-card-header flex flex-col items-stretch gap-0 px-5 py-4 lg:px-8 lg:py-5 border-b border-border/80">
-        <h3 class="kt-card-title text-base lg:text-lg">
-         {{ __('Manage FAQ (Super Admin)') }}
-        </h3>
-        <p class="text-sm text-secondary-foreground font-normal mt-2 max-w-3xl leading-relaxed pe-2">
-         {{ __('Create, reorder, publish or remove questions shown to all users in the FAQ section below.') }}
-        </p>
+     @php
+      $notifFaqOpenManageSub = $canManageNotificationPage && (
+       filled(old('_faq_id'))
+       || $errors->has('question')
+       || $errors->has('answer')
+       || $errors->has('sort_order')
+      );
+     @endphp
+     <div id="notif_faq_subtabs_root" class="flex flex-col gap-4 min-w-0 w-full">
+      @if ($canManageNotificationPage)
+       <div class="kt-tabs kt-tabs-line w-full border-b border-border pb-1 -mb-1 shrink-0" id="notif_faq_subtabs_tabs" role="tablist" aria-label="{{ __('FAQ tab sections') }}">
+        <div class="flex flex-wrap gap-1">
+         <button
+          type="button"
+          role="tab"
+          id="notif_faq_sub_btn_help"
+          class="notif-faq-subtab py-2.5 px-3 text-sm {{ $notifFaqOpenManageSub ? '' : 'active' }}"
+          data-notif-faq-sub-target="notif_faq_sub_help"
+          aria-selected="{{ $notifFaqOpenManageSub ? 'false' : 'true' }}"
+          aria-controls="notif_faq_sub_help"
+         >
+          {{ __('Help') }}
+         </button>
+         <button
+          type="button"
+          role="tab"
+          id="notif_faq_sub_btn_manage"
+          class="notif-faq-subtab py-2.5 px-3 text-sm {{ $notifFaqOpenManageSub ? 'active' : '' }}"
+          data-notif-faq-sub-target="notif_faq_sub_manage"
+          aria-selected="{{ $notifFaqOpenManageSub ? 'true' : 'false' }}"
+          aria-controls="notif_faq_sub_manage"
+         >
+          {{ __('Manage FAQ') }}
+         </button>
+        </div>
        </div>
-       <div class="kt-card-content flex flex-col gap-6 lg:gap-8 px-5 py-6 lg:px-8 lg:py-8">
-        <form method="post" action="{{ route('settings.notifications.faqs.store') }}" class="flex flex-col gap-5 p-5 lg:p-6 rounded-xl border border-border bg-muted/25 shadow-sm">
-         @csrf
-         <p class="text-base font-semibold text-mono pb-3 mb-0 border-b border-border/70">{{ __('Add FAQ entry') }}</p>
-         <div class="flex flex-col gap-2">
-          <label id="lbl_new_faq_question" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Question') }}</label>
-          <div id="quill_new_faq_question" class="faq-quill-editor faq-quill-question rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_new_faq_question" aria-labelledby="lbl_new_faq_question"></div>
-          <textarea id="hidden_new_faq_question" name="question" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ old('question') }}</textarea>
-          <p id="new_faq_question_hint" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
-           {{ __('Rich text for the accordion title: bold, color, headings, links, etc. Empty text is not allowed.') }}
-          </p>
-         </div>
-         <div class="flex flex-col gap-2">
-          <label id="lbl_new_faq_answer" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Answer') }}</label>
-          <div id="quill_new_faq_answer" class="faq-quill-editor faq-quill-answer rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_new_faq_answer" aria-labelledby="lbl_new_faq_answer"></div>
-          <textarea id="hidden_new_faq_answer" name="answer" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ old('answer') }}</textarea>
-          <p id="new_faq_answer_hint" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
-           {{ __('Rich text: lists, numbered lists, headings, colors, links, and more. Content is sanitised when saved.') }}
-          </p>
-         </div>
-         <div class="flex flex-wrap items-end gap-6 pt-1">
-          <div class="flex flex-col gap-2 min-w-[8rem]">
-           <label class="text-sm font-medium text-foreground ps-0.5" for="new_faq_sort">{{ __('Sort order') }}</label>
-           <input id="new_faq_sort" type="number" name="sort_order" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ old('sort_order', 0) }}" min="0" />
-          </div>
-          <label class="kt-label text-sm font-medium text-foreground items-center gap-2.5 pb-1">
-           {{ __('Published') }}
-           <input class="kt-switch kt-switch-sm shrink-0" name="is_active" type="checkbox" value="1" @checked(old('is_active', true)) />
-          </label>
-         </div>
-         <div class="pt-2">
-          <button type="submit" class="kt-btn kt-btn-primary">{{ __('Add FAQ') }}</button>
-         </div>
-        </form>
+      @endif
 
-        @foreach ($notificationFaqs as $faq)
-         @php
-          $faqUseOld = (string) old('_faq_id') === (string) $faq->id;
-         @endphp
-         <div class="rounded-xl border border-border bg-card/80 p-5 lg:p-7 flex flex-col gap-5 shadow-sm">
-          <form method="post" action="{{ route('settings.notifications.faqs.update', $faq) }}" class="flex flex-col gap-4">
-           @csrf
-           @method('PUT')
-           <input type="hidden" name="_faq_id" value="{{ $faq->id }}" />
-           <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-dashed border-border/90">
-            <span class="text-sm font-semibold text-muted-foreground tracking-tight">{{ __('Entry #:id', ['id' => $faq->id]) }}</span>
-            <label class="kt-label text-sm font-medium text-foreground items-center gap-2.5">
-             {{ __('Published') }}
-             <input class="kt-switch kt-switch-sm shrink-0" name="is_active" type="checkbox" value="1" @checked($faqUseOld ? (bool) old('is_active') : $faq->is_active) />
-            </label>
-           </div>
-           @php
-            $faqQuestionVal = $faqUseOld ? old('question', $faq->question) : $faq->question;
-            $faqAnswerVal = $faqUseOld ? old('answer', $faq->answer) : $faq->answer;
-           @endphp
-           <div class="flex flex-col gap-2">
-            <label id="lbl_faq_q_{{ $faq->id }}" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Question') }}</label>
-            <div id="quill_faq_q_{{ $faq->id }}" class="faq-quill-editor faq-quill-question rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_faq_q_{{ $faq->id }}" aria-labelledby="lbl_faq_q_{{ $faq->id }}"></div>
-            <textarea id="hidden_faq_q_{{ $faq->id }}" name="question" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ $faqQuestionVal }}</textarea>
-            <p id="faq_q_hint_{{ $faq->id }}" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
-             {{ __('Rich text for the accordion title. Empty text is not allowed.') }}
-            </p>
-           </div>
-           <div class="flex flex-col gap-2">
-            <label id="lbl_faq_a_{{ $faq->id }}" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Answer') }}</label>
-            <div id="quill_faq_a_{{ $faq->id }}" class="faq-quill-editor faq-quill-answer rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_faq_a_{{ $faq->id }}" aria-labelledby="lbl_faq_a_{{ $faq->id }}"></div>
-            <textarea id="hidden_faq_a_{{ $faq->id }}" name="answer" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ $faqAnswerVal }}</textarea>
-            <p id="faq_a_hint_{{ $faq->id }}" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
-             {{ __('Rich answer text; sanitised when saved.') }}
-            </p>
-           </div>
-           <div class="flex flex-col gap-2 max-w-xs">
-            <label class="text-sm font-medium text-foreground ps-0.5" for="faq_sort_{{ $faq->id }}">{{ __('Sort order') }}</label>
-            <input id="faq_sort_{{ $faq->id }}" type="number" name="sort_order" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ $faqUseOld ? old('sort_order', $faq->sort_order) : $faq->sort_order }}" min="0" />
-           </div>
-           <div class="flex flex-wrap items-center gap-3 pt-4 mt-1 border-t border-border/70">
-            <button type="submit" class="kt-btn kt-btn-primary">{{ __('Save') }}</button>
-           </div>
-          </form>
-          <form method="post" action="{{ route('settings.notifications.faqs.destroy', $faq) }}" class="inline" onsubmit="return confirm(@json(__('Delete this FAQ entry?')))">
-           @csrf
-           @method('DELETE')
-           <button type="submit" class="kt-btn kt-btn-outline text-destructive border-destructive/35 hover:bg-destructive/10 px-4 py-2.5">{{ __('Delete') }}</button>
-          </form>
-         </div>
-        @endforeach
-       </div>
-      </div>
-     @endif
+      <div
+       role="tabpanel"
+       id="notif_faq_sub_help"
+       class="notifications-faq-subpanel flex flex-col gap-5 lg:gap-7.5 min-w-0"
+       @if ($canManageNotificationPage && $notifFaqOpenManageSub) hidden @endif
+       aria-labelledby="{{ $canManageNotificationPage ? 'notif_faq_sub_btn_help' : 'notif_tab_btn_faq' }}"
+      >
 
      {{-- FAQ (visible to all users) --}}
-     <div class="kt-card">
-      <div class="kt-card-header">
-       <h3 class="kt-card-title">
-        {{ __('FAQ') }}
+     <div class="kt-card border-border/80 shadow-sm overflow-hidden">
+      <div class="kt-card-header flex flex-col gap-2 border-b border-border/70 px-5 py-5 lg:px-7.5 lg:py-6">
+       <h3 class="kt-card-title text-lg sm:text-xl font-semibold text-mono tracking-tight mb-0">
+        {{ __('Frequently asked questions') }}
        </h3>
+       <p class="text-sm text-secondary-foreground leading-relaxed max-w-2xl mb-0">
+        {{ __('Short answers about how FamLedger sends, batches, and prioritizes notification emails.') }}
+       </p>
       </div>
-      <div class="kt-card-content py-3">
+      <div class="kt-card-content p-4 sm:p-6 lg:p-8">
        @if ($notificationFaqsPublic->isEmpty())
-        <p class="text-sm text-secondary-foreground px-2">{{ __('No FAQ entries yet.') }}</p>
+        <p class="text-sm text-secondary-foreground">{{ __('No FAQ entries yet.') }}</p>
        @else
-        <div data-kt-accordion="true" data-kt-accordion-expand-all="true">
+        <div class="notif-faq-accordion flex flex-col gap-3 max-w-3xl" data-kt-accordion="true">
          @foreach ($notificationFaqsPublic as $faq)
-          <div class="kt-accordion-item not-last:border-b border-b-border" data-kt-accordion-item="true">
-           <div role="button" tabindex="0" aria-controls="faq_content_{{ $faq->id }}" class="kt-accordion-toggle py-4 flex flex-wrap items-center justify-between gap-3 text-start w-full cursor-pointer select-none" data-kt-accordion-toggle="#faq_content_{{ $faq->id }}">
-            <div class="faq-rich-content text-base text-mono min-w-0 flex-1 [&_p]:mb-1 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ps-5 [&_ol]:list-decimal [&_ol]:ps-5 [&_a]:text-primary [&_a]:underline">
+          <div class="rounded-xl border border-border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-primary/20 hover:shadow-md overflow-hidden" data-kt-accordion-item="true">
+           <button
+            type="button"
+            class="kt-accordion-toggle group/faq-q flex w-full items-start gap-3 px-4 py-4 sm:px-5 sm:py-4 text-start cursor-pointer select-none border-0 bg-transparent hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/35 !justify-start !items-start !py-4 !gap-3"
+            data-kt-accordion-toggle="#faq_content_{{ $faq->id }}"
+            aria-expanded="false"
+            aria-controls="faq_content_{{ $faq->id }}"
+           >
+            <div class="faq-rich-content min-w-0 flex-1 text-base sm:text-[1.0625rem] font-semibold text-mono leading-snug [&_p]:mb-1 [&_p:last-child]:mb-0 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:ps-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:ps-5 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-base [&_a]:text-primary [&_a]:underline">
              {!! Purify::config('notification_faq')->clean($faq->question) !!}
             </div>
-            <span class="kt-accordion-active:hidden inline-flex shrink-0">
-             <i class="ki-filled ki-plus text-muted-foreground text-sm"></i>
+            <span class="relative inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-border/80 bg-muted/50 text-muted-foreground transition-colors group-hover/faq-q:bg-muted group-hover/faq-q:text-foreground" aria-hidden="true">
+             <span class="kt-accordion-indicator-on absolute inset-0 flex items-center justify-center">
+              <i class="ki-filled ki-plus text-lg leading-none"></i>
+             </span>
+             <span class="kt-accordion-indicator-off absolute inset-0 flex items-center justify-center">
+              <i class="ki-filled ki-minus text-lg leading-none"></i>
+             </span>
             </span>
-            <span class="kt-accordion-active:inline-flex hidden shrink-0">
-             <i class="ki-filled ki-minus text-muted-foreground text-sm"></i>
-            </span>
-           </div>
-           <div class="kt-accordion-content hidden" id="faq_content_{{ $faq->id }}">
-            <div class="faq-rich-content text-secondary-foreground text-base pb-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ps-5 [&_ol]:list-decimal [&_ol]:ps-5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-base [&_a]:text-primary [&_a]:underline [&_blockquote]:border-s-2 [&_blockquote]:border-border [&_blockquote]:ps-3 [&_blockquote]:italic">
+           </button>
+           <div class="kt-accordion-content hidden border-t border-border/70 bg-muted/10" id="faq_content_{{ $faq->id }}">
+            <div class="faq-rich-content text-secondary-foreground px-4 py-4 sm:px-5 sm:py-5 text-sm sm:text-[0.9375rem] leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:ps-5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:ps-5 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:text-sm [&_h2]:font-semibold [&_h3]:text-sm [&_a]:text-primary [&_a]:underline [&_blockquote]:border-s-2 [&_blockquote]:border-border [&_blockquote]:ps-3 [&_blockquote]:italic">
              {!! Purify::config('notification_faq')->clean($faq->answer) !!}
             </div>
            </div>
@@ -717,6 +720,126 @@
         </div>
        @endif
       </div>
+     </div>
+      </div>
+
+     @if ($canManageNotificationPage)
+      <div
+       role="tabpanel"
+       id="notif_faq_sub_manage"
+       class="notifications-faq-subpanel flex flex-col gap-5 lg:gap-7.5 min-w-0"
+       @unless ($notifFaqOpenManageSub) hidden @endunless
+       aria-labelledby="notif_faq_sub_btn_manage"
+      >
+       <div class="kt-card border-primary/25 shadow-sm">
+        <div class="kt-card-header flex flex-col items-stretch gap-0 px-5 py-4 lg:px-8 lg:py-5 border-b border-border/80">
+         <h3 class="kt-card-title text-base lg:text-lg">
+          {{ __('Manage FAQ (Super Admin)') }}
+         </h3>
+         <p class="text-sm text-secondary-foreground font-normal mt-2 max-w-3xl leading-relaxed pe-2">
+          {{ __('Create, reorder, publish or remove questions shown to everyone under the Help tab.') }}
+         </p>
+        </div>
+        <div class="kt-card-content flex flex-col gap-6 lg:gap-8 px-5 py-6 lg:px-8 lg:py-8">
+         <form method="post" action="{{ route('settings.notifications.faqs.store') }}" class="flex flex-col gap-5 p-5 lg:p-6 rounded-xl border border-border bg-muted/25 shadow-sm">
+          @csrf
+          <p class="text-base font-semibold text-mono pb-3 mb-0 border-b border-border/70">{{ __('Add FAQ entry') }}</p>
+          <div class="flex flex-col gap-2">
+           <label id="lbl_new_faq_question" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Question') }}</label>
+           <div id="quill_new_faq_question" class="faq-quill-editor faq-quill-question rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_new_faq_question" aria-labelledby="lbl_new_faq_question"></div>
+           <textarea id="hidden_new_faq_question" name="question" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ old('question') }}</textarea>
+           <p id="new_faq_question_hint" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
+            {{ __('Rich text for the accordion title: bold, color, headings, links, etc. Empty text is not allowed.') }}
+           </p>
+          </div>
+          <div class="flex flex-col gap-2">
+           <label id="lbl_new_faq_answer" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Answer') }}</label>
+           <div id="quill_new_faq_answer" class="faq-quill-editor faq-quill-answer rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_new_faq_answer" aria-labelledby="lbl_new_faq_answer"></div>
+           <textarea id="hidden_new_faq_answer" name="answer" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ old('answer') }}</textarea>
+           <p id="new_faq_answer_hint" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
+            {{ __('Rich text: lists, numbered lists, headings, colors, links, and more. Content is sanitised when saved.') }}
+           </p>
+          </div>
+          <div class="flex flex-col gap-2 max-w-md">
+           <label class="text-sm font-medium text-foreground ps-0.5" for="new_faq_group">{{ __('Group (landing sidebar)') }}</label>
+           <input id="new_faq_group" type="text" name="group_label" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ old('group_label') }}" maxlength="120" placeholder="{{ __('e.g. Notifications') }}" />
+           <p class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">{{ __('Optional. FAQs with the same group label are grouped on the public landing page.') }}</p>
+          </div>
+          <div class="flex flex-wrap items-end gap-6 pt-1">
+           <div class="flex flex-col gap-2 min-w-[8rem]">
+            <label class="text-sm font-medium text-foreground ps-0.5" for="new_faq_sort">{{ __('Sort order') }}</label>
+            <input id="new_faq_sort" type="number" name="sort_order" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ old('sort_order', 0) }}" min="0" />
+           </div>
+           <label class="kt-label text-sm font-medium text-foreground items-center gap-2.5 pb-1">
+            {{ __('Published') }}
+            <input class="kt-switch kt-switch-sm shrink-0" name="is_active" type="checkbox" value="1" @checked(old('is_active', true)) />
+           </label>
+          </div>
+          <div class="pt-2">
+           <button type="submit" class="kt-btn kt-btn-primary">{{ __('Add FAQ') }}</button>
+          </div>
+         </form>
+
+         @foreach ($notificationFaqs as $faq)
+          @php
+           $faqUseOld = (string) old('_faq_id') === (string) $faq->id;
+          @endphp
+          <div class="rounded-xl border border-border bg-card/80 p-5 lg:p-7 flex flex-col gap-5 shadow-sm">
+           <form method="post" action="{{ route('settings.notifications.faqs.update', $faq) }}" class="flex flex-col gap-4">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="_faq_id" value="{{ $faq->id }}" />
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-dashed border-border/90">
+             <span class="text-sm font-semibold text-muted-foreground tracking-tight">{{ __('Entry #:id', ['id' => $faq->id]) }}</span>
+             <label class="kt-label text-sm font-medium text-foreground items-center gap-2.5">
+              {{ __('Published') }}
+              <input class="kt-switch kt-switch-sm shrink-0" name="is_active" type="checkbox" value="1" @checked($faqUseOld ? (bool) old('is_active') : $faq->is_active) />
+             </label>
+            </div>
+            @php
+             $faqQuestionVal = $faqUseOld ? old('question', $faq->question) : $faq->question;
+             $faqAnswerVal = $faqUseOld ? old('answer', $faq->answer) : $faq->answer;
+             $faqGroupVal = $faqUseOld ? old('group_label', $faq->group_label) : $faq->group_label;
+            @endphp
+            <div class="flex flex-col gap-2">
+             <label id="lbl_faq_q_{{ $faq->id }}" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Question') }}</label>
+             <div id="quill_faq_q_{{ $faq->id }}" class="faq-quill-editor faq-quill-question rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_faq_q_{{ $faq->id }}" aria-labelledby="lbl_faq_q_{{ $faq->id }}"></div>
+             <textarea id="hidden_faq_q_{{ $faq->id }}" name="question" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ $faqQuestionVal }}</textarea>
+             <p id="faq_q_hint_{{ $faq->id }}" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
+              {{ __('Rich text for the accordion title. Empty text is not allowed.') }}
+             </p>
+            </div>
+            <div class="flex flex-col gap-2">
+             <label id="lbl_faq_a_{{ $faq->id }}" class="text-sm font-medium text-foreground ps-0.5 pe-1">{{ __('Answer') }}</label>
+             <div id="quill_faq_a_{{ $faq->id }}" class="faq-quill-editor faq-quill-answer rounded-lg border border-border bg-background overflow-hidden" data-faq-quill data-sync="hidden_faq_a_{{ $faq->id }}" aria-labelledby="lbl_faq_a_{{ $faq->id }}"></div>
+             <textarea id="hidden_faq_a_{{ $faq->id }}" name="answer" class="faq-quill-sync-field" tabindex="-1" aria-hidden="true">{{ $faqAnswerVal }}</textarea>
+             <p id="faq_a_hint_{{ $faq->id }}" class="text-xs text-muted-foreground leading-relaxed ps-0.5 pe-1">
+              {{ __('Rich answer text; sanitised when saved.') }}
+             </p>
+            </div>
+            <div class="flex flex-col gap-2 max-w-md">
+             <label class="text-sm font-medium text-foreground ps-0.5" for="faq_group_{{ $faq->id }}">{{ __('Group (landing sidebar)') }}</label>
+             <input id="faq_group_{{ $faq->id }}" type="text" name="group_label" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ $faqGroupVal }}" maxlength="120" placeholder="{{ __('e.g. Notifications') }}" />
+            </div>
+            <div class="flex flex-col gap-2 max-w-xs">
+             <label class="text-sm font-medium text-foreground ps-0.5" for="faq_sort_{{ $faq->id }}">{{ __('Sort order') }}</label>
+             <input id="faq_sort_{{ $faq->id }}" type="number" name="sort_order" class="kt-input text-sm w-full min-h-11 px-4 py-3" value="{{ $faqUseOld ? old('sort_order', $faq->sort_order) : $faq->sort_order }}" min="0" />
+            </div>
+            <div class="flex flex-wrap items-center gap-3 pt-4 mt-1 border-t border-border/70">
+             <button type="submit" class="kt-btn kt-btn-primary">{{ __('Save') }}</button>
+            </div>
+           </form>
+           <form method="post" action="{{ route('settings.notifications.faqs.destroy', $faq) }}" class="inline" onsubmit="return confirm(@json(__('Delete this FAQ entry?')))">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="kt-btn kt-btn-outline text-destructive border-destructive/35 hover:bg-destructive/10 px-4 py-2.5">{{ __('Delete') }}</button>
+           </form>
+          </div>
+         @endforeach
+        </div>
+       </div>
+      </div>
+     @endif
      </div>
     </div>
     <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_contact" aria-labelledby="notif_tab_btn_contact">
@@ -1085,7 +1208,7 @@
 
    var faqAccordion = document.querySelector('#notif_tab_faq [data-kt-accordion="true"]');
    if (faqAccordion) {
-    faqAccordion.querySelectorAll('[data-kt-accordion-toggle][role="button"]').forEach(function (toggle) {
+    faqAccordion.querySelectorAll('[data-kt-accordion-toggle]').forEach(function (toggle) {
      toggle.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') {
        e.preventDefault();
@@ -1093,6 +1216,48 @@
       }
      });
     });
+   }
+
+   var faqSubRoot = document.getElementById('notif_faq_subtabs_root');
+   if (faqSubRoot) {
+    var faqSubBtns = faqSubRoot.querySelectorAll('[data-notif-faq-sub-target]');
+    var faqSubPanelIds = ['notif_faq_sub_help', 'notif_faq_sub_manage'];
+    var initialFaqSub = @json($notifFaqOpenManageSub ? 'notif_faq_sub_manage' : 'notif_faq_sub_help');
+    function showFaqSub(panelId) {
+     var id = typeof panelId === 'string' ? panelId.trim() : '';
+     faqSubPanelIds.forEach(function (pid) {
+      var el = document.getElementById(pid);
+      if (!el) return;
+      var on = pid === id;
+      el.toggleAttribute('hidden', !on);
+      if (on) {
+       el.style.setProperty('display', 'flex', 'important');
+       el.style.setProperty('flex-direction', 'column', 'important');
+      } else {
+       el.style.setProperty('display', 'none', 'important');
+      }
+     });
+     faqSubBtns.forEach(function (btn) {
+      var t = (btn.getAttribute('data-notif-faq-sub-target') || '').trim();
+      var on = t === id;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+     });
+    }
+    faqSubBtns.forEach(function (btn) {
+     btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === 'function') {
+       e.stopImmediatePropagation();
+      }
+      var t = (btn.getAttribute('data-notif-faq-sub-target') || '').trim();
+      if (t) showFaqSub(t);
+     }, true);
+    });
+    if (faqSubBtns.length) {
+     showFaqSub(initialFaqSub);
+    }
    }
 
    @if ($canManageNotificationPage)

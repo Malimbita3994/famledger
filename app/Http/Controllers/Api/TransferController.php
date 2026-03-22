@@ -74,10 +74,10 @@ class TransferController extends Controller
             return response()->json(['message' => 'Both wallets must use the same currency.'], 422);
         }
 
-        $available = $fromWallet->balance;
-        if ($validated['amount'] > $available) {
+        if (! $fromWallet->canAffordDebit((float) $validated['amount'])) {
             return response()->json([
-                'message' => 'Insufficient funds in the source wallet. Available: ' . number_format($available, 2) . ' ' . $fromWallet->currency_code,
+                'message' => 'Insufficient funds in the source wallet. Available: '
+                    .number_format($fromWallet->balance, 2).' '.$fromWallet->currency_code,
             ], 422);
         }
 

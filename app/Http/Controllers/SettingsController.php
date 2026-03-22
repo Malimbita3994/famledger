@@ -12,6 +12,7 @@ use App\Models\NotificationPageContent;
 use App\Models\NotificationSupportContact;
 use App\Models\SystemLookup;
 use App\Models\User;
+use App\Support\CurrentFamilyResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class SettingsController extends Controller
     public function index(Request $request): View
     {
         return view('settings.index', [
-            'currentFamily' => $this->resolveCurrentFamily($request),
+            'currentFamily' => CurrentFamilyResolver::family($request),
         ]);
     }
 
@@ -38,26 +39,7 @@ class SettingsController extends Controller
      */
     protected function resolveCurrentFamily(Request $request): ?Family
     {
-        $user = $request->user();
-        if (! $user) {
-            return null;
-        }
-
-        $currentFamilyId = (int) $request->session()->get('current_family_id');
-        if ($currentFamilyId > 0) {
-            $family = $user->families()
-                ->where('families.id', $currentFamilyId)
-                ->first();
-            if ($family) {
-                return $family;
-            }
-        }
-
-        return $user->families()
-            ->wherePivot('status', 'active')
-            ->orderByDesc('family_user.is_primary')
-            ->orderBy('family_user.created_at')
-            ->first();
+        return CurrentFamilyResolver::family($request);
     }
 
     /**
@@ -377,6 +359,7 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'question' => ['required', 'string', 'max:65000'],
             'answer' => ['required', 'string', 'max:65000'],
+            'group_label' => ['nullable', 'string', 'max:120'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
@@ -386,9 +369,12 @@ class SettingsController extends Controller
             $validated['answer']
         );
 
+        $groupLabel = $this->normalizeNotificationFaqGroupLabel($validated['group_label'] ?? null);
+
         NotificationFaq::query()->create([
             'question' => $question,
             'answer' => $answer,
+            'group_label' => $groupLabel,
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_active' => $request->boolean('is_active', true),
         ]);
@@ -401,6 +387,7 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'question' => ['required', 'string', 'max:65000'],
             'answer' => ['required', 'string', 'max:65000'],
+            'group_label' => ['nullable', 'string', 'max:120'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
@@ -410,9 +397,12 @@ class SettingsController extends Controller
             $validated['answer']
         );
 
+        $groupLabel = $this->normalizeNotificationFaqGroupLabel($validated['group_label'] ?? null);
+
         $notification_faq->update([
             'question' => $question,
             'answer' => $answer,
+            'group_label' => $groupLabel,
             'sort_order' => $validated['sort_order'] ?? $notification_faq->sort_order,
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -746,6 +736,16 @@ class SettingsController extends Controller
         }
 
         return [$questionHtml, $answerHtml];
+    }
+
+    protected function normalizeNotificationFaqGroupLabel(?string $raw): ?string
+    {
+        if ($raw === null) {
+            return null;
+        }
+        $t = trim(html_entity_decode(strip_tags($raw), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+
+        return $t === '' ? null : mb_substr($t, 0, 120);
     }
 
     protected function purifySupportContactBody(string $body): string

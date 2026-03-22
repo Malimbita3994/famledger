@@ -31,6 +31,18 @@
         Back to assets list
     </a>
 
+    @if (auth()->user() && auth()->user()->hasRole('Super Admin'))
+        <div class="mb-6 rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground flex flex-wrap items-center justify-between gap-3">
+            <span>
+                {{ __('Category and attribute definitions come from system configuration.') }}
+            </span>
+            <a href="{{ route('settings.property.index') }}" class="kt-btn kt-btn-sm kt-btn-outline shrink-0 inline-flex items-center gap-1.5">
+                <i class="ki-filled ki-setting-2 text-base"></i>
+                {{ __('Property configuration') }}
+            </a>
+        </div>
+    @endif
+
     <form action="{{ route('families.properties.update', [$family, $property]) }}" method="POST" class="space-y-6">
         @csrf
         @method('PUT')

@@ -144,10 +144,10 @@
       Property configuration
      </a>
      <span class="text-sm text-secondary-foreground leading-5">
-      Manage property categories and dynamic attributes used across all family properties.
+      Define categories and attributes that appear when families add or edit properties (Finance → Properties → Add property).
      </span>
      <span class="text-xs text-muted-foreground">
-      System-wide configuration, available only to platform administrators.
+      System-wide template; actual assets are created per family. Super Admin only.
      </span>
     </div>
    </div>

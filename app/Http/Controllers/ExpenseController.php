@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Budget;
 use App\Models\ExpenseCategory;
 use App\Models\Family;
-use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -89,6 +88,13 @@ class ExpenseController extends Controller
             'currency_code.in' => 'Currency must match the selected wallet.',
             'category_id.required' => 'Please choose a category for this expense.',
         ]);
+
+        if (! $wallet->canAffordDebit((float) $validated['amount'])) {
+            $message = 'Insufficient funds in the selected wallet. Available balance is '
+                .number_format($wallet->balance, 2).' '.strtoupper($wallet->currency_code).'.';
+
+            return back()->withInput()->withErrors(['amount' => $message])->with('error', $message);
+        }
 
         $family->expenses()->create([
             'wallet_id' => $validated['wallet_id'],

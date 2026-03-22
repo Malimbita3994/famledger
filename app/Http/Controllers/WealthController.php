@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Family;
-use App\Models\FamilyWealthTrend;
 use App\Models\FamilyLiability;
+use App\Models\FamilyWealthTrend;
 use App\Models\Project;
 use App\Models\Property;
 use App\Models\PropertyDepreciation;
 use App\Models\PropertyValuation;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class WealthController extends Controller
@@ -47,7 +48,7 @@ class WealthController extends Controller
 
         // Project wallets hold funds reserved for projects (type = project_fund).
         $projectWallets = $wallets->where('type', 'project_fund');
-        $otherWallets   = $wallets->where('type', '!=', 'project_fund');
+        $otherWallets = $wallets->where('type', '!=', 'project_fund');
 
         // Real cash in normal family wallets
         $walletTotal = (float) $otherWallets->sum('balance');
@@ -135,7 +136,98 @@ class WealthController extends Controller
                 'project_pct' => $projectPct,
             ],
             'trend' => $trend,
+            'wealthCharts' => $this->buildWealthChartsPayload($trend, $currency),
         ]);
+    }
+
+    /**
+     * Series for ApexCharts: historical snapshots plus optional linear net-wealth projection.
+     *
+     * @param  Collection<int, FamilyWealthTrend>  $trend
+     * @return array<string, mixed>
+     */
+    private function buildWealthChartsPayload(Collection $trend, string $currency): array
+    {
+        if ($trend->isEmpty()) {
+            return ['hasData' => false];
+        }
+
+        $rows = $trend->values();
+        $n = $rows->count();
+
+        $historicalCategories = $rows->map(fn (FamilyWealthTrend $r) => $r->snapshot_date->format('M j'))->all();
+        $netWealth = $rows->map(fn (FamilyWealthTrend $r) => round((float) $r->net_wealth, 2))->all();
+        $wallet = $rows->map(fn (FamilyWealthTrend $r) => round((float) $r->wallet_total, 2))->all();
+        $property = $rows->map(fn (FamilyWealthTrend $r) => round((float) $r->property_total, 2))->all();
+        $project = $rows->map(fn (FamilyWealthTrend $r) => round((float) $r->project_total, 2))->all();
+        $liability = $rows->map(fn (FamilyWealthTrend $r) => round((float) $r->liability_total, 2))->all();
+
+        $projection = [
+            'enabled' => false,
+            'fullCategories' => $historicalCategories,
+            'netActual' => $netWealth,
+            'netForecast' => null,
+            'daysAhead' => 0,
+        ];
+
+        if ($n >= 2) {
+            $firstDate = $rows->first()->snapshot_date->copy()->startOfDay();
+            $lastDate = $rows->last()->snapshot_date->copy()->startOfDay();
+            $lastNet = (float) $rows->last()->net_wealth;
+
+            $xs = $rows->map(fn (FamilyWealthTrend $r) => (float) $firstDate->diffInDays($r->snapshot_date->copy()->startOfDay()))->all();
+            $ys = $netWealth;
+            $sumX = array_sum($xs);
+            $sumY = array_sum($ys);
+            $sumXY = 0.0;
+            $sumX2 = 0.0;
+            for ($i = 0; $i < $n; $i++) {
+                $sumXY += $xs[$i] * $ys[$i];
+                $sumX2 += $xs[$i] * $xs[$i];
+            }
+            $denom = $n * $sumX2 - $sumX * $sumX;
+            $slope = abs($denom) > 1e-9 ? ($n * $sumXY - $sumX * $sumY) / $denom : 0.0;
+            $intercept = ($sumY - $slope * $sumX) / $n;
+
+            $projectionDays = 30;
+            $futureCategories = [];
+            $futureValues = [];
+            for ($d = 1; $d <= $projectionDays; $d++) {
+                $futureDate = $lastDate->copy()->addDays($d);
+                $x = (float) $firstDate->diffInDays($futureDate->copy()->startOfDay());
+                $futureCategories[] = $futureDate->format('M j');
+                $futureValues[] = round($intercept + $slope * $x, 2);
+            }
+
+            $fullCategories = array_merge($historicalCategories, $futureCategories);
+            $netActualPadded = array_merge($netWealth, array_fill(0, $projectionDays, null));
+            $forecastPadded = array_merge(
+                array_fill(0, $n - 1, null),
+                [$lastNet],
+                $futureValues
+            );
+
+            $projection = [
+                'enabled' => true,
+                'fullCategories' => $fullCategories,
+                'netActual' => $netActualPadded,
+                'netForecast' => $forecastPadded,
+                'daysAhead' => $projectionDays,
+                'slopePerDay' => round($slope, 4),
+            ];
+        }
+
+        return [
+            'hasData' => true,
+            'currency' => $currency,
+            'categories' => $historicalCategories,
+            'netWealth' => $netWealth,
+            'wallet' => $wallet,
+            'property' => $property,
+            'project' => $project,
+            'liability' => $liability,
+            'projection' => $projection,
+        ];
     }
 
     /**
@@ -163,10 +255,10 @@ class WealthController extends Controller
         });
 
         $projectWallets = $wallets->where('type', 'project_fund');
-        $otherWallets   = $wallets->where('type', '!=', 'project_fund');
-        $walletTotal    = (float) $otherWallets->sum('balance');
+        $otherWallets = $wallets->where('type', '!=', 'project_fund');
+        $walletTotal = (float) $otherWallets->sum('balance');
 
-        $properties  = Property::where('family_id', $family->id)->get(['id', 'purchase_price', 'current_estimated_value']);
+        $properties = Property::where('family_id', $family->id)->get(['id', 'purchase_price', 'current_estimated_value']);
         $propertyIds = $properties->pluck('id')->all();
 
         $latestValuations = PropertyValuation::whereIn('property_id', $propertyIds)
@@ -179,32 +271,32 @@ class WealthController extends Controller
 
         $propertyTotal = 0.0;
         foreach ($properties as $property) {
-            $latestVal     = $latestValuations[$property->id] ?? null;
-            $latestDep     = $latestDepreciations[$property->id] ?? null;
-            $valuation     = $latestVal ? (float) $latestVal->estimated_value : (float) ($property->current_estimated_value ?? 0);
+            $latestVal = $latestValuations[$property->id] ?? null;
+            $latestDep = $latestDepreciations[$property->id] ?? null;
+            $valuation = $latestVal ? (float) $latestVal->estimated_value : (float) ($property->current_estimated_value ?? 0);
             $propertyTotal += $latestDep ? (float) $latestDep->book_value : ($valuation ?: (float) ($property->purchase_price ?? 0));
         }
 
-        $projectTotal   = (float) $projectWallets->sum(fn (Wallet $w) => $w->balance);
+        $projectTotal = (float) $projectWallets->sum(fn (Wallet $w) => $w->balance);
         $liabilityTotal = (float) FamilyLiability::where('family_id', $family->id)->where('status', '!=', 'closed')->sum('outstanding_balance');
-        $netWealth      = $walletTotal + $propertyTotal + $projectTotal - $liabilityTotal;
-        $totalAssets    = $walletTotal + $propertyTotal + $projectTotal;
+        $netWealth = $walletTotal + $propertyTotal + $projectTotal - $liabilityTotal;
+        $totalAssets = $walletTotal + $propertyTotal + $projectTotal;
 
         $pdf = app('dompdf.wrapper');
         $pdf->loadView('families.wealth.pdf', [
-            'family'      => $family,
-            'currency'    => $currency,
-            'overview'    => ['wallet_total' => $walletTotal, 'property_total' => $propertyTotal, 'project_total' => $projectTotal, 'liability_total' => $liabilityTotal, 'net_wealth' => $netWealth],
-            'allocation'  => [
-                'wallet_pct'   => $totalAssets > 0 ? round(($walletTotal / $totalAssets) * 100, 1) : 0.0,
+            'family' => $family,
+            'currency' => $currency,
+            'overview' => ['wallet_total' => $walletTotal, 'property_total' => $propertyTotal, 'project_total' => $projectTotal, 'liability_total' => $liabilityTotal, 'net_wealth' => $netWealth],
+            'allocation' => [
+                'wallet_pct' => $totalAssets > 0 ? round(($walletTotal / $totalAssets) * 100, 1) : 0.0,
                 'property_pct' => $totalAssets > 0 ? round(($propertyTotal / $totalAssets) * 100, 1) : 0.0,
-                'project_pct'  => $totalAssets > 0 ? round(($projectTotal / $totalAssets) * 100, 1) : 0.0,
+                'project_pct' => $totalAssets > 0 ? round(($projectTotal / $totalAssets) * 100, 1) : 0.0,
             ],
-            'trend'       => FamilyWealthTrend::where('family_id', $family->id)->orderBy('snapshot_date')->get(),
+            'trend' => FamilyWealthTrend::where('family_id', $family->id)->orderBy('snapshot_date')->get(),
             'generatedAt' => now()->format('Y-m-d H:i'),
         ]);
         $pdf->setPaper('a4', 'landscape');
 
-        return $pdf->download('wealth-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+        return $pdf->download('wealth-'.$family->id.'-'.now()->format('Y-m-d').'.pdf');
     }
 }

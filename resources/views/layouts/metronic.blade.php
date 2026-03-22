@@ -81,7 +81,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    }
   </style>
  </head>
- <body class="antialiased flex h-full min-h-screen text-base text-foreground bg-background [--header-height:60px] [--sidebar-width:270px] overflow-x-hidden lg:overflow-hidden bg-zinc-950 dark:bg-background!" id="app-body" data-sidebar-collapsed="false">
+ <body class="antialiased flex flex-col min-h-screen w-full max-w-full min-w-0 text-base text-foreground bg-background [--header-height:60px] [--sidebar-width:270px] overflow-x-hidden bg-zinc-950 dark:bg-background!" id="app-body" data-sidebar-collapsed="false">
   <!-- Global page loader (hidden on window load) -->
   <div id="global-page-loader" aria-hidden="true">
    <div class="global-loader-spinner" role="presentation"></div>
@@ -101,6 +101,62 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    body[data-sidebar-collapsed="true"] #sidebar .kt-menu-label .text-lg { display: none !important; }
    body[data-sidebar-collapsed="true"] #sidebar .kt-menu-link { justify-content: center; padding-inline: 0.5rem; }
    body[data-sidebar-collapsed="true"] #sidebar #sidebar_footer .cursor-pointer span:not(.size-9) { display: none; }
+
+   /*
+    Horizontal overflow: flex items default to min-width:auto, so wide tables/charts can force the whole page wider than the viewport.
+    Keep the shell and card bodies shrinkable; let .kt-scrollable-x-auto absorb table width.
+   */
+   main[role="content"] .kt-container-fixed {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+   }
+   main[role="content"] .kt-card-grid,
+   main[role="content"] .kt-card.kt-card-grid {
+    min-width: 0;
+    max-width: 100%;
+   }
+   main[role="content"] .kt-card-grid .kt-card-content,
+   main[role="content"] .kt-card-table .kt-card-content {
+    min-width: 0;
+    max-width: 100%;
+   }
+   main[role="content"] .kt-scrollable-x-auto {
+    max-width: 100%;
+    min-width: 0;
+    overscroll-behavior-x: contain;
+   }
+   main[role="content"] .kt-card-header {
+    min-width: 0;
+   }
+   /* ApexCharts: clip horizontal bleed inside the card (scroll within panel if needed) */
+   main[role="content"] .famledger-chart-card {
+    min-width: 0;
+    max-width: 100%;
+   }
+   main[role="content"] .famledger-chart-panel {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+   }
+   main[role="content"] .famledger-chart-panel [id^="famledger_"] {
+    min-width: 0;
+    max-width: 100%;
+   }
+
+   /*
+    Desktop: cap main column to the viewport so #scrollable_content gets a bounded height and overflow-y-auto works.
+    Below lg, wrapper uses pt for the fixed header — avoid max-h here so flex allocation + body scroll stay correct.
+   */
+   @media (min-width: 1024px) {
+    #famledger_main_column {
+     max-height: 100vh;
+     max-height: 100dvh;
+    }
+   }
 
    /* Card spacing: avoid cards touching in grids (main content only) */
    .kt-container-fixed .grid > .kt-card,
@@ -244,7 +300,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <!-- End of Theme Mode -->
   <!-- Page -->
   <!-- Base -->
-  <div class="flex grow">
+  <div class="flex flex-col grow min-h-0 min-w-0 w-full max-w-full">
    <!-- Header -->
    <header class="flex lg:hidden items-center fixed z-10 top-0 start-0 end-0 shrink-0 bg-mono dark:bg-background h-(--header-height)" id="header">
     <!-- Container -->
@@ -297,7 +353,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    </header>
    <!-- End of Header -->
    <!-- Wrapper -->
-   <div class="flex flex-col lg:flex-row grow pt-(--header-height) lg:pt-0">
+   <div class="flex flex-col lg:flex-row grow min-h-0 min-w-0 w-full max-w-full pt-(--header-height) lg:pt-0">
     <!-- Sidebar -->
     <div class="flex-col fixed top-0 bottom-0 z-20 hidden lg:flex items-stretch shrink-0 w-(--sidebar-width) dark [--kt-drawer-enable:true] lg:[--kt-drawer-enable:false]" data-kt-drawer="true" data-kt-drawer-class="kt-drawer kt-drawer-start flex top-0 bottom-0" id="sidebar">
      <!-- Sidebar Header -->
@@ -1696,202 +1752,49 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      <!-- Footer -->
      <div class="flex flex-center justify-between shrink-0 ps-4 pe-3.5 mb-3.5" id="sidebar_footer">
       <!-- User -->
+      @php
+       $__sbUser = auth()->user();
+       $__sbAvatar = ($__sbUser && ! empty($__sbUser->avatar))
+        ? \Illuminate\Support\Facades\Storage::disk('public')->url($__sbUser->avatar)
+        : asset('metronic/assets/media/avatars/gray/5.png');
+      @endphp
       <div data-kt-dropdown="true" data-kt-dropdown-offset="10px, 10px" data-kt-dropdown-offset-rtl="-20px, 10px" data-kt-dropdown-placement="bottom-start" data-kt-dropdown-placement-rtl="bottom-end" data-kt-dropdown-trigger="click">
        <div class="cursor-pointer shrink-0" data-kt-dropdown-toggle="true">
-        <img alt="" class="size-9 rounded-full border-2 border-mono/25 shrink-0 cursor-pointer" src="{{ asset('metronic/assets/media/avatars/gray/5.png') }}"/>
+        <img alt="{{ $__sbUser?->name ?? '' }}" class="size-9 rounded-full border-2 border-mono/25 shrink-0 cursor-pointer" src="{{ $__sbAvatar }}"/>
        </div>
        <div class="kt-dropdown-menu w-[250px]" data-kt-dropdown-menu="true">
-        <div class="flex items-center justify-between px-2.5 py-1.5 gap-1.5">
-         <div class="flex items-center gap-2">
-          <img alt="" class="size-9 shrink-0 rounded-full border-2 border-green-500" src="{{ asset('metronic/assets/media/avatars/300-2.png') }}"/>
-          <div class="flex flex-col gap-1.5">
-           <span class="text-sm text-foreground font-semibold leading-none">
-            Cody Fisher
-           </span>
-           <a class="text-xs text-secondary-foreground hover:text-primary font-medium leading-none" href="#">
-            c.fisher@gmail.com
-           </a>
-          </div>
+        <div class="flex items-center gap-2 px-2.5 py-2.5">
+         <img alt="{{ $__sbUser?->name ?? '' }}" class="size-9 shrink-0 rounded-full border-2 border-border" src="{{ $__sbAvatar }}"/>
+         <div class="min-w-0 flex flex-col gap-1">
+          <span class="text-sm font-semibold text-foreground leading-none truncate">
+           {{ $__sbUser?->name ?? 'Account' }}
+          </span>
+          <span class="text-xs text-muted-foreground leading-none truncate">
+           {{ $__sbUser?->email ?? '' }}
+          </span>
          </div>
-         <span class="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">
-          Pro
-         </span>
         </div>
         <ul class="kt-dropdown-menu-sub">
          <li>
           <div class="kt-dropdown-menu-separator">
           </div>
          </li>
+         @if ($__sbUser)
          <li>
-          <a class="kt-dropdown-menu-link" href="#">
-           <i class="ki-filled ki-badge">
-           </i>
-           Public Profile
-          </a>
-         </li>
-         <li>
-          <a class="kt-dropdown-menu-link" href="#">
+          <a class="kt-dropdown-menu-link" href="{{ route('profile.edit') }}">
            <i class="ki-filled ki-profile-circle">
            </i>
-           My Profile
+           {{ __('Profile') }}
           </a>
-         </li>
-         <li data-kt-dropdown="true" data-kt-dropdown-placement="right-start" data-kt-dropdown-trigger="hover">
-          <button class="kt-dropdown-menu-toggle" data-kt-dropdown-toggle="true">
-           <i class="ki-filled ki-setting-2">
-           </i>
-           My Account
-           <span class="kt-dropdown-menu-indicator">
-            <i class="ki-filled ki-right text-xs">
-            </i>
-           </span>
-          </button>
-          <div class="kt-dropdown-menu w-[220px]" data-kt-dropdown-menu="true">
-           <ul class="kt-dropdown-menu-sub">
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-coffee">
-              </i>
-              Get Started
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-some-files">
-              </i>
-              My Profile
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <i class="ki-filled ki-icon">
-               </i>
-               Billing
-              </span>
-              <span class="ms-auto inline-flex items-center" data-kt-tooltip="true" data-kt-tooltip-placement="top">
-               <i class="ki-filled ki-information-2 text-base text-muted-foreground">
-               </i>
-               <span class="kt-tooltip" data-kt-tooltip-content="true">
-                Payment and subscription info
-               </span>
-              </span>
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-medal-star">
-              </i>
-              Security
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-setting">
-              </i>
-              Members & Roles
-             </a>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <i class="ki-filled ki-switch">
-              </i>
-              Integrations
-             </a>
-            </li>
-            <li>
-             <div class="kt-dropdown-menu-separator">
-             </div>
-            </li>
-            <li>
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <i class="ki-filled ki-shield-tick">
-               </i>
-               Notifications
-              </span>
-              <input checked="" class="ms-auto kt-switch" name="check" type="checkbox" value="1"/>
-             </a>
-            </li>
-           </ul>
-          </div>
          </li>
          <li>
-          <a class="kt-dropdown-menu-link" href="https://devs.keenthemes.com">
-           <i class="ki-filled ki-message-programming">
+          <a class="kt-dropdown-menu-link" href="{{ route('settings.index') }}">
+           <i class="ki-filled ki-setting-2">
            </i>
-           Dev Forum
+           {{ __('Settings') }}
           </a>
          </li>
-         <li data-kt-dropdown="true" data-kt-dropdown-placement="right-start" data-kt-dropdown-trigger="hover">
-          <button class="kt-dropdown-menu-toggle py-1" data-kt-dropdown-toggle="true">
-           <span class="flex items-center gap-2">
-            <i class="ki-filled ki-icon">
-            </i>
-            Language
-           </span>
-           <span class="ms-auto kt-badge kt-badge-stroke shrink-0">
-            English
-            <img alt="" class="inline-block size-3.5 rounded-full" src="{{ asset('metronic/assets/media/flags/united-states.svg') }}"/>
-           </span>
-          </button>
-          <div class="kt-dropdown-menu w-[180px]" data-kt-dropdown-menu="true">
-           <ul class="kt-dropdown-menu-sub">
-            <li class="active">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/united-states.svg') }}"/>
-               <span class="kt-menu-title">
-                English
-               </span>
-              </span>
-              <i class="ki-solid ki-check-circle ms-auto text-green-500 text-base">
-              </i>
-             </a>
-            </li>
-            <li class="">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/saudi-arabia.svg') }}"/>
-               <span class="kt-menu-title">
-                Arabic(Saudi)
-               </span>
-              </span>
-             </a>
-            </li>
-            <li class="">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/spain.svg') }}"/>
-               <span class="kt-menu-title">
-                Spanish
-               </span>
-              </span>
-             </a>
-            </li>
-            <li class="">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/germany.svg') }}"/>
-               <span class="kt-menu-title">
-                German
-               </span>
-              </span>
-             </a>
-            </li>
-            <li class="">
-             <a class="kt-dropdown-menu-link" href="#">
-              <span class="flex items-center gap-2">
-               <img alt="" class="inline-block size-4 rounded-full" src="{{ asset('metronic/assets/media/flags/japan.svg') }}"/>
-               <span class="kt-menu-title">
-                Japanese
-               </span>
-              </span>
-             </a>
-            </li>
-           </ul>
-          </div>
-         </li>
+         @endif
          <li>
           <div class="kt-dropdown-menu-separator">
           </div>
@@ -3294,7 +3197,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     </div>
     <!-- End of Sidebar -->
     <!-- Main -->
-    <div class="flex flex-col grow min-w-0 lg:rounded-l-xl bg-background border border-input lg:ms-(--sidebar-width)">
+    <div id="famledger_main_column" class="flex flex-col grow min-h-0 min-w-0 basis-0 w-full max-w-full overflow-hidden lg:rounded-l-xl bg-background border border-input lg:ms-(--sidebar-width)">
      <!-- Top nav bar: active page label (left), shrink sidebar, user profile (right) -->
      <div class="flex items-center justify-between shrink-0 px-4 lg:px-6 h-14 border-b border-border bg-background sticky top-0 z-50">
       <div class="flex items-center gap-3 min-w-0">
@@ -3366,12 +3269,13 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        @endauth
       </div>
      </div>
-     <div class="flex flex-col grow kt-scrollable-y-auto lg:[--kt-scrollbar-width:auto] pt-5" id="scrollable_content">
-      <main class="grow min-w-0" role="content">
+     <div class="flex flex-col flex-1 basis-0 min-h-0 overflow-y-auto overscroll-y-contain lg:[--kt-scrollbar-width:auto] pt-5 min-w-0 w-full max-w-full" id="scrollable_content">
+      {{-- main flex-1: fills space so footer stays at bottom of column when content is short --}}
+      <main class="flex-1 min-w-0 w-full" role="content">
        @yield('content')
       </main>
       <!-- Footer -->
-      <footer class="footer">
+      <footer class="footer shrink-0">
        <!-- Container -->
        <div class="kt-container-fixed">
         <div class="flex flex-col md:flex-row justify-center md:justify-between items-center gap-3 py-5">
@@ -3406,6 +3310,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    <!-- End of Wrapper -->
   </div>
   <!-- End of Base -->
+  {{-- Bootstrap 3 contact modal(s): render here (direct under #app-body) so position:fixed backdrop/dialog cover the full viewport — not inside <main> scroll/transform ancestors --}}
+  @stack('famledger_bootstrap_modals')
   <div class="kt-modal" data-kt-modal="true" id="search_modal">
    <div class="kt-modal-content max-w-[600px] top-[15%]">
     <div class="kt-modal-header py-4 px-5">

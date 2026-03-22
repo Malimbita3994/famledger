@@ -16,6 +16,43 @@
         </div>
     @endif
 
+    <div class="mb-6 rounded-xl border border-primary/25 bg-primary/5 dark:bg-primary/10 px-5 py-4">
+        <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+            <div class="shrink-0 mt-0.5">
+                <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                    <i class="ki-filled ki-home-2 text-xl"></i>
+                </span>
+            </div>
+            <div class="min-w-0 flex-1">
+                <h2 class="text-sm font-semibold text-foreground">{{ __('How this links to families') }}</h2>
+                <p class="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                    {{ __('Categories and attributes you configure here appear on each family’s Add property and Edit property forms. This screen only defines the template; actual assets are created under each family: Finance → Properties.') }}
+                </p>
+                @if (! empty($currentFamily))
+                    @if (! empty($canManageProperty))
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            <a href="{{ route('families.properties.assets', $currentFamily) }}" class="kt-btn kt-btn-outline kt-btn-sm inline-flex items-center gap-1.5">
+                                <i class="ki-filled ki-element-11 text-base"></i>
+                                {{ __('Property assets') }} — {{ $currentFamily->name }}
+                            </a>
+                            <a href="{{ route('families.properties.create', $currentFamily) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1.5">
+                                <i class="ki-filled ki-plus text-base"></i>
+                                {{ __('Add property') }}
+                            </a>
+                        </div>
+                    @else
+                        <p class="text-sm text-muted-foreground mt-3">
+                            {{ __('You are not owner or co-owner on this family, so you cannot open the property workspace. Switch to a family where you have that role, or use an account that does.') }}
+                            <span class="block mt-1 font-medium text-foreground">{{ $currentFamily->name }}</span>
+                        </p>
+                    @endif
+                @else
+                    <p class="text-sm text-muted-foreground mt-3">{{ __('Join a family first; then family owners use Properties under that family to add assets.') }}</p>
+                @endif
+            </div>
+        </div>
+    </div>
+
     <div class="grid gap-6 lg:gap-7.5 lg:grid-cols-2">
         {{-- Categories --}}
         <div class="kt-card p-5 lg:p-6">
