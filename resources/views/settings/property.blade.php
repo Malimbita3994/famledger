@@ -4,7 +4,7 @@
 @section('page_title', 'Property configuration')
 
 @section('content')
-<div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
+<div class="settings-pulse kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
     <a href="{{ route('settings.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
         Back to settings
@@ -16,8 +16,8 @@
         </div>
     @endif
 
-    <div class="mb-6 rounded-xl border border-primary/25 bg-primary/5 dark:bg-primary/10 px-5 py-4">
-        <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+    <div class="settings-intro-banner rounded-xl border border-primary/25 bg-primary/5 dark:bg-primary/10">
+        <div class="settings-intro-inner">
             <div class="shrink-0 mt-0.5">
                 <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
                     <i class="ki-filled ki-home-2 text-xl"></i>
@@ -31,11 +31,11 @@
                 @if (! empty($currentFamily))
                     @if (! empty($canManageProperty))
                         <div class="flex flex-wrap gap-2 mt-4">
-                            <a href="{{ route('families.properties.assets', $currentFamily) }}" class="kt-btn kt-btn-outline kt-btn-sm inline-flex items-center gap-1.5">
+                            <a href="{{ route('families.properties.assets') }}" class="kt-btn kt-btn-outline kt-btn-sm inline-flex items-center gap-1.5">
                                 <i class="ki-filled ki-element-11 text-base"></i>
                                 {{ __('Property assets') }} — {{ $currentFamily->name }}
                             </a>
-                            <a href="{{ route('families.properties.create', $currentFamily) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1.5">
+                            <a href="{{ route('families.properties.create') }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1.5">
                                 <i class="ki-filled ki-plus text-base"></i>
                                 {{ __('Add property') }}
                             </a>
@@ -53,9 +53,9 @@
         </div>
     </div>
 
-    <div class="grid gap-6 lg:gap-7.5 lg:grid-cols-2">
+    <div class="settings-grid-2">
         {{-- Categories --}}
-        <div class="kt-card p-5 lg:p-6">
+        <div class="kt-card settings-card-pad">
             <div class="mb-4 flex items-center justify-between gap-3">
                 <div>
                     <h2 class="text-sm font-semibold text-foreground tracking-tight">Property categories</h2>
@@ -63,13 +63,13 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('settings.property.categories.store') }}" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <form method="POST" action="{{ route('settings.property.categories.store') }}" class="settings-form-cat">
                 @csrf
-                <div class="sm:col-span-2 flex flex-col gap-1.5">
+                <div class="settings-form-cat-name flex flex-col gap-1.5">
                     <label for="category_name" class="kt-form-label text-[11px] uppercase tracking-wide text-muted-foreground">New category</label>
                     <input id="category_name" type="text" name="name" class="kt-input py-2.5 text-sm" placeholder="e.g. Vehicles" required>
                 </div>
-                <div class="flex flex-col gap-1.5">
+                <div class="settings-form-cat-parent flex flex-col gap-1.5">
                     <label for="parent_id" class="kt-form-label text-[11px] uppercase tracking-wide text-muted-foreground">Parent (optional)</label>
                     <select id="parent_id" name="parent_id" class="kt-select py-2.5 text-sm">
                         <option value="">None</option>
@@ -78,7 +78,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="sm:col-span-3 flex justify-end">
+                <div class="settings-form-cat-actions flex justify-end">
                     <button type="submit" class="kt-btn kt-btn-primary kt-btn-sm px-4">Add category</button>
                 </div>
             </form>
@@ -182,7 +182,7 @@
         </div>
 
         {{-- Attributes --}}
-        <div class="kt-card p-5 lg:p-6">
+        <div class="kt-card settings-card-pad">
             <div class="mb-4 flex items-center justify-between gap-3">
                 <div>
                     <h2 class="text-sm font-semibold text-foreground tracking-tight">Attribute builder</h2>
@@ -190,13 +190,13 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('settings.property.attributes.store') }}" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <form method="POST" action="{{ route('settings.property.attributes.store') }}" class="settings-form-attr">
                 @csrf
-                <div class="sm:col-span-2 flex flex-col gap-1.5">
+                <div class="settings-form-attr-name flex flex-col gap-1.5">
                     <label for="attr_name" class="kt-form-label text-[11px] uppercase tracking-wide text-muted-foreground">Attribute name</label>
                     <input id="attr_name" type="text" name="name" class="kt-input py-2.5 text-sm" placeholder="e.g. Registration Number" required>
                 </div>
-                <div class="flex flex-col gap-1.5">
+                <div class="settings-form-attr-cat flex flex-col gap-1.5">
                     <label for="attr_category_id" class="kt-form-label text-[11px] uppercase tracking-wide text-muted-foreground">Category</label>
                     <select id="attr_category_id" name="category_id" class="kt-select py-2.5 text-sm">
                         <option value="">Any category</option>
@@ -205,7 +205,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="flex flex-col gap-1.5">
+                <div class="settings-form-attr-type flex flex-col gap-1.5">
                     <label for="attr_data_type" class="kt-form-label text-[11px] uppercase tracking-wide text-muted-foreground">Data type</label>
                     <select id="attr_data_type" name="data_type" class="kt-select py-2.5 text-sm" required>
                         <option value="text">Text</option>
@@ -217,7 +217,7 @@
                         <option value="currency">Currency</option>
                     </select>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="settings-form-attr-checks flex items-center gap-2 flex-wrap">
                     <label class="inline-flex items-center gap-1 text-xs text-muted-foreground">
                         <input type="checkbox" name="is_required" value="1" class="kt-checkbox rounded-md">
                         Required
@@ -231,11 +231,11 @@
                         Reportable
                     </label>
                 </div>
-                <div class="flex flex-col gap-1.5">
+                <div class="settings-form-attr-sort flex flex-col gap-1.5">
                     <label for="attr_sort_order" class="kt-form-label text-[11px] uppercase tracking-wide text-muted-foreground">Sort order</label>
                     <input id="attr_sort_order" type="number" name="sort_order" class="kt-input py-2.5 text-sm" value="0">
                 </div>
-                <div class="sm:col-span-3 flex justify-end">
+                <div class="settings-form-attr-actions flex justify-end">
                     <button type="submit" class="kt-btn kt-btn-primary kt-btn-sm px-4">Add attribute</button>
                 </div>
             </form>

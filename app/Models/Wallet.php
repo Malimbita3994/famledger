@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Stand-alone family wallet (internal ledger).
@@ -41,7 +42,7 @@ class Wallet extends Model
             'savings' => 'Savings',
             'daily_spending' => 'Daily Spending',
             'emergency_fund' => 'Emergency Fund',
-            'project_fund' => 'Project Fund',
+            'project_fund' => 'Goal fund',
             'allowance' => 'Allowance',
             'business_fund' => 'Business Fund',
             'other' => 'Other',
@@ -86,6 +87,36 @@ class Wallet extends Model
     public function savingsGoals(): HasMany
     {
         return $this->hasMany(SavingsGoal::class, 'wallet_id');
+    }
+
+    /** Project that uses this wallet as its funded cash bucket (created when project is first funded). */
+    public function dedicatedProject(): HasOne
+    {
+        return $this->hasOne(Project::class, 'wallet_id');
+    }
+
+    /**
+     * User-facing label: goal-linked wallets use the goal name (avoids legacy "Project: …" stored names).
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->relationLoaded('dedicatedProject')) {
+            if ($this->dedicatedProject) {
+                return (string) $this->dedicatedProject->name;
+            }
+        } else {
+            $linkedName = $this->dedicatedProject()->value('name');
+            if ($linkedName !== null && $linkedName !== '') {
+                return (string) $linkedName;
+            }
+        }
+
+        $name = (string) ($this->attributes['name'] ?? '');
+        if ($this->type === 'project_fund' && str_starts_with($name, 'Project: ')) {
+            return trim(substr($name, strlen('Project: ')));
+        }
+
+        return $name;
     }
 
     /**

@@ -4,6 +4,122 @@
 @section('page_title', __('Notifications'))
 
 @push('styles')
+<style>
+    .notif-pulse-page.admin-pulse-page {
+        --ap-accent: #009ef7;
+        --ap-accent-2: #0ea5e9;
+    }
+    .admin-pulse-eyebrow {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .admin-pulse-title {
+        font-size: clamp(1.35rem, 2.8vw, 1.7rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        color: var(--ap-accent);
+    }
+    .admin-pulse-breadcrumb a {
+        color: #64748b;
+        transition: color 0.2s ease;
+    }
+    .admin-pulse-breadcrumb a:hover {
+        color: var(--ap-accent);
+    }
+    .notif-pulse-page .notif-pulse-shell.admin-pulse-frame {
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .admin-pulse-frame {
+        padding: 3px;
+        border-radius: 24px;
+        background: linear-gradient(
+            135deg,
+            rgba(0, 158, 247, 0.42) 0%,
+            rgba(255, 255, 255, 0.96) 46%,
+            rgba(14, 165, 233, 0.3) 100%
+        );
+        box-shadow:
+            0 4px 24px rgba(0, 158, 247, 0.12),
+            0 24px 48px rgba(15, 23, 42, 0.08);
+        width: 100%;
+    }
+    .admin-pulse-card-inner {
+        background: #fff;
+        border-radius: 21px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+    .dark .admin-pulse-card-inner {
+        background: rgb(15 23 42 / 0.96);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .admin-pulse-btn-outline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.65rem 1.15rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(255, 255, 255, 0.95);
+        color: #334155 !important;
+        text-decoration: none !important;
+        transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+    .admin-pulse-btn-outline:hover {
+        border-color: var(--ap-accent);
+        background: rgba(0, 158, 247, 0.06);
+        box-shadow: 0 0 0 1px rgba(0, 158, 247, 0.12);
+    }
+    .dark .admin-pulse-btn-outline {
+        background: rgba(30, 41, 59, 0.9);
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.35);
+    }
+    .admin-pulse-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.65rem 1.25rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        border-radius: 12px;
+        color: #fff !important;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--ap-accent) 0%, var(--ap-accent-2) 100%);
+        box-shadow: 0 4px 14px rgba(0, 158, 247, 0.35);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+    .admin-pulse-btn-primary:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 6px 20px rgba(0, 158, 247, 0.42);
+        transform: translateY(-1px);
+    }
+    .settings-notifications-page.notif-pulse-page #notification_settings_tabs.kt-tabs-line .notif-settings-tab.active,
+    .settings-notifications-page.notif-pulse-page #notification_settings_tabs.kt-tabs-line .notif-settings-tab[aria-selected='true'] {
+        color: var(--ap-accent);
+        border-bottom-color: var(--ap-accent);
+    }
+    .settings-notifications-page.notif-pulse-page #notif_faq_subtabs_tabs.kt-tabs-line .notif-faq-subtab.active,
+    .settings-notifications-page.notif-pulse-page #notif_faq_subtabs_tabs.kt-tabs-line .notif-faq-subtab[aria-selected='true'] {
+        color: var(--ap-accent);
+        border-bottom-color: var(--ap-accent);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .admin-pulse-btn-primary:hover {
+            transform: none;
+        }
+    }
+</style>
  @if ($canManageNotificationPage)
   <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet"/>
   <style>
@@ -26,21 +142,21 @@
 
 @section('content')
  @if (session('success'))
-  <div class="kt-container-fixed pb-3">
+  <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 pb-3">
    <div class="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 text-sm text-green-800 dark:text-green-200">
     {{ session('success') }}
    </div>
   </div>
  @endif
  @if (session('error'))
-  <div class="kt-container-fixed pb-3">
+  <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 pb-3">
    <div class="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-800 dark:text-red-200">
     {{ session('error') }}
    </div>
   </div>
  @endif
  @if ($errors->any())
-  <div class="kt-container-fixed pb-3">
+  <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 pb-3">
    <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
     <p class="font-medium mb-1">{{ __('Please fix the following:') }}</p>
     <ul class="list-disc ps-5 space-y-0.5">
@@ -51,40 +167,30 @@
    </div>
   </div>
  @endif
- <div class="pb-5">
-  <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
-   <div class="flex items-center flex-wrap gap-1 lg:gap-5">
-    <h1 class="font-medium text-lg text-mono">
-     {{ __('Notifications') }}
-    </h1>
-    <div class="flex items-center gap-1 text-sm font-normal">
-     <a href="{{ route('dashboard') }}" class="text-secondary-foreground hover:text-primary">
-      {{ __('Home') }}
-     </a>
-     <span class="text-muted-foreground text-sm">
-      /
-     </span>
-     <span class="text-secondary-foreground">
-      {{ __('Settings') }}
-     </span>
-     <span class="text-muted-foreground text-sm">
-      /
-     </span>
-     <span class="text-mono">
-      {{ __('Notifications') }}
-     </span>
+ <div class="settings-pulse settings-notifications-page admin-pulse-page notif-pulse-page">
+    <div class="famledger-page-header">
+        <div class="kt-container-fixed flex flex-row flex-wrap items-start gap-4 w-full min-w-0 px-4 sm:px-6 lg:px-8">
+            <div class="min-w-0 flex-1">
+                <p class="admin-pulse-eyebrow mb-1.5">{{ __('Settings') }}</p>
+                <h1 class="admin-pulse-title">{{ __('Notifications') }}</h1>
+                <div class="admin-pulse-breadcrumb flex items-center flex-wrap gap-1 text-sm font-normal mt-2">
+                    <a href="{{ route('dashboard') }}">{{ __('Home') }}</a>
+                    <span class="text-muted-foreground">/</span>
+                    <a href="{{ route('settings.index') }}">{{ __('Settings') }}</a>
+                    <span class="text-muted-foreground">/</span>
+                    <span class="text-foreground font-medium">{{ __('Notifications') }}</span>
+                </div>
+            </div>
+            <div class="shrink-0 ms-auto">
+                <a href="{{ route('settings.index') }}" class="admin-pulse-btn-outline inline-flex">
+                    <i class="ki-filled ki-left text-base"></i>
+                    {{ __('Back to settings') }}
+                </a>
+            </div>
+        </div>
     </div>
-   </div>
-   <div class="flex items-center flex-wrap gap-1.5 lg:gap-3.5">
-    <a href="{{ route('settings.index') }}" class="kt-btn kt-btn-outline">
-     <i class="ki-filled ki-left text-base"></i>
-     <span>{{ __('Back to settings') }}</span>
-    </a>
-   </div>
-  </div>
- </div>
 
- <div class="kt-container-fixed pb-6 flex flex-col gap-4">
+ <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 pb-14 settings-notifications-main">
   {{-- Standalone form (inputs use form= attribute) so FAQ / page-content forms can live inside tabs --}}
   <form method="post" action="{{ route('settings.notifications.update') }}" id="notification_settings_form" class="absolute start-0 top-0 h-px w-px overflow-hidden opacity-0 pointer-events-none" tabindex="-1" aria-hidden="true">
    @csrf
@@ -198,10 +304,11 @@
     background: color-mix(in srgb, var(--primary) 26%, transparent);
    }
   </style>
-  <div class="kt-card">
-   <div class="kt-card-content p-5 lg:p-7.5 flex flex-col gap-5" id="notification_settings_tabs_root">
+  <div class="admin-pulse-frame notif-pulse-shell min-w-0 max-w-full">
+   <div class="admin-pulse-card-inner notif-pulse-card-inner min-w-0 overflow-hidden p-0">
+   <div class="kt-card-content border-0 shadow-none bg-transparent rounded-none" id="notification_settings_tabs_root">
     <div class="kt-tabs kt-tabs-line w-full border-b border-border pb-1 -mb-1" id="notification_settings_tabs" role="tablist">
-     <div class="flex flex-wrap gap-1">
+     <div class="settings-notif-tab-row">
       <button type="button" role="tab" id="notif_tab_btn_channels" class="notif-settings-tab py-2.5 px-3 text-sm active" data-notif-tab-target="notif_tab_channels" aria-selected="true" aria-controls="notif_tab_channels">
        {{ __('Notification channels') }}
       </button>
@@ -219,7 +326,7 @@
       </button>
      </div>
     </div>
-    <div role="tabpanel" class="kt-tab-content notifications-settings-tab-panel active flex flex-col gap-5 lg:gap-7.5" id="notif_tab_channels" aria-labelledby="notif_tab_btn_channels">
+    <div role="tabpanel" class="kt-tab-content notifications-settings-tab-panel active" id="notif_tab_channels" aria-labelledby="notif_tab_btn_channels">
      {{-- Notification channels --}}
      <div class="kt-card">
       <div class="kt-card-header gap-2">
@@ -383,7 +490,7 @@
       </div>
      </div>
     </div>
-    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_other" aria-labelledby="notif_tab_btn_other">
+    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel" id="notif_tab_other" aria-labelledby="notif_tab_btn_other">
      {{-- Other notifications --}}
      <div class="kt-card">
       <div class="kt-card-header gap-2">
@@ -489,7 +596,7 @@
           <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="notify_invoice" type="checkbox" value="1" @checked(old('notify_invoice', $prefs['notify_invoice'] ?? true)) />
          </div>
          @if ($currentFamily)
-          <a href="{{ route('families.expenses.index', $currentFamily) }}" class="kt-btn kt-btn-outline text-center shrink-0">
+          <a href="{{ route('families.expenses.index') }}" class="kt-btn kt-btn-outline text-center shrink-0">
            {{ __('View expenses') }}
           </a>
          @endif
@@ -587,7 +694,7 @@
           <input form="notification_settings_form" class="kt-switch kt-switch-sm" name="notify_meeting_reminder" type="checkbox" value="1" @checked(old('notify_meeting_reminder', $prefs['notify_meeting_reminder'] ?? true)) />
          </div>
          @if ($currentFamily)
-          <a href="{{ route('families.projects.index', $currentFamily) }}" class="kt-btn kt-btn-outline shrink-0">
+          <a href="{{ route('families.projects.index') }}" class="kt-btn kt-btn-outline shrink-0">
            {{ __('View projects') }}
           </a>
          @endif
@@ -627,7 +734,7 @@
       </div>
      </div>
     </div>
-    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_faq" aria-labelledby="notif_tab_btn_faq">
+    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel" id="notif_tab_faq" aria-labelledby="notif_tab_btn_faq">
      @php
       $notifFaqOpenManageSub = $canManageNotificationPage && (
        filled(old('_faq_id'))
@@ -639,7 +746,7 @@
      <div id="notif_faq_subtabs_root" class="flex flex-col gap-4 min-w-0 w-full">
       @if ($canManageNotificationPage)
        <div class="kt-tabs kt-tabs-line w-full border-b border-border pb-1 -mb-1 shrink-0" id="notif_faq_subtabs_tabs" role="tablist" aria-label="{{ __('FAQ tab sections') }}">
-        <div class="flex flex-wrap gap-1">
+        <div class="settings-notif-tab-row">
          <button
           type="button"
           role="tab"
@@ -669,7 +776,7 @@
       <div
        role="tabpanel"
        id="notif_faq_sub_help"
-       class="notifications-faq-subpanel flex flex-col gap-5 lg:gap-7.5 min-w-0"
+       class="notifications-faq-subpanel min-w-0"
        @if ($canManageNotificationPage && $notifFaqOpenManageSub) hidden @endif
        aria-labelledby="{{ $canManageNotificationPage ? 'notif_faq_sub_btn_help' : 'notif_tab_btn_faq' }}"
       >
@@ -727,7 +834,7 @@
       <div
        role="tabpanel"
        id="notif_faq_sub_manage"
-       class="notifications-faq-subpanel flex flex-col gap-5 lg:gap-7.5 min-w-0"
+       class="notifications-faq-subpanel min-w-0"
        @unless ($notifFaqOpenManageSub) hidden @endunless
        aria-labelledby="notif_faq_sub_btn_manage"
       >
@@ -740,7 +847,7 @@
           {{ __('Create, reorder, publish or remove questions shown to everyone under the Help tab.') }}
          </p>
         </div>
-        <div class="kt-card-content flex flex-col gap-6 lg:gap-8 px-5 py-6 lg:px-8 lg:py-8">
+        <div class="kt-card-content settings-notif-section-pad">
          <form method="post" action="{{ route('settings.notifications.faqs.store') }}" class="flex flex-col gap-5 p-5 lg:p-6 rounded-xl border border-border bg-muted/25 shadow-sm">
           @csrf
           <p class="text-base font-semibold text-mono pb-3 mb-0 border-b border-border/70">{{ __('Add FAQ entry') }}</p>
@@ -842,7 +949,7 @@
      @endif
      </div>
     </div>
-    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_contact" aria-labelledby="notif_tab_btn_contact">
+    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel" id="notif_tab_contact" aria-labelledby="notif_tab_btn_contact">
      @if ($canManageNotificationPage)
       <div class="kt-card border-primary/25 shadow-sm">
        <div class="kt-card-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 lg:px-8 lg:py-5 border-b border-border/80">
@@ -856,7 +963,7 @@
          </a>
         @endcan
        </div>
-       <div class="kt-card-content flex flex-col gap-6 lg:gap-8 px-5 py-6 lg:px-8 lg:py-8">
+       <div class="kt-card-content settings-notif-section-pad">
         <form method="post" action="{{ route('settings.notifications.support-contacts.store') }}" class="flex flex-col gap-5 p-5 lg:p-6 rounded-xl border border-border bg-muted/25 shadow-sm">
          @csrf
          <input type="hidden" name="_support_from" value="create" />
@@ -941,7 +1048,7 @@
       <p class="text-sm text-secondary-foreground px-0.5">{{ __('Contact support is managed by a Super Admin and appears on the public FamLedger page.') }}</p>
      @endif
     </div>
-    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel flex flex-col gap-5 lg:gap-7.5" id="notif_tab_dnd" aria-labelledby="notif_tab_btn_dnd">
+    <div role="tabpanel" hidden class="kt-tab-content notifications-settings-tab-panel" id="notif_tab_dnd" aria-labelledby="notif_tab_btn_dnd">
      {{-- Do not disturb --}}
      <div class="kt-card">
       <div class="kt-card-header">
@@ -1007,8 +1114,8 @@
          {{ __('Intro text and optional “learn more” link shown above to all users on this tab.') }}
         </p>
        </div>
-       <div class="kt-card-content flex flex-col gap-6 px-5 py-6 lg:px-8 lg:py-8">
-        <form method="post" action="{{ route('settings.notifications.page-content.update') }}" class="grid gap-5 lg:gap-6 max-w-3xl w-full">
+       <div class="kt-card-content settings-notif-section-pad">
+        <form method="post" action="{{ route('settings.notifications.page-content.update') }}" class="settings-notif-form-grid max-w-3xl w-full">
          @csrf
          @method('PUT')
          <input type="hidden" name="page_content_section" value="dnd" />
@@ -1120,14 +1227,16 @@
      </div>
     </div>
    </div>
-  </div>
-  <div class="flex flex-wrap items-center justify-end gap-2.5 pt-2">
-   <button type="submit" form="notification_settings_form" class="kt-btn kt-btn-primary">
+  <div class="flex flex-wrap items-center justify-end gap-2.5 px-5 sm:px-6 lg:px-8 py-4 border-t border-sky-100/80 dark:border-slate-600/50">
+   <button type="submit" form="notification_settings_form" class="admin-pulse-btn-primary">
     <i class="ki-filled ki-check text-base"></i>
     {{ __('Save preferences') }}
    </button>
   </div>
+   </div>
+  </div>
  </div>
+</div>
 @endsection
 
 @push('scripts')

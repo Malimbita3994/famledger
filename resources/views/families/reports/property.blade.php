@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
         Back to {{ $family->name }}
     </a>
@@ -34,7 +34,7 @@
                 </select>
                 <button type="submit" class="kt-btn kt-btn-outline kt-btn-sm whitespace-nowrap">Filter</button>
             </form>
-            <a href="{{ route('families.reports.property.export-pdf', $family) . '?' . http_build_query(request()->only(['category_id','status'])) }}"
+            <a href="{{ route('families.reports.property.export-pdf') . '?' . http_build_query(request()->only(['category_id','status'])) }}"
                class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5 whitespace-nowrap">
                 <i class="ki-filled ki-file-down text-base"></i>
                 Export PDF

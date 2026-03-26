@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.budgets.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.budgets.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to budgets
     </a>
@@ -25,10 +25,16 @@
                     @if ($budget->type === 'category' && $budget->categories->isNotEmpty())
                         <p class="text-xs text-muted-foreground mt-1">Categories: {{ $budget->categories->pluck('name')->join(', ') }}</p>
                     @endif
+                    @if ($budget->type === \App\Models\Budget::TYPE_PROJECT && $budget->project)
+                        <p class="text-xs text-muted-foreground mt-1">
+                            Project:
+                            <a href="{{ route('families.projects.show', $budget->project) }}" class="text-primary hover:underline font-medium">{{ $budget->project->name }}</a>
+                        </p>
+                    @endif
                 </div>
                 <div class="flex items-center gap-2">
-                    <a href="{{ route('families.budgets.edit', [$family, $budget]) }}" class="kt-btn kt-btn-sm kt-btn-ghost">Edit</a>
-                    <form action="{{ route('families.budgets.destroy', [$family, $budget]) }}" method="POST" class="inline" onsubmit="return confirm('Remove this budget?');">
+                    <a href="{{ route('families.budgets.edit', $budget) }}" class="kt-btn kt-btn-sm kt-btn-ghost">Edit</a>
+                    <form action="{{ route('families.budgets.destroy', $budget) }}" method="POST" class="inline" onsubmit="return confirm('Remove this budget?');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="kt-btn kt-btn-sm kt-btn-ghost text-destructive">Remove</button>

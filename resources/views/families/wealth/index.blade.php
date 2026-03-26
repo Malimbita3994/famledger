@@ -19,64 +19,62 @@
         width: 100% !important;
     }
     </style>
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
         Back to {{ $family->name }}
     </a>
 
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="font-medium text-lg text-mono">Family Wealth</h1>
-            <p class="text-sm text-muted-foreground mt-0.5">
-                Live net worth from real wallet balances, property values and funded projects for {{ $family->name }}.
-            </p>
+    <div class="kt-card fin-pulse-kt-card overflow-hidden mb-6">
+        <div class="kt-card-content flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="fin-pulse-eyebrow mb-1">Wealth</p>
+                <h1 class="fin-pulse-title truncate">Family Wealth</h1>
+                <p class="text-sm text-muted-foreground mt-0.5">
+                    Live net worth from real wallet balances, property values and funded projects for {{ $family->name }}.
+                </p>
+            </div>
+            <x-famledger.pulse-button
+                variant="outline"
+                size="sm"
+                :href="route('families.wealth.export-pdf')"
+            >
+                <i class="ki-filled ki-file-down text-base"></i>
+                Export PDF
+            </x-famledger.pulse-button>
         </div>
-        <a href="{{ route('families.wealth.export-pdf', $family) }}"
-           class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
-            <i class="ki-filled ki-file-down text-base"></i>
-            Export PDF
-        </a>
     </div>
 
     {{-- Wealth overview (KPI style, similar to reports) --}}
     <div class="grid gap-5 lg:gap-7.5 lg:grid-cols-3 mb-6">
         <div class="lg:col-span-2">
-            <div class="kt-card rounded-2xl border border-border shadow-sm bg-card p-5 lg:p-6">
+            <div class="kt-card fin-pulse-kt-card rounded-2xl border border-border shadow-sm bg-card p-5 lg:p-6">
                 <div class="wealth-kpi-grid items-start">
-                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
-                        <h2 class="text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">Total family wealth</h2>
-                        <div class="text-xl lg:text-2xl font-semibold text-foreground tabular-nums">
-                            {{ number_format($overview['net_wealth'], 0) }} {{ $currency }}
-                        </div>
-                        <p class="text-[11px] text-secondary-foreground mt-1 leading-snug">
-                            Wallets + properties + projects (minus liabilities).
-                        </p>
-                    </div>
-                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
-                        <div class="text-[11px] uppercase tracking-wide text-muted-foreground">Wallets</div>
-                        <div class="text-sm font-semibold tabular-nums mt-1">
-                            {{ number_format($overview['wallet_total'], 0) }} {{ $currency }}
-                        </div>
-                    </div>
-                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
-                        <div class="text-[11px] uppercase tracking-wide text-muted-foreground">Properties</div>
-                        <div class="text-sm font-semibold tabular-nums mt-1">
-                            {{ number_format($overview['property_total'], 0) }} {{ $currency }}
-                        </div>
-                    </div>
-                    <div class="rounded-xl border border-border bg-background px-3 py-2.5">
-                        <div class="text-[11px] uppercase tracking-wide text-muted-foreground">Projects</div>
-                        <div class="text-sm font-semibold tabular-nums mt-1">
-                            {{ number_format($overview['project_total'], 0) }} {{ $currency }}
-                        </div>
-                    </div>
+                    <x-famledger.pulse-stat-card
+                        label="Total family wealth"
+                        :value="number_format($overview['net_wealth'], 0) . ' ' . $currency"
+                    />
+
+                    <x-famledger.pulse-stat-card
+                        label="Wallets"
+                        :value="number_format($overview['wallet_total'], 0) . ' ' . $currency"
+                    />
+
+                    <x-famledger.pulse-stat-card
+                        label="Properties"
+                        :value="number_format($overview['property_total'], 0) . ' ' . $currency"
+                    />
+
+                    <x-famledger.pulse-stat-card
+                        label="Projects"
+                        :value="number_format($overview['project_total'], 0) . ' ' . $currency"
+                    />
                 </div>
             </div>
         </div>
 
         {{-- Asset allocation --}}
         <div class="mb-6 lg:mb-0">
-            <div class="kt-card rounded-2xl border border-border shadow-sm bg-card p-5 lg:p-6">
+            <div class="kt-card fin-pulse-kt-card rounded-2xl border border-border shadow-sm bg-card p-5 lg:p-6">
                 <h2 class="text-xs text-muted-foreground uppercase tracking-wide mb-3">Asset allocation</h2>
                 <div class="wealth-allocation-grid text-xs text-muted-foreground">
                     {{-- Wallets --}}
@@ -130,7 +128,7 @@
 
     @if (!empty($wealthCharts['hasData']))
     <div class="grid gap-5 lg:gap-7.5 lg:grid-cols-2 mb-6">
-        <div class="kt-card rounded-2xl border border-border shadow-sm bg-card">
+        <div class="kt-card fin-pulse-kt-card rounded-2xl border border-border shadow-sm bg-card">
             <div class="kt-card-header border-b border-border flex flex-col gap-1 items-start">
                 <h3 class="kt-card-title text-sm">Net wealth trend</h3>
                 <p class="text-xs text-muted-foreground font-normal">
@@ -143,7 +141,7 @@
                 <div id="famledger_wealth_net_chart" class="min-h-[300px] w-full"></div>
             </div>
         </div>
-        <div class="kt-card rounded-2xl border border-border shadow-sm bg-card">
+        <div class="kt-card fin-pulse-kt-card rounded-2xl border border-border shadow-sm bg-card">
             <div class="kt-card-header border-b border-border flex flex-col gap-1 items-start">
                 <h3 class="kt-card-title text-sm">Composition over time</h3>
                 <p class="text-xs text-muted-foreground font-normal">
@@ -158,7 +156,7 @@
     @endif
 
     {{-- Wealth trend table --}}
-    <div class="kt-card rounded-2xl border border-border shadow-sm bg-card">
+    <div class="kt-card fin-pulse-kt-card rounded-2xl border border-border shadow-sm bg-card">
         <div class="kt-card-header border-b border-border flex items-center justify-between gap-3">
             <h3 class="kt-card-title text-sm">Snapshot history</h3>
             <span class="text-xs text-muted-foreground">Historical daily snapshots. Cards above are always based on live balances.</span>

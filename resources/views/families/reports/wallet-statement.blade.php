@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reports.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.reports.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to Reports
     </a>
@@ -23,7 +23,7 @@
             <h3 class="kt-card-title text-sm">Filter report</h3>
         </div>
         <div class="kt-card-content pt-4">
-            <form method="get" action="{{ route('families.reports.wallet-statement', $family) }}" class="flex flex-wrap items-end gap-4">
+            <form method="get" action="{{ route('families.reports.wallet-statement') }}" class="flex flex-wrap items-end gap-4">
                 <div>
                     <label class="block text-sm text-muted-foreground mb-1">Wallet</label>
                     <select name="wallet_id" class="kt-input rounded-lg border border-border px-3 py-2 text-sm min-w-[180px]">
@@ -41,7 +41,7 @@
                     <input type="date" name="to" value="{{ $dateTo }}" class="kt-input rounded-lg border border-border px-3 py-2 text-sm min-w-[140px]">
                 </div>
                 <button type="submit" class="kt-btn kt-btn-primary">Apply</button>
-                <a href="{{ route('families.reports.wallet-statement', $family) }}" class="kt-btn kt-btn-ghost">Reset</a>
+                <a href="{{ route('families.reports.wallet-statement') }}" class="kt-btn kt-btn-ghost">Reset</a>
             </form>
         </div>
     </div>

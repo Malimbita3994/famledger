@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.savings-goals.show', [$family, $savingsGoal]) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.savings-goals.show', $savingsGoal) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to goal
     </a>
@@ -35,12 +35,12 @@
                 </p>
                 @if ($savingsGoal->wallet)
                     <p class="text-sm text-muted-foreground">
-                        Funds are taken from wallet: <a href="{{ route('families.wallets.show', [$family, $savingsGoal->wallet]) }}" class="text-primary hover:underline font-medium">{{ $savingsGoal->wallet->name }}</a>.
-                        <a href="{{ route('families.savings-goals.edit', [$family, $savingsGoal]) }}" class="text-muted-foreground hover:text-foreground text-xs ml-1">Change wallet</a>
+                        Funds are taken from wallet: <a href="{{ route('families.wallets.show', $savingsGoal->wallet) }}" class="text-primary hover:underline font-medium">{{ $savingsGoal->wallet->name }}</a>.
+                        <a href="{{ route('families.savings-goals.edit', $savingsGoal) }}" class="text-muted-foreground hover:text-foreground text-xs ml-1">Change wallet</a>
                     </p>
                 @endif
 
-                <form action="{{ route('families.savings-goals.allocate.store', [$family, $savingsGoal]) }}" method="POST">
+                <form action="{{ route('families.savings-goals.allocate.store', $savingsGoal) }}" method="POST">
                     @csrf
 
                     <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5 mb-5">
@@ -76,7 +76,7 @@
                     </div>
 
                     <div class="flex justify-end pt-2 gap-2">
-                        <a href="{{ route('families.savings-goals.show', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-outline">Cancel</a>
+                        <a href="{{ route('families.savings-goals.show', $savingsGoal) }}" class="kt-btn kt-btn-outline">Cancel</a>
                         <button type="submit" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
                             <i class="ki-filled ki-check"></i>
                             Allocate

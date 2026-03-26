@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Concerns\AuthorizesFamilyMember;
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Http\Controllers\Controller;
 use App\Models\Family;
 use App\Models\Project;
@@ -98,10 +98,10 @@ class ProjectFundingController extends Controller
             $projectWallet = $project->wallet;
             if (! $projectWallet) {
                 $projectWallet = $family->wallets()->create([
-                    'name' => 'Project: ' . $project->name,
+                    'name' => $project->name,
                     'type' => 'project_fund',
                     'currency_code' => $currency,
-                    'description' => 'Dedicated wallet for project: ' . $project->name,
+                    'description' => 'Fund bucket for: ' . $project->name,
                     'initial_balance' => 0,
                     'is_shared' => true,
                     'status' => 'active',

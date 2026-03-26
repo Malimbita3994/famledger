@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
         Back to {{ $family->name }}
     </a>
@@ -37,7 +37,7 @@
             <h2 class="kt-card-title text-sm font-medium">Invite people by email</h2>
         </div>
         <div class="kt-card-content p-4 lg:p-5">
-            <form action="{{ route('families.invites.store', $family) }}" method="POST" class="flex flex-wrap items-end gap-4">
+            <form action="{{ route('families.invites.store') }}" method="POST" class="flex flex-wrap items-end gap-4">
                 @csrf
                 <div class="min-w-[200px] flex-1">
                     <label for="email" class="block text-xs font-medium text-muted-foreground mb-1">Email</label>
@@ -77,7 +77,7 @@
                     <i class="ki-filled ki-copy"></i>
                     <span class="copy-text">Copy link</span>
                 </button>
-                <form action="{{ route('families.invites.reset-link', $family) }}"
+                <form action="{{ route('families.invites.reset-link') }}"
                       method="POST"
                       class="inline js-confirm-delete"
                       data-confirm-title="Reset invite link?"
@@ -149,7 +149,7 @@
                                     </td>
                                     <td class="text-right">
                                         @if ($invitation->status === 'pending')
-                                            <form action="{{ route('families.invites.destroy', [$family, $invitation]) }}" method="POST" class="inline-block js-confirm-delete" data-confirm-title="Remove this invitation?" data-confirm-message="They will no longer be able to use this invite link.">
+                                            <form action="{{ route('families.invites.destroy', $invitation) }}" method="POST" class="inline-block js-confirm-delete" data-confirm-title="Remove this invitation?" data-confirm-message="They will no longer be able to use this invite link.">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="kt-btn kt-btn-xs kt-btn-ghost text-destructive">
@@ -203,7 +203,7 @@
 
                             @if ($invitation->status === 'pending')
                                 <div class="flex flex-wrap justify-end gap-2 pt-1">
-                                    <form action="{{ route('families.invites.destroy', [$family, $invitation]) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Remove this invitation?" data-confirm-message="They will no longer be able to use this invite link.">
+                                    <form action="{{ route('families.invites.destroy', $invitation) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Remove this invitation?" data-confirm-message="They will no longer be able to use this invite link.">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="kt-btn kt-btn-xs kt-btn-ghost text-destructive">

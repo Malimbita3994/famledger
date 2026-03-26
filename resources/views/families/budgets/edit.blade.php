@@ -41,12 +41,12 @@
             }
         }
     </style>
-    <a href="{{ route('families.budgets.show', [$family, $budget]) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.budgets.show', $budget) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to budget
     </a>
 
-    <form action="{{ route('families.budgets.update', [$family, $budget]) }}" method="POST" id="budget-form">
+    <form action="{{ route('families.budgets.update', $budget) }}" method="POST" id="budget-form">
         @csrf
         @method('PUT')
 
@@ -167,6 +167,20 @@
                             @error('category_ids')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
                         </div>
 
+                        <div id="scope-project" class="budget-main-col" style="display: none;">
+                            <label for="project_id" class="kt-form-label">Project <span class="text-destructive">*</span></label>
+                            <select name="project_id" id="project_id" class="kt-select">
+                                <option value="">Select project</option>
+                                @foreach ($projects as $proj)
+                                    <option value="{{ $proj->id }}" @selected((string) old('project_id', $budget->project_id) === (string) $proj->id)>{{ $proj->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('project_id')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                            @if ($projects->isEmpty())
+                                <p class="text-xs text-muted-foreground mt-1">Create a project under <a href="{{ route('families.projects.index') }}" class="text-primary hover:underline">Projects</a> first.</p>
+                            @endif
+                        </div>
+
                         <div class="budget-main-col">
                             <label for="status" class="kt-form-label">Status</label>
                             <select name="status" id="status" class="kt-select">
@@ -178,7 +192,7 @@
                     </div>
 
                     <div class="flex justify-end pt-2 gap-2">
-                        <a href="{{ route('families.budgets.show', [$family, $budget]) }}" class="kt-btn kt-btn-outline">Cancel</a>
+                        <a href="{{ route('families.budgets.show', $budget) }}" class="kt-btn kt-btn-outline">Cancel</a>
                         <button type="submit" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
                             <i class="ki-filled ki-check"></i>
                             Update budget
@@ -197,6 +211,7 @@
     var scopeWallets = document.getElementById('scope-wallets');
     var scopeCategoryGroup = document.getElementById('scope-category-group');
     var scopeCategorySub = document.getElementById('scope-category-sub');
+    var scopeProject = document.getElementById('scope-project');
     var isMainCheckbox = document.getElementById('is_main_budget');
     var categoryGroupSelect = document.getElementById('budget_category_group');
     var categorySubSelect = document.getElementById('category_ids');
@@ -215,12 +230,14 @@
     function toggleScope() {
         var type = typeSelect && typeSelect.value;
         var isMain = type === 'family';
+        var isWallet = type === 'wallet';
+        var isCategory = type === 'category';
+        var isProject = type === 'project';
 
-        setVisible(scopeWallets, true);
-
-        var showCat = !isMain;
-        setVisible(scopeCategoryGroup, showCat);
-        setVisible(scopeCategorySub, showCat);
+        setVisible(scopeWallets, isWallet);
+        setVisible(scopeCategoryGroup, isCategory);
+        setVisible(scopeCategorySub, isCategory);
+        setVisible(scopeProject, isProject);
 
         if (isMainCheckbox) {
             isMainCheckbox.checked = isMain;
@@ -232,7 +249,7 @@
         if (isMainCheckbox.checked) {
             typeSelect.value = 'family';
         } else if (typeSelect.value === 'family') {
-            typeSelect.value = 'wallet';
+            typeSelect.value = 'category';
         }
         toggleScope();
     }

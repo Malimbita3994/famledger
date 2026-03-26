@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Expense;
 use App\Models\Family;
+use App\Services\WalletBalanceGuard;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,12 +13,7 @@ use Illuminate\Validation\Rule;
 
 class TransactionController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family, Request $request)
     {
@@ -192,7 +189,7 @@ class TransactionController extends Controller
             'income' => $this->storeIncome($request, $family),
             'expense' => $this->storeExpense($request, $family),
             default => redirect()
-                ->route('families.transactions.index', $family)
+                ->route('families.transactions.index')
                 ->withInput($request->except(['_token']))
                 ->withErrors(['transaction_type' => 'Invalid transaction type.']),
         };
@@ -203,7 +200,7 @@ class TransactionController extends Controller
         $wallet = $family->mainWallet();
         if (! $wallet || $wallet->status !== 'active') {
             return redirect()
-                ->route('families.transactions.index', $family)
+                ->route('families.transactions.index')
                 ->with('error', 'Main wallet is missing or inactive. Set up an active main wallet before recording income.')
                 ->withInput($request->except(['_token', '_method']));
         }
@@ -211,7 +208,7 @@ class TransactionController extends Controller
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency_code' => ['required', 'string', 'size:3', Rule::in([strtoupper($wallet->currency_code)])],
-            'category_id' => ['required', Rule::exists('income_categories', 'id')],
+            'category_id' => ['required', Rule::exists('income_categories', 'id')->where(fn ($q) => $q->whereNull('family_id'))],
             'family_liability_id' => ['nullable', Rule::exists('family_liabilities', 'id')->where('family_id', $family->id)],
             'source' => ['nullable', 'string', 'max:255'],
             'received_date' => ['required', 'date'],
@@ -231,12 +228,13 @@ class TransactionController extends Controller
             'source' => $validated['source'] ?? null,
             'received_date' => $validated['received_date'],
             'notes' => $validated['notes'] ?? null,
+            'is_taxable' => true,
             'received_by' => $request->user()->id,
             'created_by' => $request->user()->id,
         ]);
 
         return redirect()
-            ->route('families.transactions.index', $family)
+            ->route('families.transactions.index')
             ->with('success', 'Income recorded.');
     }
 
@@ -270,50 +268,68 @@ class TransactionController extends Controller
         $wallet = $family->wallets()->whereKey($validated['wallet_id'])->first();
         if (! $wallet || $wallet->status !== 'active') {
             return redirect()
-                ->route('families.transactions.index', $family)
+                ->route('families.transactions.index')
                 ->with('error', 'Selected wallet is missing or inactive.')
                 ->withInput($request->except(['_token', '_method']));
         }
 
         if (strtoupper($validated['currency_code']) !== strtoupper($wallet->currency_code)) {
             return redirect()
-                ->route('families.transactions.index', $family)
+                ->route('families.transactions.index')
                 ->withInput($request->except(['_token', '_method']))
                 ->withErrors(['currency_code' => 'Currency must match the selected wallet.']);
         }
 
-        if (! $wallet->canAffordDebit((float) $validated['amount'])) {
-            $message = 'Insufficient funds in the selected wallet. Available balance is '
-                .number_format($wallet->balance, 2).' '.strtoupper($wallet->currency_code).'.';
+        return DB::transaction(function () use ($family, $validated, $request) {
+            $locked = WalletBalanceGuard::lockWalletsForUpdate([(int) $validated['wallet_id']]);
+            $w = $locked->get((int) $validated['wallet_id']);
+            if (! $w || $w->status !== 'active') {
+                return redirect()
+                    ->route('families.transactions.index')
+                    ->with('error', 'Selected wallet is missing or inactive.')
+                    ->withInput($request->except(['_token', '_method']));
+            }
+
+            if (strtoupper($validated['currency_code']) !== strtoupper($w->currency_code)) {
+                return redirect()
+                    ->route('families.transactions.index')
+                    ->withInput($request->except(['_token', '_method']))
+                    ->withErrors(['currency_code' => 'Currency must match the selected wallet.']);
+            }
+
+            if (! $w->canAffordDebit((float) $validated['amount'])) {
+                $message = 'Insufficient funds in the selected wallet. Available balance is '
+                    .number_format($w->balance, 2).' '.strtoupper($w->currency_code).'.';
+
+                return redirect()
+                    ->route('families.transactions.index')
+                    ->withInput($request->except(['_token', '_method']))
+                    ->withErrors(['amount' => $message])
+                    ->with('error', $message);
+            }
+
+            $family->expenses()->create([
+                'wallet_id' => $validated['wallet_id'],
+                'category_id' => $validated['category_id'] ?? null,
+                'subcategory' => $validated['subcategory'] ?? null,
+                'project_id' => $validated['project_id'] ?? null,
+                'family_liability_id' => $validated['family_liability_id'] ?? null,
+                'budget_id' => $validated['budget_id'] ?? null,
+                'amount' => $validated['amount'],
+                'currency_code' => strtoupper($validated['currency_code']),
+                'description' => $validated['description'] ?? null,
+                'expense_date' => $validated['expense_date'],
+                'merchant' => $validated['merchant'] ?? null,
+                'paid_by' => $validated['paid_by'] ?? $request->user()->id,
+                'payment_method' => $validated['payment_method'] ?? null,
+                'reference' => $validated['reference'] ?? null,
+                'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
+                'created_by' => $request->user()->id,
+            ]);
 
             return redirect()
-                ->route('families.transactions.index', $family)
-                ->withInput($request->except(['_token', '_method']))
-                ->withErrors(['amount' => $message])
-                ->with('error', $message);
-        }
-
-        $family->expenses()->create([
-            'wallet_id' => $validated['wallet_id'],
-            'category_id' => $validated['category_id'] ?? null,
-            'subcategory' => $validated['subcategory'] ?? null,
-            'project_id' => $validated['project_id'] ?? null,
-            'family_liability_id' => $validated['family_liability_id'] ?? null,
-            'budget_id' => $validated['budget_id'] ?? null,
-            'amount' => $validated['amount'],
-            'currency_code' => strtoupper($validated['currency_code']),
-            'description' => $validated['description'] ?? null,
-            'expense_date' => $validated['expense_date'],
-            'merchant' => $validated['merchant'] ?? null,
-            'paid_by' => $validated['paid_by'] ?? $request->user()->id,
-            'payment_method' => $validated['payment_method'] ?? null,
-            'reference' => $validated['reference'] ?? null,
-            'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
-            'created_by' => $request->user()->id,
-        ]);
-
-        return redirect()
-            ->route('families.transactions.index', $family)
-            ->with('success', 'Expense recorded.');
+                ->route('families.transactions.index')
+                ->with('success', 'Expense recorded.');
+        });
     }
 }

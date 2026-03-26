@@ -40,7 +40,7 @@
     </a>
 
     <div class="kt-card p-5 lg:p-7.5">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 famledger-page-toolbar">
             <div>
                 <h1 class="text-lg font-semibold text-mono">{{ $user->name }}</h1>
                 <p class="text-sm text-muted-foreground mt-0.5">

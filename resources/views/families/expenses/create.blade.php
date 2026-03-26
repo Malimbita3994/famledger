@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.expenses.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.expenses.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to expenses
     </a>
@@ -30,150 +30,33 @@
     </style>
 
     @php
-        // Map expense categories into logical groups + subcategories (based on seeded names)
-        $groupDefinitions = [
-            'Children' => [
-                'Activities',
-                'Allowance',
-                'Medical',
-                'Childcare',
-                'Clothing',
-                'School',
-                'Toys',
-                'Other',
-            ],
-            'Debt' => [
-                'Credit cards',
-                'Student loans',
-                'Other loans',
-                'Taxes (federal)',
-                'Taxes (state)',
-                'Other',
-            ],
-            'Education' => [
-                'Tuition',
-                'Books',
-                'Music lessons',
-                'Other',
-            ],
-            'Entertainment' => [
-                'Books',
-                'Concerts/shows',
-                'Games',
-                'Hobbies',
-                'Movies',
-                'Music',
-                'Outdoor activities',
-                'Photography',
-                'Sports',
-                'Theater/plays',
-                'TV',
-                'Other',
-            ],
-            'Everyday' => [
-                'Groceries',
-                'Restaurants',
-                'Personal supplies',
-                'Clothes',
-                'Laundry/dry cleaning',
-                'Hair/beauty',
-                'Subscriptions',
-                'Other',
-            ],
-            'Gifts' => [
-                'Gifts',
-                'Donations (charity)',
-                'Other',
-            ],
-            'Health/medical' => [
-                'Doctors/dental/vision',
-                'Specialty care',
-                'Pharmacy',
-                'Emergency',
-                'Other',
-            ],
-            'Home' => [
-                'Rent/mortgage',
-                'Property taxes',
-                'Furnishings',
-                'Lawn/garden',
-                'Supplies',
-                'Maintenance',
-                'Improvements',
-                'Moving',
-                'Other',
-            ],
-            'Insurance' => [
-                'Car',
-                'Health',
-                'Home',
-                'Life',
-                'Other',
-            ],
-            'Pets' => [
-                'Food',
-                'Vet/medical',
-                'Toys',
-                'Supplies',
-                'Other',
-            ],
-            'Technology' => [
-                'Domains & hosting',
-                'Online services',
-                'Hardware',
-                'Software',
-                'Other',
-            ],
-            'Transportation' => [
-                'Fuel',
-                'Car payments',
-                'Repairs',
-                'Registration/license',
-                'Supplies',
-                'Public transit',
-                'Other',
-            ],
-            'Travel' => [
-                'Airfare',
-                'Hotels',
-                'Food',
-                'Transportation',
-                'Entertainment',
-                'Other',
-            ],
-            'Utilities' => [
-                'Phone',
-                'TV',
-                'Internet',
-                'Electricity',
-                'Heat/gas',
-                'Water',
-                'Trash',
-                'Other',
-            ],
-            'Other' => [
-                'Category 1',
-                'Category 2',
-            ],
-        ];
-
-        // Build mapping: group -> sub -> expense_category_id based on seeded names "Group - Sub"
         $groupToSubcategoryIds = [];
         $categoryIdToGroupSub = [];
+
+        // Derive groups/subcategories from seeded category names of form: "Group - Subcategory".
+        // Ignore legacy "flat" categories without " - " so the dropdown stays consistent.
         foreach ($categories as $cat) {
-            foreach ($groupDefinitions as $group => $subs) {
-                foreach ($subs as $sub) {
-                    $expected = $group . ' - ' . $sub;
-                    if ($cat->name === $expected) {
-                        $groupToSubcategoryIds[$group][$sub] = $cat->id;
-                        $categoryIdToGroupSub[$cat->id] = ['group' => $group, 'sub' => $sub];
-                    }
-                }
+            $parts = explode(' - ', (string) $cat->name, 2);
+            if (count($parts) !== 2) {
+                continue;
             }
+
+            $group = trim($parts[0] ?? '');
+            $sub = trim($parts[1] ?? '');
+
+            if ($group === '' || $sub === '') {
+                continue;
+            }
+
+            $groupToSubcategoryIds[$group][$sub] = $cat->id;
+            $categoryIdToGroupSub[$cat->id] = ['group' => $group, 'sub' => $sub];
         }
+
+        $groupLabels = array_keys($groupToSubcategoryIds);
+        sort($groupLabels, SORT_NATURAL | SORT_FLAG_CASE);
     @endphp
 
-    <form action="{{ route('families.expenses.store', $family) }}" method="POST" id="expense-form">
+    <form action="{{ route('families.expenses.store') }}" method="POST" id="expense-form">
         @csrf
 
         <div class="grid gap-5 lg:gap-7.5 xl:w-[38.75rem] mx-auto">
@@ -207,10 +90,8 @@
                             <label for="category_group" class="kt-form-label">Category <span class="text-destructive">*</span></label>
                             <select name="category_group" id="category_group" class="kt-select" required>
                                 <option value="">Select category</option>
-                                @foreach ($groupDefinitions as $groupLabel => $subs)
-                                    @if(isset($groupToSubcategoryIds[$groupLabel]))
-                                        <option value="{{ $groupLabel }}">{{ $groupLabel }}</option>
-                                    @endif
+                                @foreach ($groupLabels as $groupLabel)
+                                    <option value="{{ $groupLabel }}">{{ $groupLabel }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -239,7 +120,14 @@
                             <select name="budget_id" id="budget_id" class="kt-select">
                                 <option value="">— None —</option>
                                 @foreach($budgets as $b)
-                                    <option value="{{ $b->id }}" {{ old('budget_id') == $b->id ? 'selected' : '' }}>
+                                    <option
+                                        value="{{ $b->id }}"
+                                        data-budget-type="{{ $b->type }}"
+                                        data-project-id="{{ $b->project_id }}"
+                                        data-wallet-id="{{ $b->wallets->first()->id ?? '' }}"
+                                        data-category-id="{{ $b->categories->first()->id ?? '' }}"
+                                        {{ old('budget_id') == $b->id ? 'selected' : '' }}
+                                    >
                                         {{ $b->name }} ({{ \App\Models\Budget::types()[$b->type] ?? $b->type }}, {{ number_format($b->amount, 0) }} {{ $b->currency_code }})
                                     </option>
                                 @endforeach
@@ -333,7 +221,7 @@
                     </div>
 
                     <div class="flex justify-end pt-2 gap-2">
-                        <a href="{{ route('families.expenses.index', $family) }}" class="kt-btn kt-btn-outline">Cancel</a>
+                        <a href="{{ route('families.expenses.index') }}" class="kt-btn kt-btn-outline">Cancel</a>
                         <button type="submit" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
                             <i class="ki-filled ki-check"></i>
                             Record expense
@@ -350,6 +238,78 @@
 (function () {
     var walletSelect = document.getElementById('wallet_id');
     var currencyInput = document.getElementById('currency_code');
+
+    // Link Budget source <-> Project (for project-scoped budgets only)
+    var budgetSelect = document.getElementById('budget_id');
+    var projectSelect = document.getElementById('project_id');
+
+    function getSelectedOption(selectEl) {
+        if (!selectEl || !selectEl.selectedOptions || selectEl.selectedOptions.length === 0) return null;
+        return selectEl.selectedOptions[0];
+    }
+
+    function syncProjectFromBudget() {
+        if (!budgetSelect || !projectSelect) return;
+
+        var opt = getSelectedOption(budgetSelect);
+        if (!opt || !opt.value) return;
+
+        if ((opt.dataset && opt.dataset.budgetType) === 'project' && opt.dataset.projectId) {
+            projectSelect.value = opt.dataset.projectId;
+        }
+    }
+
+    function syncBudgetFromProject() {
+        if (!budgetSelect || !projectSelect) return;
+
+        var pid = projectSelect.value;
+        var currentBudgetOpt = getSelectedOption(budgetSelect);
+        var currentBudgetType = currentBudgetOpt && currentBudgetOpt.dataset ? currentBudgetOpt.dataset.budgetType : '';
+        var currentBudgetProjectId = currentBudgetOpt && currentBudgetOpt.dataset ? currentBudgetOpt.dataset.projectId : '';
+
+        // If user cleared project, clear only project-linked budgets.
+        if (!pid) {
+            if (currentBudgetType === 'project') {
+                budgetSelect.value = '';
+            }
+            return;
+        }
+
+        // Find first matching project budget for this project.
+        var candidateValue = '';
+        for (var i = 0; i < budgetSelect.options.length; i++) {
+            var o = budgetSelect.options[i];
+            if (!o.value) continue;
+            if (o.dataset && o.dataset.budgetType === 'project' && o.dataset.projectId === pid) {
+                candidateValue = o.value;
+                break;
+            }
+        }
+
+        if (candidateValue) {
+            budgetSelect.value = candidateValue;
+            return;
+        }
+
+        // No project budget found: clear only if current selection is a project budget.
+        if (currentBudgetType === 'project' && currentBudgetProjectId !== pid) {
+            budgetSelect.value = '';
+        }
+    }
+
+    if (budgetSelect && projectSelect) {
+        budgetSelect.addEventListener('change', function () {
+            syncProjectFromBudget();
+        });
+        projectSelect.addEventListener('change', function () {
+            syncBudgetFromProject();
+        });
+
+        // Initial sync for validation errors / query-string state.
+        syncProjectFromBudget();
+        syncBudgetFromProject();
+    }
+
     function syncCurrency() {
         if (!walletSelect || !currencyInput) return;
         var opt = walletSelect.options[walletSelect.selectedIndex];
@@ -378,7 +338,7 @@
         subcategorySelect.appendChild(placeholder);
 
         var subs = groupMap[group] || {};
-        Object.keys(subs).forEach(function (subLabel) {
+        Object.keys(subs).sort().forEach(function (subLabel) {
             var opt = document.createElement('option');
             opt.value = subs[subLabel];
             opt.textContent = subLabel;
@@ -402,6 +362,37 @@
         if (subcategorySelect) {
             subcategorySelect.value = oldCategoryId;
         }
+    }
+
+    function syncExpenseFieldsFromBudgetSource() {
+        if (!budgetSelect || !walletSelect || !groupSelect || !subcategorySelect) return;
+
+        var opt = getSelectedOption(budgetSelect);
+        if (!opt || !opt.value) return;
+
+        var budgetType = opt.dataset ? opt.dataset.budgetType : '';
+        var walletId = opt.dataset ? opt.dataset.walletId : '';
+        var categoryId = opt.dataset ? opt.dataset.categoryId : '';
+
+        if (budgetType === 'wallet' && walletId) {
+            walletSelect.value = walletId;
+            syncCurrency();
+        }
+
+        if (budgetType === 'category' && categoryId) {
+            var cid = String(categoryId);
+            if (idToGroupSub[cid]) {
+                var catInfo = idToGroupSub[cid];
+                groupSelect.value = catInfo.group;
+                populateSubcategories(catInfo.group);
+                subcategorySelect.value = cid;
+            }
+        }
+    }
+
+    if (budgetSelect) {
+        budgetSelect.addEventListener('change', syncExpenseFieldsFromBudgetSource);
+        syncExpenseFieldsFromBudgetSource();
     }
 })();
 </script>

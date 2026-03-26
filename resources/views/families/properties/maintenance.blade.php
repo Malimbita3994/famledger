@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.properties.assets', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+    <a href="{{ route('families.properties.assets') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
         Back to assets list
     </a>
@@ -84,7 +84,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('families.properties.maintenance.store', $family) }}" class="grid gap-4 lg:gap-5">
+        <form method="POST" action="{{ route('families.properties.maintenance.store') }}" class="grid gap-4 lg:gap-5">
             @csrf
             <div class="maintenance-main-row">
                 <div class="maintenance-main-col grid gap-1.5">

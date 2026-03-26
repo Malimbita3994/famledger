@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
         Back to {{ $family->name }}
     </a>
@@ -46,7 +46,7 @@
                 Track all properties owned by this family, including value and status.
             </p>
         </div>
-        <a href="{{ route('families.properties.create', $family) }}" class="kt-btn kt-btn-primary">
+        <a href="{{ route('families.properties.create') }}" class="kt-btn kt-btn-primary">
             <i class="ki-filled ki-plus"></i>
             Add property
         </a>
@@ -90,7 +90,7 @@
                 <div class="py-12 text-center text-muted-foreground">
                     <i class="ki-filled ki-home-3 text-4xl mb-2"></i>
                     <p class="text-sm">No properties recorded yet.</p>
-                    <a href="{{ route('families.properties.create', $family) }}" class="kt-btn kt-btn-outline mt-4">Add property</a>
+                    <a href="{{ route('families.properties.create') }}" class="kt-btn kt-btn-outline mt-4">Add property</a>
                 </div>
             @else
                 <div class="px-5 pt-4">
@@ -128,15 +128,21 @@
                                 <th class="min-w-[140px]">Category</th>
                                 <th class="min-w-[140px] text-right">Price</th>
                                 <th class="min-w-[140px]">Status</th>
+                                <th class="w-[60px]">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($properties as $property)
                                 <tr>
                                     <td class="text-sm text-muted-foreground">
-                                        <a href="{{ route('families.properties.show', [$family, $property]) }}" class="hover:text-primary underline-offset-2 hover:underline">
+                                        <button
+                                            type="button"
+                                            class="hover:text-primary underline-offset-2 hover:underline bg-transparent border-0 p-0 cursor-pointer font-inherit text-left text-inherit"
+                                            data-property-modal="{{ $property->id }}"
+                                            title="{{ __('View details') }}"
+                                        >
                                             {{ $property->property_code }}
-                                        </a>
+                                        </button>
                                     </td>
                                     <td class="text-sm font-medium text-foreground">{{ $property->name }}</td>
                                     <td class="text-sm text-secondary-foreground">
@@ -152,6 +158,29 @@
                                         <span class="kt-badge kt-badge-sm kt-badge-outline {{ $property->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }}">
                                             {{ ucfirst($property->status) }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        <div class="kt-menu flex-inline" data-kt-menu="true">
+                                            <div class="kt-menu-item" data-kt-menu-item-offset="0, 10px" data-kt-menu-item-placement="bottom-end" data-kt-menu-item-toggle="dropdown" data-kt-menu-item-trigger="click">
+                                                <button class="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" type="button" aria-label="{{ __('Actions') }}">
+                                                    <i class="ki-filled ki-dots-vertical text-lg"></i>
+                                                </button>
+                                                <div class="kt-menu-dropdown kt-menu-default w-full max-w-[175px]" data-kt-menu-dismiss="true">
+                                                    <div class="kt-menu-item">
+                                                        <button type="button" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer" data-property-modal="{{ $property->id }}">
+                                                            <span class="kt-menu-icon"><i class="ki-filled ki-eye"></i></span>
+                                                            <span class="kt-menu-title">{{ __('View') }}</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="kt-menu-item">
+                                                        <a class="kt-menu-link" href="{{ route('families.properties.edit', $property) }}">
+                                                            <span class="kt-menu-icon"><i class="ki-filled ki-pencil"></i></span>
+                                                            <span class="kt-menu-title">Edit</span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -188,6 +217,14 @@
                                     {{ ucfirst($property->status) }}
                                 </span>
                             </div>
+                            <div class="flex flex-wrap justify-end gap-2 pt-1 border-t border-border">
+                                <x-famledger.pulse-button variant="outline" size="sm" type="button" data-property-modal="{{ $property->id }}">
+                                    {{ __('View') }}
+                                </x-famledger.pulse-button>
+                                <x-famledger.pulse-button variant="outline" size="sm" :href="route('families.properties.edit', $property)">
+                                    Edit
+                                </x-famledger.pulse-button>
+                            </div>
                         </div>
                     @endforeach
                 </div>
@@ -199,5 +236,14 @@
         </div>
     </div>
 </div>
+
+<x-famledger.entity-detail-modal
+    id="property_details_modal"
+    :title="__('Property details')"
+    :payloads="$propertyModalPayloads"
+    :open-on-load="$openPropertyModalId"
+    variant="grid4"
+    trigger-attribute="data-property-modal"
+/>
 @endsection
 

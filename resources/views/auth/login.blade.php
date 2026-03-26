@@ -1,21 +1,23 @@
 <x-guest-metronic-layout>
     <x-slot name="title">{{ __('Sign in') }} - {{ config('app.name') }}</x-slot>
-    <x-slot name="brandedTitle">{{ __('Secure Access Portal') }}</x-slot>
 
     @if (session('status'))
-        <div class="text-sm text-muted-foreground mb-2 p-2 rounded bg-muted/50">
+        <div class="text-sm text-slate-600 mb-3 px-3 py-2.5 rounded-xl bg-sky-50 border border-sky-100/80">
             {{ session('status') }}
         </div>
     @endif
 
-    <form x-data="{ loading: false }" x-on:submit="loading = true" method="POST" action="{{ route('login') }}" class="flex flex-col gap-5" id="sign_in_form">
+    <form x-data="{ loading: false }" x-on:submit="loading = true" method="POST" action="{{ route('login') }}" class="flex flex-col gap-4 sm:gap-5" id="sign_in_form">
         @csrf
 
-        <div class="text-center mb-2.5">
-            <h3 class="text-lg font-medium text-mono leading-none mb-2.5">
+        <div class="text-center mb-1">
+            <h3 class="font-semibold leading-none mb-2">
                 {{ __('Sign in') }}
             </h3>
-            <div class="flex items-center justify-center font-medium">
+            <p class="text-xs text-slate-500 font-medium tracking-wide uppercase opacity-90 mb-0">
+                {{ __('Secure Access Portal') }}
+            </p>
+            <div class="flex items-center justify-center font-medium mt-3">
                 <span class="text-sm text-secondary-foreground me-1.5">
                     {{ __('Need an account?') }}
                 </span>
@@ -83,10 +85,16 @@
             <span class="kt-checkbox-label">{{ __('Remember me') }}</span>
         </label>
 
-        <button type="submit" class="kt-btn kt-btn-primary flex justify-center items-center gap-2 grow"
-                x-bind:disabled="loading">
-            <span x-show="!loading">{{ __('Sign In') }}</span>
-            <div x-show="loading" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        <button type="submit" class="kt-btn kt-btn-primary"
+                x-bind:disabled="loading"
+                x-bind:aria-busy="loading">
+            <span x-show="!loading" class="inline-flex items-center">{{ __('Sign In') }}</span>
+            <span x-show="loading" class="inline-flex items-center justify-center" aria-hidden="true">
+                <svg class="auth-pulse-btn-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </span>
         </button>
     </form>
 </x-guest-metronic-layout>

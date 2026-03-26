@@ -15,7 +15,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reports.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.reports.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to Reports
     </a>
@@ -25,7 +25,7 @@
             <h1 class="font-medium text-lg text-mono">Project Summary Report</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Status, budget, spent, remaining, and completion. Filter by tab or search by name.</p>
         </div>
-        <a href="{{ route('families.reports.project-summary.export-pdf', $family) . '?' . http_build_query(request()->only(['tab','search'])) }}"
+        <a href="{{ route('families.reports.project-summary.export-pdf') . '?' . http_build_query(request()->only(['tab','search'])) }}"
            class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
             <i class="ki-filled ki-file-down text-base"></i>
             Export PDF
@@ -39,7 +39,7 @@
             <nav class="flex flex-wrap gap-1 mt-2 md:mt-0" role="tablist">
                 @foreach($tabs as $key => $tab)
                     @php
-                        $tabUrl = route('families.reports.project-summary', [$family, 'tab' => $key, 'search' => $filterSearch ?? '']);
+                        $tabUrl = route('families.reports.project-summary', ['tab' => $key, 'search' => $filterSearch ?? '']);
                     @endphp
                     <a href="{{ $tabUrl }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors {{ $filterTab === $key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground' }}">
                         <i class="ki-filled {{ $tab['icon'] }} text-base"></i>
@@ -49,52 +49,51 @@
             </nav>
         </div>
         <div class="kt-card-content pt-4">
-            <form method="get" action="{{ route('families.reports.project-summary', $family) }}" class="flex flex-wrap items-end gap-4">
+            <form method="get" action="{{ route('families.reports.project-summary') }}" class="flex flex-wrap items-end gap-4">
                 <input type="hidden" name="tab" value="{{ $filterTab }}">
                 <div>
                     <label class="block text-sm text-muted-foreground mb-1">Search by name</label>
                     <input type="text" name="search" value="{{ $filterSearch ?? '' }}" placeholder="Project name…" class="kt-input rounded-lg border border-border px-3 py-2 text-sm min-w-[180px]">
                 </div>
                 <button type="submit" class="kt-btn kt-btn-primary">Apply</button>
-                <a href="{{ route('families.reports.project-summary', [$family, 'tab' => $filterTab]) }}" class="kt-btn kt-btn-ghost">Reset</a>
+                <a href="{{ route('families.reports.project-summary', ['tab' => $filterTab]) }}" class="kt-btn kt-btn-ghost">Reset</a>
             </form>
         </div>
     </div>
 
     {{-- KPI cards (cash-flow style: 4-col) --}}
     <div class="report-kpi-grid">
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">All Projects</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-briefcase"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $totalProjects ?? 0 }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Total projects</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Active</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-flag"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-green-600">{{ $activeCount ?? 0 }}</div>
-            <div class="text-muted-foreground text-sm mt-2">In progress</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Completed</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-check-circle"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $completedCount ?? 0 }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Finished</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">With funding</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-wallet"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $fundedCount ?? 0 }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Projects funded</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="All Projects"
+            :value="(string) ($totalProjects ?? 0)"
+        >
+            Total projects
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Active"
+            :value="(string) ($activeCount ?? 0)"
+        >
+            In progress
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Completed"
+            :value="(string) ($completedCount ?? 0)"
+        >
+            Finished
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="With funding"
+            :value="(string) ($fundedCount ?? 0)"
+        >
+            Projects funded
+        </x-famledger.pulse-stat-card>
     </div>
 
     {{-- Table card (same as cash flow summary card) --}}
@@ -128,7 +127,7 @@
                             @endphp
                             <tr>
                                 <td>
-                                    <a href="{{ route('families.projects.show', [$family, $p]) }}" class="font-medium text-primary hover:underline">{{ $p->name }}</a>
+                                    <a href="{{ route('families.projects.show', $p) }}" class="font-medium text-primary hover:underline">{{ $p->name }}</a>
                                 </td>
                                 <td>
                                     <span class="kt-badge kt-badge-sm {{ $p->status === 'active' ? 'kt-badge-primary' : ($p->status === 'completed' ? 'kt-badge-success' : 'kt-badge-outline') }}">{{ ucfirst($p->status) }}</span>
@@ -173,7 +172,7 @@
                         {{-- Header: name + status --}}
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex flex-col min-w-0">
-                                <a href="{{ route('families.projects.show', [$family, $p]) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
+                                <a href="{{ route('families.projects.show', $p) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
                                     {{ $p->name }}
                                 </a>
                                 @if ($p->category)

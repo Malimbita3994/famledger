@@ -90,7 +90,7 @@ class FamilyInvitationController extends Controller
             'status'      => 'pending',
         ]);
 
-        return redirect()->route('families.invites.index', $family)
+        return redirect()->route('families.invites.index')
             ->with('success', 'Invitation sent to ' . $validated['email']);
     }
 
@@ -100,7 +100,7 @@ class FamilyInvitationController extends Controller
 
         $family->update(['invite_token' => Str::random(64)]);
 
-        return redirect()->route('families.invites.index', $family)
+        return redirect()->route('families.invites.index')
             ->with('success', 'Invite link has been reset. Previous link no longer works.');
     }
 
@@ -114,7 +114,7 @@ class FamilyInvitationController extends Controller
 
         $invitation->delete();
 
-        return redirect()->route('families.invites.index', $family)
+        return redirect()->route('families.invites.index')
             ->with('success', 'Invitation removed.');
     }
 }

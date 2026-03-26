@@ -103,6 +103,12 @@ class Project extends Model
         return $this->belongsTo(Budget::class);
     }
 
+    /** All budgets that reference this project (type = project). The primary planning budget is usually {@see $this->budget}. */
+    public function projectBudgets(): HasMany
+    {
+        return $this->hasMany(Budget::class, 'project_id');
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -160,5 +166,59 @@ class Project extends Model
             return 0;
         }
         return round(($this->total_expenses / $planned) * 100, 1);
+    }
+
+    /**
+     * Label/value rows for <x-famledger.entity-detail-modal /> (funding create, funding index, etc.).
+     *
+     * @return array<int, array{l: string, v: string, full?: bool}>
+     */
+    public function fundingFormDetailRows(): array
+    {
+        $types = self::types();
+        $statuses = self::statuses();
+        $priorities = self::priorities();
+        $ccy = $this->currency_code ?: '—';
+        $funded = (float) ($this->fundings_sum_amount ?? 0);
+        $planned = (float) ($this->planned_budget ?? 0);
+        $remaining = max(0, $planned - $funded);
+
+        $rows = [
+            ['l' => __('Type'), 'v' => $this->type ? ($types[$this->type] ?? $this->type) : '—'],
+            ['l' => __('Status'), 'v' => $this->status ? ($statuses[$this->status] ?? ucfirst((string) $this->status)) : '—'],
+            ['l' => __('Priority'), 'v' => $this->priority ? ($priorities[$this->priority] ?? $this->priority) : '—'],
+            ['l' => __('Currency'), 'v' => $ccy],
+            ['l' => __('Planned budget'), 'v' => number_format($planned, 2).' '.$ccy],
+            ['l' => __('Funded to date'), 'v' => number_format($funded, 2).' '.$ccy],
+            ['l' => __('Remaining (budget − funded)'), 'v' => number_format($remaining, 2).' '.$ccy],
+        ];
+
+        if (array_key_exists('expenses_sum_amount', $this->getAttributes())) {
+            $exp = (float) $this->expenses_sum_amount;
+            $rows[] = ['l' => __('Total expenses'), 'v' => number_format($exp, 2).' '.$ccy];
+        }
+
+        if ($planned > 0) {
+            $rows[] = ['l' => __('Funding progress'), 'v' => min(100, (int) round(($funded / $planned) * 100)).'%'];
+        }
+
+        if ($this->relationLoaded('wallet') && $this->wallet) {
+            $rows[] = ['l' => __('Project wallet'), 'v' => $this->wallet->name.' ('.$this->wallet->currency_code.')'];
+        }
+
+        if ($this->start_date) {
+            $rows[] = ['l' => __('Start date'), 'v' => $this->start_date->format('Y-m-d')];
+        }
+        if ($this->target_end_date) {
+            $rows[] = ['l' => __('Target end date'), 'v' => $this->target_end_date->format('Y-m-d')];
+        }
+
+        $rows[] = [
+            'l' => __('Description'),
+            'v' => $this->description !== null && $this->description !== '' ? (string) $this->description : '—',
+            'full' => true,
+        ];
+
+        return $rows;
     }
 }

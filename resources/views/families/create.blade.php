@@ -13,7 +13,7 @@
     <form action="{{ route('families.store') }}" method="POST">
         @csrf
 
-        <div class="grid gap-5 lg:gap-7.5 xl:w-[38.75rem] mx-auto">
+        <div class="grid gap-5 lg:gap-7.5 w-full max-w-5xl mx-auto">
             <div class="kt-card pb-2.5">
                 <div class="kt-card-header" id="family_details">
                     <h3 class="kt-card-title">Family registration</h3>
@@ -21,10 +21,11 @@
                 <div class="kt-card-content grid gap-5">
                     <p class="text-sm text-muted-foreground -mt-1">Owner and status are set automatically. Only the fields below are needed.</p>
 
-                    {{-- Required: Family Name --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="name" class="kt-form-label max-w-56">Family name <span class="text-destructive">*</span></label>
-                        <div class="grow">
+                    {{-- Metronic styles.css omits most grid-cols-* utilities; use famledger-form-grids.css --}}
+                    <div class="famledger-form-row-3">
+                        {{-- md+: name | currency | timezone on one row; country starts next row --}}
+                        <div class="famledger-form-field flex flex-col gap-2">
+                            <label for="name" class="kt-form-label">Family name <span class="text-destructive">*</span></label>
                             <input
                                 type="text"
                                 name="name"
@@ -32,24 +33,21 @@
                                 value="{{ old('name') }}"
                                 required
                                 placeholder="e.g. Smith Family"
-                                class="kt-input"
+                                class="kt-input w-full"
                                 aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}"
                             />
                             @error('name')
                                 <p class="kt-form-message mt-1">{{ $message }}</p>
                             @enderror
                         </div>
-                    </div>
 
-                    {{-- Required: Currency --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="currency_code" class="kt-form-label max-w-56">Currency <span class="text-destructive">*</span></label>
-                        <div class="grow">
+                        <div class="famledger-form-field flex flex-col gap-2">
+                            <label for="currency_code" class="kt-form-label">Currency <span class="text-destructive">*</span></label>
                             <select
                                 name="currency_code"
                                 id="currency_code"
                                 required
-                                class="kt-select"
+                                class="kt-select w-full"
                                 aria-invalid="{{ $errors->has('currency_code') ? 'true' : 'false' }}"
                             >
                                 @foreach ($currencies ?? [] as $code => $label)
@@ -60,12 +58,9 @@
                                 <p class="kt-form-message mt-1">{{ $message }}</p>
                             @enderror
                         </div>
-                    </div>
 
-                    {{-- Required: Timezone --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="timezone" class="kt-form-label max-w-56">Timezone <span class="text-destructive">*</span></label>
-                        <div class="grow">
+                        <div class="famledger-form-field flex flex-col gap-2">
+                            <label for="timezone" class="kt-form-label">Timezone <span class="text-destructive">*</span></label>
                             <input
                                 type="text"
                                 name="timezone"
@@ -73,26 +68,23 @@
                                 value="{{ old('timezone', 'UTC') }}"
                                 required
                                 placeholder="e.g. UTC or America/New_York"
-                                class="kt-input"
+                                class="kt-input w-full"
                                 aria-invalid="{{ $errors->has('timezone') ? 'true' : 'false' }}"
                             />
                             @error('timezone')
                                 <p class="kt-form-message mt-1">{{ $message }}</p>
                             @enderror
                         </div>
-                    </div>
 
-                    {{-- Optional: Country --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="country" class="kt-form-label max-w-56">Country <span class="text-muted-foreground font-normal">(optional)</span></label>
-                        <div class="grow">
+                        <div class="famledger-form-field flex flex-col gap-2">
+                            <label for="country" class="kt-form-label">Country <span class="text-muted-foreground font-normal">(optional)</span></label>
                             <input
                                 type="text"
                                 name="country"
                                 id="country"
                                 value="{{ old('country') }}"
                                 placeholder="e.g. United States"
-                                class="kt-input"
+                                class="kt-input w-full"
                                 aria-invalid="{{ $errors->has('country') ? 'true' : 'false' }}"
                             />
                             @error('country')
@@ -101,22 +93,20 @@
                         </div>
                     </div>
 
-                    {{-- Optional: Description --}}
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="description" class="kt-form-label max-w-56">Description <span class="text-muted-foreground font-normal">(optional)</span></label>
-                        <div class="grow">
-                            <textarea
-                                name="description"
-                                id="description"
-                                rows="4"
-                                placeholder="Short description of the family"
-                                class="kt-textarea min-h-[120px] resize-y"
-                                aria-invalid="{{ $errors->has('description') ? 'true' : 'false' }}"
-                            >{{ old('description') }}</textarea>
-                            @error('description')
-                                <p class="kt-form-message mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
+                    {{-- Optional: full width --}}
+                    <div class="flex flex-col gap-2">
+                        <label for="description" class="kt-form-label">Description <span class="text-muted-foreground font-normal">(optional)</span></label>
+                        <textarea
+                            name="description"
+                            id="description"
+                            rows="4"
+                            placeholder="Short description of the family"
+                            class="kt-textarea min-h-[120px] resize-y w-full"
+                            aria-invalid="{{ $errors->has('description') ? 'true' : 'false' }}"
+                        >{{ old('description') }}</textarea>
+                        @error('description')
+                            <p class="kt-form-message mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="flex justify-end pt-2">

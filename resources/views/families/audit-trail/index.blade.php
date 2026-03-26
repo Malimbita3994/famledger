@@ -26,7 +26,7 @@
             @endif
         </div>
         <div class="kt-card-content pt-4">
-            <form method="get" action="{{ route('families.audit-trail.index', $family) }}" class="flex flex-wrap items-end gap-4">
+            <form method="get" action="{{ route('families.audit-trail.index') }}" class="flex flex-wrap items-end gap-4">
                 <div>
                     <label class="block text-sm text-muted-foreground mb-1">{{ __('From') }}</label>
                     <input type="date" name="from" value="{{ request('from') }}" class="kt-input rounded-lg border border-border px-3 py-2 text-sm min-w-[140px]">
@@ -64,7 +64,7 @@
                     </select>
                 </div>
                 <button type="submit" class="kt-btn kt-btn-primary">{{ __('Apply') }}</button>
-                <a href="{{ route('families.audit-trail.index', $family) }}" class="kt-btn kt-btn-ghost">{{ __('Reset') }}</a>
+                <a href="{{ route('families.audit-trail.index') }}" class="kt-btn kt-btn-ghost">{{ __('Reset') }}</a>
             </form>
         </div>
     </div>

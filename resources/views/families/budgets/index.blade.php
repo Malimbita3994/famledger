@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12 w-full max-w-full min-w-0">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
     </a>
@@ -15,7 +15,7 @@
             <h1 class="font-medium text-lg text-mono">Budgets</h1>
             <p class="text-sm text-muted-foreground mt-0.5 mb-2.5">Plan and monitor spending. Budgets guide decisions; they do not move money.</p>
         </div>
-        <a href="{{ route('families.budgets.create', $family) }}" class="kt-btn kt-btn-primary">
+        <a href="{{ route('families.budgets.create') }}" class="kt-btn kt-btn-primary">
             <i class="ki-filled ki-plus"></i>
             New budget
         </a>
@@ -27,10 +27,9 @@
             $planned = (float) $mainBudget->amount;
             $subBudgets = $family->budgets()->where('type', '!=', \App\Models\Budget::TYPE_FAMILY)->get();
             $allocatedToSubBudgets = (float) $subBudgets->sum('amount');
-            // Used amount across all sub-budgets (out of the main budget)
-            $usedAlready = (float) $subBudgets->sum(function ($b) { return $b->used_amount; });
-            // Remaining unplanned capacity: main budget minus what is allocated to sub-budgets
-            $unplanned = max(0, $planned - $allocatedToSubBudgets);
+            // Total spending in the main budget period (family scope); avoids double-count vs summing sub-budgets
+            $usedAlready = (float) $mainBudget->used_amount;
+            $unplanned = (float) ($unplannedAmount ?? max(0, $planned - $allocatedToSubBudgets));
         @endphp
         <style>
             .budget-summary-grid {
@@ -95,7 +94,7 @@
                     <i class="ki-filled ki-chart-pie text-4xl mb-2"></i>
                     <p class="text-sm">No budgets yet.</p>
                     <p class="text-xs mt-1">Create a budget to plan and track spending against a limit.</p>
-                    <a href="{{ route('families.budgets.create', $family) }}" class="kt-btn kt-btn-outline mt-4">New budget</a>
+                    <a href="{{ route('families.budgets.create') }}" class="kt-btn kt-btn-outline mt-4">New budget</a>
                 </div>
             @else
                 <div class="kt-scrollable-x-auto">
@@ -115,12 +114,7 @@
                         <tbody>
                             @foreach ($budgets as $budget)
                             @php
-                                // For the main budget, "Used" should reflect what sub-budgets have spent.
-                                if ($mainBudget && $budget->id === $mainBudget->id) {
-                                    $used = isset($subBudgets) ? (float) $subBudgets->sum(function ($b) { return $b->used_amount; }) : (float) $budget->used_amount;
-                                } else {
-                                    $used = (float) $budget->used_amount;
-                                }
+                                $used = (float) $budget->used_amount;
                                 // Remaining and percent still use the budget's own helper properties
                                 $remaining = $budget->remaining_amount;
                                 $pct = $budget->utilization_percent;
@@ -128,7 +122,7 @@
                             @endphp
                             <tr>
                                 <td>
-                                    <a href="{{ route('families.budgets.show', [$family, $budget]) }}" class="font-medium text-foreground hover:text-primary">
+                                    <a href="{{ route('families.budgets.show', $budget) }}" class="font-medium text-foreground hover:text-primary">
                                         {{ $budget->name }}
                                         @if ($budget->type === \App\Models\Budget::TYPE_FAMILY)
                                             <span class="ml-1 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
@@ -141,6 +135,11 @@
                                     @endif
                                     @if ($budget->type === 'category' && $budget->categories->isNotEmpty())
                                         <p class="text-xs text-muted-foreground mt-0.5">{{ $budget->categories->pluck('name')->join(', ') }}</p>
+                                    @endif
+                                    @if ($budget->type === \App\Models\Budget::TYPE_PROJECT && $budget->project)
+                                        <p class="text-xs text-muted-foreground mt-0.5">
+                                            <a href="{{ route('families.projects.show', $budget->project) }}" class="text-primary hover:underline">{{ $budget->project->name }}</a>
+                                        </p>
                                     @endif
                                 </td>
                                 <td class="text-foreground">{{ \App\Models\Budget::types()[$budget->type] ?? $budget->type }}</td>
@@ -155,7 +154,7 @@
                                     <span class="text-xs text-muted-foreground">{{ $pct }}%</span>
                                 </td>
                                 <td>
-                                    <a href="{{ route('families.budgets.show', [$family, $budget]) }}" class="kt-btn kt-btn-ghost kt-btn-sm">View</a>
+                                    <a href="{{ route('families.budgets.show', $budget) }}" class="kt-btn kt-btn-ghost kt-btn-sm">View</a>
                                 </td>
                             </tr>
                             @endforeach

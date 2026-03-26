@@ -10,7 +10,7 @@
             <h1 class="font-medium text-lg text-mono">General Report</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Overview of family finances, budgets, savings, and projects. Filter by date and wallet.</p>
         </div>
-        <a href="{{ route('families.reports.export-pdf', $family) . '?' . http_build_query(request()->only(['from','to','wallet_id'])) }}"
+        <a href="{{ route('families.reports.export-pdf') . '?' . http_build_query(request()->only(['from','to','wallet_id'])) }}"
            class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
             <i class="ki-filled ki-file-down text-base"></i>
             Export PDF
@@ -23,7 +23,7 @@
             <h3 class="kt-card-title text-sm">Filter report</h3>
         </div>
         <div class="kt-card-content pt-4">
-            <form method="get" action="{{ route('families.reports.index', $family) }}" class="flex flex-wrap items-end gap-4">
+            <form method="get" action="{{ route('families.reports.index') }}" class="flex flex-wrap items-end gap-4">
                 <div>
                     <label class="block text-sm text-muted-foreground mb-1">From</label>
                     <input type="date" name="from" value="{{ $dateFrom }}" class="kt-input rounded-lg border border-border px-3 py-2 text-sm min-w-[140px]">
@@ -42,45 +42,44 @@
                     </select>
                 </div>
                 <button type="submit" class="kt-btn kt-btn-primary">Apply</button>
-                <a href="{{ route('families.reports.index', $family) }}" class="kt-btn kt-btn-ghost">Reset</a>
+                <a href="{{ route('families.reports.index') }}" class="kt-btn kt-btn-ghost">Reset</a>
             </form>
         </div>
     </div>
 
     {{-- Summary KPI cards (standard 4-col) --}}
     <div class="report-kpi-grid">
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total Income</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-arrow-up"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-green-600">{{ $formatAmount($totalIncome) }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Selected period</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total Expenses</span>
-                <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-arrow-down"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-red-600">{{ $formatAmount($totalExpenses) }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Selected period</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Net (Savings)</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-safe"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-blue-600">{{ $formatAmount($savings) }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Income − Expenses</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total Liabilities</span>
-                <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-debit"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-red-600">{{ $formatAmount($totalLiabilities) }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Outstanding loans and debts (all time).</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total Income"
+            :value="$formatAmount($totalIncome)"
+        >
+            Selected period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total Expenses"
+            :value="$formatAmount($totalExpenses)"
+        >
+            Selected period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Net (Savings)"
+            :value="$formatAmount($savings)"
+        >
+            Income − Expenses
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total Liabilities"
+            :value="$formatAmount($totalLiabilities)"
+        >
+            Outstanding loans and debts (all time).
+        </x-famledger.pulse-stat-card>
     </div>
 
     {{-- Family snapshot tables: basic info, members, projects, finances, budgets, savings --}}
@@ -308,7 +307,7 @@
                 @else
                     <div class="py-6 px-4 text-sm text-muted-foreground">
                         No budgets snapshot is available on this page. View full details in the
-                        <a href="{{ route('families.reports.budget-vs-actual', $family) }}" class="text-primary hover:underline">
+                        <a href="{{ route('families.reports.budget-vs-actual') }}" class="text-primary hover:underline">
                             Budget vs Actual report
                         </a>.
                     </div>
@@ -353,7 +352,7 @@
                 @else
                     <div class="py-6 px-4 text-sm text-muted-foreground">
                         No savings snapshot is available on this page. View full details in the
-                        <a href="{{ route('families.reports.savings', $family) }}" class="text-primary hover:underline">
+                        <a href="{{ route('families.reports.savings') }}" class="text-primary hover:underline">
                             Savings report
                         </a>.
                     </div>
@@ -370,27 +369,27 @@
                 <p class="text-sm text-muted-foreground mt-0.5">Income, expenses, cash flow, budgets, savings, and wallet statement</p>
             </div>
             <div class="kt-card-content p-5 space-y-2">
-                <a href="{{ route('families.reports.wallet-statement', $family) }}?from={{ $dateFrom }}&to={{ $dateTo }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <a href="{{ route('families.reports.wallet-statement') }}?from={{ $dateFrom }}&to={{ $dateTo }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <span class="text-sm font-medium">Wallet Statement</span>
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>
-                <a href="{{ route('families.reports.expense', $family) }}?from={{ $dateFrom }}&to={{ $dateTo }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <a href="{{ route('families.reports.expense') }}?from={{ $dateFrom }}&to={{ $dateTo }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <span class="text-sm font-medium">Expense Report</span>
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>
-                <a href="{{ route('families.reports.income', $family) }}?from={{ $dateFrom }}&to={{ $dateTo }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <a href="{{ route('families.reports.income') }}?from={{ $dateFrom }}&to={{ $dateTo }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <span class="text-sm font-medium">Income Report</span>
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>
-                <a href="{{ route('families.reports.cash-flow', $family) }}?from={{ $dateFrom }}&to={{ $dateTo }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <a href="{{ route('families.reports.cash-flow') }}?from={{ $dateFrom }}&to={{ $dateTo }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <span class="text-sm font-medium">Cash Flow</span>
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>
-                <a href="{{ route('families.reports.budget-vs-actual', $family) }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <a href="{{ route('families.reports.budget-vs-actual') }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <span class="text-sm font-medium">Budget vs Actual</span>
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>
-                <a href="{{ route('families.reports.savings', $family) }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <a href="{{ route('families.reports.savings') }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <span class="text-sm font-medium">Savings Report</span>
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>
@@ -402,7 +401,7 @@
                 <p class="text-sm text-muted-foreground mt-0.5">Project summary, funding, expenses, and timeline</p>
             </div>
             <div class="kt-card-content p-5 space-y-2">
-                <a href="{{ route('families.reports.project-summary', $family) }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <a href="{{ route('families.reports.project-summary') }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <span class="text-sm font-medium">Project Summary</span>
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>

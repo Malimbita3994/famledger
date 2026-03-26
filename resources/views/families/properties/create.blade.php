@@ -26,7 +26,7 @@
  }
 </style>
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.properties.assets', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+    <a href="{{ route('families.properties.assets') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
         Back to assets list
     </a>
@@ -43,7 +43,7 @@
         </div>
     @endif
 
-    <form action="{{ route('families.properties.store', $family) }}" method="POST" class="space-y-6">
+    <form action="{{ route('families.properties.store') }}" method="POST" class="space-y-6">
         @csrf
         <div class="kt-card p-5 lg:p-7.5">
             <div class="mb-5">
@@ -62,7 +62,7 @@
                             id="category_id"
                             name="category_id"
                             class="kt-select"
-                            onchange="window.location='{{ route('families.properties.create', $family) }}?category_id=' + this.value"
+                            onchange="window.location='{{ route('families.properties.create') }}?category_id=' + this.value"
                         >
                             @foreach ($categories as $cat)
                                 <option value="{{ $cat->id }}" @selected($selectedCategoryId == $cat->id)>{{ $cat->name }}</option>
@@ -205,7 +205,7 @@
             </div>
 
             <div class="flex justify-end gap-2 pt-4">
-                <a href="{{ route('families.properties.assets', $family) }}" class="kt-btn kt-btn-outline">Cancel</a>
+                <a href="{{ route('families.properties.assets') }}" class="kt-btn kt-btn-outline">Cancel</a>
                 <button type="submit" class="kt-btn kt-btn-primary">Save property</button>
             </div>
         </div>

@@ -17,7 +17,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reports.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.reports.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to Reports
     </a>
@@ -35,7 +35,7 @@
             <nav class="flex flex-wrap gap-1 mt-2 md:mt-0" role="tablist">
                 @foreach($tabs as $key => $tab)
                     @php
-                        $params = [$family, 'report' => $key, 'from' => $dateFrom ?? '', 'to' => $dateTo ?? ''];
+                        $params = ['report' => $key, 'from' => $dateFrom ?? '', 'to' => $dateTo ?? ''];
                         if ($key !== 'budget' && $key !== 'savings') {
                             $params['wallet_id'] = $walletId ?? '';
                         }
@@ -53,7 +53,7 @@
             </nav>
         </div>
         <div class="kt-card-content pt-4">
-            <form method="get" action="{{ route('families.reports.cash-flow', $family) }}" class="flex flex-wrap items-end gap-4">
+            <form method="get" action="{{ route('families.reports.cash-flow') }}" class="flex flex-wrap items-end gap-4">
                 <input type="hidden" name="report" value="{{ $report }}">
                 <div>
                     <label class="block text-sm text-muted-foreground mb-1">From</label>
@@ -94,7 +94,7 @@
                 </div>
                 @endif
                 <button type="submit" class="kt-btn kt-btn-primary">Apply</button>
-                <a href="{{ route('families.reports.cash-flow', [$family, 'report' => $report]) }}" class="kt-btn kt-btn-ghost">Reset</a>
+                <a href="{{ route('families.reports.cash-flow', ['report' => $report]) }}" class="kt-btn kt-btn-ghost">Reset</a>
             </form>
         </div>
     </div>
@@ -102,39 +102,38 @@
     {{-- Cash flow report --}}
     @if($report === 'cash-flow')
     <div class="cash-flow-kpi-grid">
-        <div class="cash-flow-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Opening balance</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-wallet"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ number_format($openingBalance ?? 0, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Start of period</div>
-        </div>
-        <div class="cash-flow-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total income</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-arrow-up"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-green-600">+ {{ number_format($totalIncome ?? 0, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">In period</div>
-        </div>
-        <div class="cash-flow-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total expenses</span>
-                <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-arrow-down"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-red-600">− {{ number_format($totalExpenses ?? 0, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">In period</div>
-        </div>
-        <div class="cash-flow-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Closing balance</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-safe"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ number_format($closingBalance ?? 0, 0) }} {{ $currency }}</div>
-            @php $netFlow = $netFlow ?? 0; @endphp
-            <div class="text-sm mt-2 {{ $netFlow >= 0 ? 'text-green-600' : 'text-red-600' }} font-medium">Net flow: {{ $netFlow >= 0 ? '+' : '' }}{{ number_format($netFlow, 0) }} {{ $currency }}</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="cash-flow-kpi-card"
+            label="Opening balance"
+            :value="number_format($openingBalance ?? 0, 0) . ' ' . $currency"
+        >
+            Start of period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="cash-flow-kpi-card"
+            label="Total income"
+            :value="'+' . ' ' . number_format($totalIncome ?? 0, 0) . ' ' . $currency"
+        >
+            In period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="cash-flow-kpi-card"
+            label="Total expenses"
+            :value="'− ' . number_format($totalExpenses ?? 0, 0) . ' ' . $currency"
+        >
+            In period
+        </x-famledger.pulse-stat-card>
+
+        @php $netFlow = $netFlow ?? 0; @endphp
+        <x-famledger.pulse-stat-card
+            class="cash-flow-kpi-card"
+            label="Closing balance"
+            :value="number_format($closingBalance ?? 0, 0) . ' ' . $currency"
+        >
+            Net flow: {{ $netFlow >= 0 ? '+' : '' }}{{ number_format($netFlow, 0) }} {{ $currency }}
+        </x-famledger.pulse-stat-card>
     </div>
     <div class="kt-card kt-card-grid min-w-full rounded-xl border border-border shadow-sm overflow-hidden bg-card">
         <div class="kt-card-header">
@@ -180,22 +179,21 @@
     {{-- Income report (cash-flow style cards) --}}
     @if($report === 'income')
     <div class="report-kpi-grid report-kpi-grid--2">
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total Income</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-arrow-up"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-green-600">{{ number_format($totalIncome ?? 0, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Selected period</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Sources</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie-simple"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ ($bySource ?? collect())->count() }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Income sources in period</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total Income"
+            :value="number_format($totalIncome ?? 0, 0) . ' ' . $currency"
+        >
+            Selected period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Sources"
+            :value="(string) ($bySource ?? collect())->count()"
+        >
+            Income sources in period
+        </x-famledger.pulse-stat-card>
     </div>
     <div class="kt-card kt-card-grid min-w-full rounded-xl border border-border shadow-sm overflow-hidden bg-card">
         <div class="kt-card-header border-b border-border">
@@ -223,22 +221,21 @@
     {{-- Expense report (cash-flow style cards) --}}
     @if($report === 'expense')
     <div class="report-kpi-grid report-kpi-grid--2">
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total Expenses</span>
-                <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-arrow-down"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-red-600">{{ number_format($totalExpenses ?? 0, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Selected period</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Categories</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie-simple"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ ($byCategory ?? collect())->count() }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Spending categories in period</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total Expenses"
+            :value="number_format($totalExpenses ?? 0, 0) . ' ' . $currency"
+        >
+            Selected period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Categories"
+            :value="(string) ($byCategory ?? collect())->count()"
+        >
+            Spending categories in period
+        </x-famledger.pulse-stat-card>
     </div>
     <div class="kt-card kt-card-grid min-w-full rounded-xl border border-border shadow-sm overflow-hidden bg-card">
         <div class="kt-card-header border-b border-border">
@@ -266,22 +263,21 @@
     {{-- Transfer report (cash-flow style: KPI row + table card) --}}
     @if($report === 'transfer')
     <div class="report-kpi-grid report-kpi-grid--2">
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total transferred</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-arrow-right-left"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ number_format($totalTransferred ?? 0, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">In selected period</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Transfers</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-document"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ ($transfers ?? collect())->count() }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Transactions in period</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total transferred"
+            :value="number_format($totalTransferred ?? 0, 0) . ' ' . $currency"
+        >
+            In selected period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Transfers"
+            :value="(string) ($transfers ?? collect())->count()"
+        >
+            Transactions in period
+        </x-famledger.pulse-stat-card>
     </div>
     <div class="kt-card kt-card-grid min-w-full rounded-xl border border-border shadow-sm overflow-hidden bg-card">
         <div class="kt-card-header border-b border-border">
@@ -331,22 +327,21 @@
         $budgetTotalUsed = collect($budgetRows ?? [])->sum('used');
     @endphp
     <div class="report-kpi-grid report-kpi-grid--2">
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Budgets</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie-simple"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $budgetCount }}</div>
-            <div class="text-muted-foreground text-sm mt-2">In selected period</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total planned</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-wallet"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ number_format($budgetTotalPlanned, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">{{ number_format($budgetTotalUsed, 0) }} {{ $currency }} used</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Budgets"
+            :value="(string) $budgetCount"
+        >
+            In selected period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total planned"
+            :value="number_format($budgetTotalPlanned, 0) . ' ' . $currency"
+        >
+            {{ number_format($budgetTotalUsed, 0) }} {{ $currency }} used
+        </x-famledger.pulse-stat-card>
     </div>
     <div class="kt-card kt-card-grid min-w-full rounded-xl border border-border shadow-sm overflow-hidden bg-card">
         <div class="kt-card-header border-b border-border">
@@ -391,22 +386,21 @@
         $savingsTotalTarget = collect($savingsRows ?? [])->sum('target');
     @endphp
     <div class="report-kpi-grid report-kpi-grid--2">
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total saved</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-dollar"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-green-600">{{ number_format($savingsTotalSaved, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Across all goals</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Goals</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-safe"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $savingsGoalCount }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Target: {{ number_format($savingsTotalTarget, 0) }} {{ $currency }}</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total saved"
+            :value="number_format($savingsTotalSaved, 0) . ' ' . $currency"
+        >
+            Across all goals
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Goals"
+            :value="(string) $savingsGoalCount"
+        >
+            Target: {{ number_format($savingsTotalTarget, 0) }} {{ $currency }}
+        </x-famledger.pulse-stat-card>
     </div>
     <div class="kt-card kt-card-grid min-w-full rounded-xl border border-border shadow-sm overflow-hidden bg-card">
         <div class="kt-card-header border-b border-border">

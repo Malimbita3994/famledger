@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reports.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.reports.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to Reports
     </a>
@@ -24,22 +24,21 @@
         $savingsTotalTarget = collect($rows ?? [])->sum('target');
     @endphp
     <div class="report-kpi-grid report-kpi-grid--2">
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total saved</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-dollar"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-green-600">{{ number_format($savingsTotalSaved, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Across all goals</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Goals</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-safe"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $savingsGoalCount }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Target: {{ number_format($savingsTotalTarget, 0) }} {{ $currency }}</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total saved"
+            :value="number_format($savingsTotalSaved, 0) . ' ' . $currency"
+        >
+            Across all goals
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Goals"
+            :value="(string) $savingsGoalCount"
+        >
+            Target: {{ number_format($savingsTotalTarget, 0) }} {{ $currency }}
+        </x-famledger.pulse-stat-card>
     </div>
 
     {{-- Content card (same as cash flow summary card) --}}

@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reports.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.reports.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to Reports
     </a>
@@ -23,7 +23,7 @@
             <h3 class="kt-card-title text-sm">Filter report</h3>
         </div>
         <div class="kt-card-content pt-4">
-            <form method="get" action="{{ route('families.reports.income', $family) }}" class="flex flex-wrap items-end gap-4">
+            <form method="get" action="{{ route('families.reports.income') }}" class="flex flex-wrap items-end gap-4">
                 <div>
                     <label class="block text-sm text-muted-foreground mb-1">From</label>
                     <input type="date" name="from" value="{{ $dateFrom }}" class="kt-input rounded-lg border border-border px-3 py-2 text-sm min-w-[140px]">
@@ -42,29 +42,28 @@
                     </select>
                 </div>
                 <button type="submit" class="kt-btn kt-btn-primary">Apply</button>
-                <a href="{{ route('families.reports.income', $family) }}" class="kt-btn kt-btn-ghost">Reset</a>
+                <a href="{{ route('families.reports.income') }}" class="kt-btn kt-btn-ghost">Reset</a>
             </form>
         </div>
     </div>
 
     {{-- KPI cards (cash-flow style: label + icon, value, subtitle) --}}
     <div class="report-kpi-grid report-kpi-grid--2">
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total Income</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-arrow-up"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-green-600">{{ number_format($totalIncome, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Selected period</div>
-        </div>
-        <div class="report-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Category groups</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie-simple"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ $bySource->count() }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Income category groups in period</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Total Income"
+            :value="number_format($totalIncome, 0) . ' ' . $currency"
+        >
+            Selected period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="report-kpi-card"
+            label="Category groups"
+            :value="(string) $bySource->count()"
+        >
+            Income category groups in period
+        </x-famledger.pulse-stat-card>
     </div>
 
     {{-- Content card (same as cash flow summary card) --}}

@@ -38,7 +38,7 @@
 }
 </style>
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
     </a>
@@ -48,7 +48,7 @@
             <h1 class="font-semibold text-lg text-mono">Projects Funding</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Allocate funds from family wallets to projects.</p>
         </div>
-        <a href="{{ route('families.projects.funding.create', $family) }}" class="kt-btn kt-btn-primary">
+        <a href="{{ route('families.projects.funding.create') }}" class="kt-btn kt-btn-primary">
             <i class="ki-filled ki-plus"></i>
             Add funding
         </a>
@@ -62,36 +62,23 @@
 
     @if ($projects->isNotEmpty())
         <div class="projects-funding-kpi-grid">
-            <div class="projects-funding-kpi-card rounded-xl border border-border bg-card px-4 py-3 flex items-center justify-between gap-3">
-                <div class="flex flex-col gap-0.5">
-                    <span class="text-xs font-medium text-muted-foreground uppercase">Total budget</span>
-                    <span class="text-sm font-semibold text-foreground tabular-nums">{{ number_format($totalBudget, 0) }} {{ $currency }}</span>
-                </div>
-                <span class="inline-flex items-center justify-center rounded-full bg-muted size-9">
-                    <i class="ki-filled ki-briefcase text-muted-foreground"></i>
-                </span>
-            </div>
-            <div class="projects-funding-kpi-card rounded-xl border border-border bg-card px-4 py-3 flex items-center justify-between gap-3">
-                <div class="flex flex-col gap-0.5">
-                    <span class="text-xs font-medium text-muted-foreground uppercase">Total funded</span>
-                    <span class="text-sm font-semibold text-foreground tabular-nums">{{ number_format($totalFunding, 0) }} {{ $currency }}</span>
-                </div>
-                <span class="inline-flex items-center justify-center rounded-full bg-primary/5 size-9">
-                    <i class="ki-filled ki-wallet text-primary"></i>
-                </span>
-            </div>
-            <div class="projects-funding-kpi-card rounded-xl border border-border bg-card px-4 py-3 flex items-center justify-between gap-3">
-                @php
-                    $remainingAll = max(0, $totalBudget - $totalExpenses);
-                @endphp
-                <div class="flex flex-col gap-0.5">
-                    <span class="text-xs font-medium text-muted-foreground uppercase">Remaining vs budget</span>
-                    <span class="text-sm font-semibold text-foreground tabular-nums">{{ number_format($remainingAll, 0) }} {{ $currency }}</span>
-                </div>
-                <span class="inline-flex items-center justify-center rounded-full bg-success/5 size-9">
-                    <i class="ki-filled ki-chart-line-up text-success"></i>
-                </span>
-            </div>
+            <x-famledger.pulse-stat-card
+                label="Total budget"
+                :value="number_format($totalBudget, 0) . ' ' . $currency"
+            />
+
+            <x-famledger.pulse-stat-card
+                label="Total funded"
+                :value="number_format($totalFunding, 0) . ' ' . $currency"
+            />
+
+            @php
+                $remainingAll = max(0, $totalBudget - $totalExpenses);
+            @endphp
+            <x-famledger.pulse-stat-card
+                label="Remaining vs budget"
+                :value="number_format($remainingAll, 0) . ' ' . $currency"
+            />
         </div>
     @endif
 
@@ -101,7 +88,7 @@
                 <div class="py-12 text-center text-muted-foreground">
                     <i class="ki-filled ki-wallet text-4xl mb-2"></i>
                     <p class="text-sm">No projects to fund yet.</p>
-                    <a href="{{ route('families.projects.create', $family) }}" class="kt-btn kt-btn-outline mt-4">Create project</a>
+                    <a href="{{ route('families.projects.create') }}" class="kt-btn kt-btn-outline mt-4">Create project</a>
                 </div>
             @else
                 <div class="kt-scrollable-x-auto">
@@ -113,7 +100,7 @@
                                 <th class="min-w-[120px]">Funded</th>
                                 <th class="min-w-[120px]">Expenses</th>
                                 <th class="min-w-[160px]">Funding progress</th>
-                                <th class="w-[120px]">Actions</th>
+                                <th class="w-[60px]">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -126,12 +113,12 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        <a href="{{ route('families.projects.show', [$family, $project]) }}" class="flex flex-col gap-0.5 hover:text-primary">
+                                        <button type="button" class="flex flex-col gap-0.5 hover:text-primary text-start max-w-full bg-transparent border-0 p-0 cursor-pointer font-inherit" data-project-funding-index-detail="{{ $project->id }}">
                                             <span class="text-sm font-medium text-mono">{{ $project->name }}</span>
                                             @if ($project->description)
                                                 <span class="text-xs text-muted-foreground truncate max-w-[260px]">{{ Str::limit($project->description, 80) }}</span>
                                             @endif
-                                        </a>
+                                        </button>
                                     </td>
                                     <td class="tabular-nums text-sm">{{ number_format($planned, 0) }} {{ $currency }}</td>
                                     <td class="tabular-nums text-sm text-success">{{ number_format($fundingSum, 0) }} {{ $currency }}</td>
@@ -145,9 +132,38 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <a href="{{ route('families.projects.funding.create', $family) }}?project_id={{ $project->id }}" class="kt-btn kt-btn-xs kt-btn-primary">
-                                            Add funding
-                                        </a>
+                                        <div class="kt-menu flex-inline" data-kt-menu="true">
+                                            <div class="kt-menu-item" data-kt-menu-item-offset="0, 10px" data-kt-menu-item-placement="bottom-end" data-kt-menu-item-toggle="dropdown" data-kt-menu-item-trigger="click">
+                                                <button class="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" type="button" aria-label="{{ __('Actions') }}">
+                                                    <i class="ki-filled ki-dots-vertical text-lg"></i>
+                                                </button>
+                                                <div class="kt-menu-dropdown kt-menu-default w-full max-w-[175px]" data-kt-menu-dismiss="true">
+                                                    <div class="kt-menu-item">
+                                                        <button type="button" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer" data-project-funding-index-detail="{{ $project->id }}">
+                                                            <span class="kt-menu-icon"><i class="ki-filled ki-eye"></i></span>
+                                                            <span class="kt-menu-title">{{ __('View') }}</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="kt-menu-item">
+                                                        <a class="kt-menu-link" href="{{ route('families.projects.edit', $project) }}">
+                                                            <span class="kt-menu-icon"><i class="ki-filled ki-pencil"></i></span>
+                                                            <span class="kt-menu-title">{{ __('Edit') }}</span>
+                                                        </a>
+                                                    </div>
+                                                    <div class="kt-menu-separator"></div>
+                                                    <div class="kt-menu-item">
+                                                        <form action="{{ route('families.projects.destroy', $project) }}" method="POST" class="js-confirm-delete inline-block w-full" data-confirm-title="{{ __('Delete this project?') }}" data-confirm-message="{{ __('This cannot be undone. Projects with funding or expenses cannot be deleted.') }}">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer text-destructive hover:!bg-destructive/10">
+                                                                <span class="kt-menu-icon"><i class="ki-filled ki-trash"></i></span>
+                                                                <span class="kt-menu-title">{{ __('Delete') }}</span>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -158,4 +174,13 @@
         </div>
     </div>
 </div>
+
+<x-famledger.entity-detail-modal
+    id="project_funding_index_detail_modal"
+    :title="__('Project details')"
+    :payloads="$projectFundingIndexModalPayloads"
+    :open-on-load="null"
+    variant="grid4"
+    trigger-attribute="data-project-funding-index-detail"
+/>
 @endsection

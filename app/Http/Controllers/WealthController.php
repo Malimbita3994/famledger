@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
 use App\Models\FamilyLiability;
 use App\Models\FamilyWealthTrend;
@@ -16,12 +17,7 @@ use Illuminate\View\View;
 
 class WealthController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family): View
     {

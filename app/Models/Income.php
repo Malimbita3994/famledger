@@ -11,16 +11,34 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Income extends Model
 {
+    public const SOURCE_ENTITY_EMPLOYER = 'employer';
+
+    public const SOURCE_ENTITY_TENANT = 'tenant';
+
+    public const SOURCE_ENTITY_CLIENT = 'client';
+
+    public const SOURCE_ENTITY_OTHER = 'other';
+
+    public const RECURRING_WEEKLY = 'weekly';
+
+    public const RECURRING_MONTHLY = 'monthly';
+
     protected $fillable = [
         'family_id',
         'wallet_id',
         'category_id',
         'family_liability_id',
+        'linked_project_id',
+        'linked_property_id',
         'amount',
         'currency_code',
         'source',
+        'source_entity_type',
         'received_date',
         'notes',
+        'is_recurring',
+        'recurring_frequency',
+        'is_taxable',
         'received_by',
         'created_by',
         'reconciliation_id',
@@ -31,6 +49,26 @@ class Income extends Model
         return [
             'amount' => 'decimal:2',
             'received_date' => 'date',
+            'is_recurring' => 'boolean',
+            'is_taxable' => 'boolean',
+        ];
+    }
+
+    public static function sourceEntityTypes(): array
+    {
+        return [
+            self::SOURCE_ENTITY_EMPLOYER => __('Employer'),
+            self::SOURCE_ENTITY_TENANT => __('Tenant'),
+            self::SOURCE_ENTITY_CLIENT => __('Client'),
+            self::SOURCE_ENTITY_OTHER => __('Other'),
+        ];
+    }
+
+    public static function recurringFrequencies(): array
+    {
+        return [
+            self::RECURRING_WEEKLY => __('Weekly'),
+            self::RECURRING_MONTHLY => __('Monthly'),
         ];
     }
 
@@ -62,6 +100,16 @@ class Income extends Model
     public function familyLiability(): BelongsTo
     {
         return $this->belongsTo(FamilyLiability::class, 'family_liability_id');
+    }
+
+    public function linkedProject(): BelongsTo
+    {
+        return $this->belongsTo(Project::class, 'linked_project_id');
+    }
+
+    public function linkedProperty(): BelongsTo
+    {
+        return $this->belongsTo(Property::class, 'linked_property_id');
     }
 
     public function reconciliation(): BelongsTo

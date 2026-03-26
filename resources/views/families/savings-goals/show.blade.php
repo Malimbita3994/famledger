@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.savings-goals.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.savings-goals.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to savings goals
     </a>
@@ -28,15 +28,15 @@
             <div class="kt-card-content flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <h1 class="text-xl font-semibold text-foreground">{{ $savingsGoal->name }}</h1>
-                    <p class="text-sm text-muted-foreground mt-0.5">Wallet: <a href="{{ route('families.wallets.show', [$family, $savingsGoal->wallet]) }}" class="text-primary hover:underline">{{ $savingsGoal->wallet->name }}</a></p>
+                    <p class="text-sm text-muted-foreground mt-0.5">Wallet: <a href="{{ route('families.wallets.show', $savingsGoal->wallet) }}" class="text-primary hover:underline">{{ $savingsGoal->wallet->name }}</a></p>
                     @if ($savingsGoal->target_date)
                         <p class="text-xs text-muted-foreground mt-1">Target by {{ $savingsGoal->target_date->format('M j, Y') }}</p>
                     @endif
                 </div>
                 <div class="flex items-center gap-2">
-                    <a href="{{ route('families.savings-goals.contribute', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-primary kt-btn-sm">Contribute</a>
-                    <a href="{{ route('families.savings-goals.allocate', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-outline kt-btn-sm">Allocate to budget</a>
-                    <a href="{{ route('families.savings-goals.edit', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-ghost kt-btn-sm">Edit</a>
+                    <a href="{{ route('families.savings-goals.contribute', $savingsGoal) }}" class="kt-btn kt-btn-primary kt-btn-sm">Contribute</a>
+                    <a href="{{ route('families.savings-goals.allocate', $savingsGoal) }}" class="kt-btn kt-btn-outline kt-btn-sm">Allocate to budget</a>
+                    <a href="{{ route('families.savings-goals.edit', $savingsGoal) }}" class="kt-btn kt-btn-ghost kt-btn-sm">Edit</a>
                 </div>
             </div>
         </div>
@@ -74,7 +74,7 @@
         <div class="kt-card">
             <div class="kt-card-header flex-wrap gap-2">
                 <h3 class="kt-card-title text-sm">Contributions</h3>
-                <a href="{{ route('families.savings-goals.contribute', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-sm kt-btn-ghost">Add contribution</a>
+                <a href="{{ route('families.savings-goals.contribute', $savingsGoal) }}" class="kt-btn kt-btn-sm kt-btn-ghost">Add contribution</a>
             </div>
             <div class="kt-card-content p-0">
                 @if ($contributions->isEmpty())

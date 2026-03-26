@@ -160,6 +160,14 @@ class ExpenseCategorySeeder extends Seeder
             'Utilities - Trash',
             'Utilities - Other',
 
+            // Construction (project / building materials + labor)
+            'Construction - Cement',
+            'Construction - Labor',
+            'Construction - Iron sheets',
+            'Construction - Contractor payments',
+            'Construction - Materials - Other',
+            'Construction - Other',
+
             // Other / custom
             'Other - Category 1',
             'Other - Category 2',

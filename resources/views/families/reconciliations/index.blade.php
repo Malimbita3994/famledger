@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
     </a>
@@ -15,7 +15,7 @@
             <h1 class="font-medium text-lg text-mono">Reconciliation</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Verify each wallet’s system balance matches the actual balance. Trust but verify.</p>
         </div>
-        <a href="{{ route('families.reconciliations.create', $family) }}" class="kt-btn kt-btn-primary">
+        <a href="{{ route('families.reconciliations.create') }}" class="kt-btn kt-btn-primary">
             <i class="ki-filled ki-check-circle"></i>
             Reconcile wallet
         </a>
@@ -37,7 +37,7 @@
     <div class="kt-card kt-card-grid min-w-full">
         <div class="kt-card-header flex-wrap gap-2">
             <h3 class="kt-card-title text-sm">Reconciliation history</h3>
-            <form method="get" action="{{ route('families.reconciliations.index', $family) }}" class="flex items-center gap-2">
+            <form method="get" action="{{ route('families.reconciliations.index') }}" class="flex items-center gap-2">
                 <label for="wallet_id" class="text-sm text-muted-foreground">Wallet</label>
                 <select name="wallet_id" id="wallet_id" class="kt-select kt-select-sm w-auto" onchange="this.form.submit()">
                     <option value="">All wallets</option>
@@ -53,7 +53,7 @@
                     <i class="ki-filled ki-check-circle text-4xl mb-2"></i>
                     <p class="text-sm">No reconciliations yet.</p>
                     <p class="text-xs mt-1">Reconcile a wallet to verify system balance matches actual (e.g. cash count or bank balance).</p>
-                    <a href="{{ route('families.reconciliations.create', $family) }}" class="kt-btn kt-btn-outline mt-4">Reconcile wallet</a>
+                    <a href="{{ route('families.reconciliations.create') }}" class="kt-btn kt-btn-outline mt-4">Reconcile wallet</a>
                 </div>
             @else
                 <div class="kt-scrollable-x-auto">
@@ -73,7 +73,7 @@
                             <tr>
                                 <td class="text-foreground">{{ $rec->reconciled_at->format('M j, Y H:i') }}</td>
                                 <td>
-                                    <a href="{{ route('families.wallets.show', [$family, $rec->wallet]) }}" class="text-primary hover:underline">{{ $rec->wallet->name }}</a>
+                                    <a href="{{ route('families.wallets.show', $rec->wallet) }}" class="text-primary hover:underline">{{ $rec->wallet->name }}</a>
                                     <span class="text-muted-foreground text-xs">({{ $rec->wallet->currency_code }})</span>
                                 </td>
                                 <td class="tabular-nums">{{ number_format($rec->system_balance, 2) }} {{ $rec->wallet->currency_code }}</td>

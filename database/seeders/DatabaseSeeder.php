@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -24,12 +25,18 @@ class DatabaseSeeder extends Seeder
             // Optional: replace all landing / in-app FAQs (destructive): FamLedgerLandingFaqSeeder::class,
         ]);
 
-        // User::factory(10)->create();
-
-        $user = User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-        $user->assignRole('Super Admin');
+        // Demo login (idempotent — safe to re-run; resets password to match below)
+        $user = User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'status' => User::STATUS_ACTIVE,
+            ]
+        );
+        if (! $user->hasRole('Super Admin')) {
+            $user->assignRole('Super Admin');
+        }
     }
 }

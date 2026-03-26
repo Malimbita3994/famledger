@@ -1,0 +1,76 @@
+/**
+ * FamLedger — native <select class="kt-select">
+ *
+ * Metronic’s .kt-select uses display:flex and padding-block:0, which clips the
+ * selected option label in Chrome/Edge (Windows). Custom kt-select widgets are
+ * not <select> elements and are unaffected.
+ *
+ * Do not style native selects with the CSS `background:` shorthand on the same
+ * ruleset as .kt-select — it clears background-image (chevron). Use
+ * background-color only for theme overrides.
+ */
+
+select.kt-select {
+  display: block !important;
+  width: 100%;
+  box-sizing: border-box;
+  height: auto !important;
+  min-height: 2.75rem;
+  padding-block: 0.6rem !important;
+  padding-inline: 0.875rem 2.25rem !important;
+  font-size: inherit;
+  line-height: 1.5 !important;
+  align-items: unset !important;
+  gap: unset !important;
+  -webkit-text-fill-color: currentcolor;
+  color: var(--foreground) !important;
+  background-color: var(--background) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%239f9fa9' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-size: 14px 11px !important;
+  background-position: right 0.65rem center !important;
+  border-radius: calc(var(--radius, 0.5rem) - 2px);
+}
+
+select.kt-select.kt-select-sm {
+  min-height: calc(var(--spacing, 0.25rem) * 7);
+  padding-block: 0.35rem !important;
+  padding-inline: calc(var(--spacing, 0.25rem) * 2.5) calc(var(--spacing, 0.25rem) * 5) !important;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.4 !important;
+  background-position: right 0.5rem center !important;
+}
+
+select.kt-select.kt-select-lg {
+  min-height: calc(var(--spacing, 0.25rem) * 10);
+  padding-block: 0.5rem !important;
+  padding-inline: calc(var(--spacing, 0.25rem) * 4) calc(var(--spacing, 0.25rem) * 8) !important;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.45 !important;
+  background-position: right 0.6rem center !important;
+}
+
+select.kt-select[multiple],
+select.kt-select[size]:not([size="1"]) {
+  padding-inline-end: 0.875rem !important;
+  background-image: none !important;
+  min-height: unset;
+  height: auto !important;
+}
+
+select.kt-select:-moz-focusring {
+  color: var(--foreground) !important;
+  text-shadow: 0 0 0;
+}
+
+[dir="rtl"] select.kt-select {
+  background-position: left 0.65rem center !important;
+}
+
+[dir="rtl"] select.kt-select.kt-select-sm {
+  background-position: left 0.5rem center !important;
+}
+
+[dir="rtl"] select.kt-select.kt-select-lg {
+  background-position: left 0.75rem center !important;
+}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\ExpenseCategory;
 use App\Models\Family;
 use App\Models\IncomeCategory;
@@ -13,12 +14,7 @@ use Illuminate\Validation\Rule;
 
 class ReconciliationController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family, Request $request)
     {
@@ -51,7 +47,7 @@ class ReconciliationController extends Controller
 
         if ($wallets->isEmpty()) {
             return redirect()
-                ->route('families.wallets.index', $family)
+                ->route('families.wallets.index')
                 ->with('error', 'Create at least one wallet before reconciling.');
         }
 
@@ -150,7 +146,7 @@ class ReconciliationController extends Controller
                 : 'Reconciled. Shortage recorded as expense adjustment; wallet balance updated.');
 
         return redirect()
-            ->route('families.reconciliations.index', $family)
+            ->route('families.reconciliations.index')
             ->with('success', $message);
     }
 }

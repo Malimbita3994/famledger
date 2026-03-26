@@ -76,7 +76,9 @@ class InviteJoinController extends Controller
             }
             if ($invitation->family->members()->where('user_id', $user->id)->exists()) {
                 $invitation->update(['status' => 'accepted', 'accepted_at' => now()]);
-                return redirect()->route('families.show', $invitation->family)
+                session()->put('current_family_id', $invitation->family_id);
+
+                return redirect()->route('families.overview')
                     ->with('success', 'You are already a member of this family.');
             }
 
@@ -92,15 +94,18 @@ class InviteJoinController extends Controller
                 'joined_at'   => now(),
             ]);
             $invitation->update(['status' => 'accepted', 'accepted_at' => now()]);
+            session()->put('current_family_id', $invitation->family_id);
 
-            return redirect()->route('families.show', $invitation->family)
+            return redirect()->route('families.overview')
                 ->with('success', 'You have joined ' . $invitation->family->name . ' as ' . $role->name . '.');
         }
 
         $family = Family::where('invite_token', $token)->first();
         if ($family) {
             if ($family->members()->where('user_id', $user->id)->exists()) {
-                return redirect()->route('families.show', $family)
+                session()->put('current_family_id', $family->id);
+
+                return redirect()->route('families.overview')
                     ->with('success', 'You are already a member of this family.');
             }
 
@@ -120,7 +125,9 @@ class InviteJoinController extends Controller
                 'joined_at'   => now(),
             ]);
 
-            return redirect()->route('families.show', $family)
+            session()->put('current_family_id', $family->id);
+
+            return redirect()->route('families.overview')
                 ->with('success', 'You have joined ' . $family->name . '.');
         }
 

@@ -12,6 +12,7 @@ use App\Models\PropertyMaintenance;
 use App\Models\PropertyDocument;
 use App\Models\PropertyValuation;
 use App\Models\PropertyDepreciation;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -84,9 +85,39 @@ class PropertyController extends Controller
             ->paginate(50)
             ->withQueryString();
 
+        $propertyModalPayloads = $properties->isEmpty()
+            ? []
+            : $properties->getCollection()->mapWithKeys(function (Property $p) use ($family) {
+                return [$p->id => [
+                    'title' => $p->name,
+                    'rows' => $p->detailModalRows($family),
+                ]];
+            })->all();
+
+        $openPropertyModalId = null;
+        $flashOpenId = $request->session()->pull('open_property_modal');
+        if ($flashOpenId) {
+            $pid = (int) $flashOpenId;
+            if ($pid > 0) {
+                $openProperty = Property::with(['category', 'subcategory'])
+                    ->where('family_id', $family->id)
+                    ->whereKey($pid)
+                    ->first();
+                if ($openProperty) {
+                    $propertyModalPayloads[$pid] = [
+                        'title' => $openProperty->name,
+                        'rows' => $openProperty->detailModalRows($family),
+                    ];
+                    $openPropertyModalId = $pid;
+                }
+            }
+        }
+
         return view('families.properties.assets', [
             'family' => $family,
             'properties' => $properties,
+            'propertyModalPayloads' => $propertyModalPayloads,
+            'openPropertyModalId' => $openPropertyModalId,
             'categories' => $categories,
             'filters' => [
                 'category_id' => $categoryId,
@@ -124,7 +155,7 @@ class PropertyController extends Controller
         ]);
     }
 
-    public function edit(Family $family, Property $property): View
+    public function edit(Property $property, Family $family): View
     {
         $this->authorizePropertyManager($family);
 
@@ -151,7 +182,12 @@ class PropertyController extends Controller
         ]);
     }
 
-    public function show(Family $family, Property $property): View
+    /**
+     * Property details are shown only via modal on the assets list. This URL redirects there and opens the modal (session flash).
+     *
+     * Route params order: {property} from URI, then session "family" from BindAccountFamilyFromSession.
+     */
+    public function show(Property $property, Family $family): RedirectResponse
     {
         $this->authorizePropertyManager($family);
 
@@ -159,15 +195,12 @@ class PropertyController extends Controller
             abort(404);
         }
 
-        $property->load(['category', 'subcategory']);
-
-        return view('families.properties.show', [
-            'family' => $family,
-            'property' => $property,
-        ]);
+        return redirect()
+            ->route('families.properties.assets')
+            ->with('open_property_modal', $property->id);
     }
 
-    public function update(Request $request, Family $family, Property $property)
+    public function update(Request $request, Property $property, Family $family)
     {
         $this->authorizePropertyManager($family);
 
@@ -264,7 +297,10 @@ class PropertyController extends Controller
             }
         }
 
-        return redirect()->route('families.properties.show', [$family, $property])->with('success', 'Property updated.');
+        return redirect()
+            ->route('families.properties.assets')
+            ->with('success', 'Property updated.')
+            ->with('open_property_modal', $property->id);
     }
     public function store(Request $request, Family $family)
     {
@@ -357,7 +393,7 @@ class PropertyController extends Controller
             }
         }
 
-        return redirect()->route('families.properties.assets', $family)->with('success', 'Property created.');
+        return redirect()->route('families.properties.assets')->with('success', 'Property created.');
     }
 
     public function maintenance(Request $request, Family $family): View
@@ -588,7 +624,7 @@ class PropertyController extends Controller
         ]);
 
         return redirect()
-            ->route('families.properties.documents', $family)
+            ->route('families.properties.documents')
             ->with('success', 'Document uploaded.');
     }
 
@@ -629,7 +665,7 @@ class PropertyController extends Controller
         ]);
 
         return redirect()
-            ->route('families.properties.valuations', $family)
+            ->route('families.properties.valuations')
             ->with('success', 'Valuation recorded.');
     }
 
@@ -664,7 +700,7 @@ class PropertyController extends Controller
         ]);
 
         return redirect()
-            ->route('families.properties.maintenance', $family)
+            ->route('families.properties.maintenance')
             ->with('success', 'Maintenance record added.');
     }
 
@@ -713,7 +749,7 @@ class PropertyController extends Controller
         );
 
         return redirect()
-            ->route('families.properties.depreciation', $family)
+            ->route('families.properties.depreciation')
             ->with('success', 'Depreciation updated.');
     }
 }

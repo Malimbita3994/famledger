@@ -18,6 +18,11 @@ use App\Models\Wallet;
 use App\Models\WalletReconciliation;
 use App\Models\ProjectFunding;
 use App\Observers\AuditLogObserver;
+use App\Policies\FamilyPolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -36,6 +41,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('auth-api', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
+        Gate::policy(Family::class, FamilyPolicy::class);
+
         View::composer('layouts.metronic', function ($view) {
             $key = 'metronic_layout_data';
             $data = request()->attributes->get($key);

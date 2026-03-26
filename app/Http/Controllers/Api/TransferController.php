@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Concerns\AuthorizesFamilyMember;
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Http\Controllers\Controller;
 use App\Models\Family;
+use App\Services\WalletBalanceGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class TransferController extends Controller
@@ -74,36 +76,42 @@ class TransferController extends Controller
             return response()->json(['message' => 'Both wallets must use the same currency.'], 422);
         }
 
-        if (! $fromWallet->canAffordDebit((float) $validated['amount'])) {
+        return DB::transaction(function () use ($family, $validated, $fromWallet, $toWallet) {
+            $locked = WalletBalanceGuard::lockWalletsForUpdate([$fromWallet->id, $toWallet->id]);
+            $from = $locked->get($fromWallet->id);
+            if (! $from || ! $from->canAffordDebit((float) $validated['amount'])) {
+                $available = $from ? $from->balance : 0;
+
+                return response()->json([
+                    'message' => 'Insufficient funds in the source wallet. Available: '
+                        .number_format($available, 2).' '.$fromWallet->currency_code,
+                ], 422);
+            }
+
+            $transfer = $family->transfers()->create([
+                'from_wallet_id' => $validated['from_wallet_id'],
+                'to_wallet_id' => $validated['to_wallet_id'],
+                'amount' => $validated['amount'],
+                'currency_code' => strtoupper($validated['currency_code']),
+                'transfer_date' => $validated['transfer_date'],
+                'description' => $validated['description'] ?? null,
+                'reference' => $validated['reference'] ?? null,
+                'created_by' => auth()->id(),
+            ]);
+
+            $transfer->load(['fromWallet:id,name,currency_code', 'toWallet:id,name,currency_code']);
+
             return response()->json([
-                'message' => 'Insufficient funds in the source wallet. Available: '
-                    .number_format($fromWallet->balance, 2).' '.$fromWallet->currency_code,
-            ], 422);
-        }
-
-        $transfer = $family->transfers()->create([
-            'from_wallet_id' => $validated['from_wallet_id'],
-            'to_wallet_id' => $validated['to_wallet_id'],
-            'amount' => $validated['amount'],
-            'currency_code' => strtoupper($validated['currency_code']),
-            'transfer_date' => $validated['transfer_date'],
-            'description' => $validated['description'] ?? null,
-            'reference' => $validated['reference'] ?? null,
-            'created_by' => auth()->id(),
-        ]);
-
-        $transfer->load(['fromWallet:id,name,currency_code', 'toWallet:id,name,currency_code']);
-
-        return response()->json([
-            'message' => 'Transfer recorded.',
-            'transfer' => [
-                'id' => $transfer->id,
-                'amount' => (float) $transfer->amount,
-                'currency_code' => $transfer->currency_code,
-                'transfer_date' => $transfer->transfer_date?->format('Y-m-d'),
-                'from_wallet' => ['id' => $transfer->fromWallet->id, 'name' => $transfer->fromWallet->name],
-                'to_wallet' => ['id' => $transfer->toWallet->id, 'name' => $transfer->toWallet->name],
-            ],
-        ], 201);
+                'message' => 'Transfer recorded.',
+                'transfer' => [
+                    'id' => $transfer->id,
+                    'amount' => (float) $transfer->amount,
+                    'currency_code' => $transfer->currency_code,
+                    'transfer_date' => $transfer->transfer_date?->format('Y-m-d'),
+                    'from_wallet' => ['id' => $transfer->fromWallet->id, 'name' => $transfer->fromWallet->name],
+                    'to_wallet' => ['id' => $transfer->toWallet->id, 'name' => $transfer->toWallet->name],
+                ],
+            ], 201);
+        });
     }
 }

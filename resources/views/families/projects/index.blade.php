@@ -5,26 +5,30 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
     </a>
 
     <div class="flex flex-col gap-5 lg:gap-7.5">
-        <div class="flex flex-wrap items-center gap-5 justify-between">
-            <div>
-                <h1 class="font-semibold text-lg text-mono">Family Projects</h1>
-                <p class="text-sm text-muted-foreground mt-0.5">Goal-driven initiatives with budget, funding, and timeline.</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('families.projects.funding.create', $family) }}" class="kt-btn kt-btn-outline">
-                    <i class="ki-filled ki-wallet"></i>
-                    Add funding
-                </a>
-                <a href="{{ route('families.projects.create', $family) }}" class="kt-btn kt-btn-primary">
-                    <i class="ki-filled ki-plus"></i>
-                    New project
-                </a>
+        {{-- Pulse header --}}
+        <div class="kt-card fin-pulse-kt-card overflow-hidden">
+            <div class="kt-card-content flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <div class="min-w-0">
+                    <div class="fin-pulse-eyebrow mb-1">Workspace</div>
+                    <h1 class="fin-pulse-title truncate">Family Projects</h1>
+                    <p class="text-sm text-muted-foreground mt-0.5">Goal-driven initiatives with budget, funding, and timeline.</p>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <x-famledger.pulse-button variant="outline" :href="route('families.projects.funding.create')" size="sm">
+                        <i class="ki-filled ki-wallet"></i>
+                        Add funding
+                    </x-famledger.pulse-button>
+                    <x-famledger.pulse-button variant="primary" :href="route('families.projects.create')" size="sm">
+                        <i class="ki-filled ki-plus"></i>
+                        New project
+                    </x-famledger.pulse-button>
+                </div>
             </div>
         </div>
 
@@ -42,19 +46,39 @@
         @endif
 
         {{-- Filters --}}
-        <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
-            <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs text-muted-foreground mr-1">Filter:</span>
-                <a href="{{ route('families.projects.index', [$family, 'filter' => 'all']) }}" class="kt-btn kt-btn-xs {{ ($filter ?? 'all') === 'all' ? 'kt-btn-primary' : 'kt-btn-outline' }}">All</a>
-                <a href="{{ route('families.projects.index', [$family, 'filter' => 'active']) }}" class="kt-btn kt-btn-xs {{ ($filter ?? '') === 'active' ? 'kt-btn-primary' : 'kt-btn-outline' }}">Active</a>
-                <a href="{{ route('families.projects.index', [$family, 'filter' => 'completed']) }}" class="kt-btn kt-btn-xs {{ ($filter ?? '') === 'completed' ? 'kt-btn-primary' : 'kt-btn-outline' }}">Completed</a>
-                <a href="{{ route('families.projects.index', [$family, 'filter' => 'planning']) }}" class="kt-btn kt-btn-xs {{ ($filter ?? '') === 'planning' ? 'kt-btn-primary' : 'kt-btn-outline' }}">Planning</a>
+        <div class="kt-card fin-pulse-kt-card overflow-hidden">
+            <div class="kt-card-content flex items-center justify-end gap-3">
+                <div class="text-right shrink-0">
+                    <div class="text-xs text-muted-foreground font-medium uppercase tracking-wide">Filter</div>
+                </div>
+                <div class="flex flex-wrap items-center justify-end gap-2">
+                    <x-famledger.pulse-button
+                        variant="{{ ($filter ?? 'all') === 'all' ? 'primary' : 'outline' }}"
+                        size="sm"
+                        :href="route('families.projects.index', ['filter' => 'all'])"
+                    >All</x-famledger.pulse-button>
+                    <x-famledger.pulse-button
+                        variant="{{ ($filter ?? '') === 'active' ? 'primary' : 'outline' }}"
+                        size="sm"
+                        :href="route('families.projects.index', ['filter' => 'active'])"
+                    >Active</x-famledger.pulse-button>
+                    <x-famledger.pulse-button
+                        variant="{{ ($filter ?? '') === 'completed' ? 'primary' : 'outline' }}"
+                        size="sm"
+                        :href="route('families.projects.index', ['filter' => 'completed'])"
+                    >Completed</x-famledger.pulse-button>
+                    <x-famledger.pulse-button
+                        variant="{{ ($filter ?? '') === 'planning' ? 'primary' : 'outline' }}"
+                        size="sm"
+                        :href="route('families.projects.index', ['filter' => 'planning'])"
+                    >Planning</x-famledger.pulse-button>
+                </div>
             </div>
         </div>
 
         {{-- Cards grid (Metronic 3-columns style) --}}
         <div id="projects_cards">
-            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-7.5">
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-5 lg:gap-7.5">
                 @forelse ($projects as $project)
                 @php
                     $fundingSum = (float) ($project->fundings_sum_amount ?? 0);
@@ -74,7 +98,7 @@
                     $initial = mb_strtoupper(mb_substr($project->name ?? 'P', 0, 1));
                 @endphp
                 <div
-                    class="kt-card flex flex-col rounded-2xl border border-border shadow-sm overflow-hidden bg-card"
+                    class="fin-pulse-kt-card kt-card flex flex-col rounded-2xl border border-border shadow-sm overflow-hidden bg-card"
                     style="padding: 1.75rem 1.75rem 1.5rem;">
                     <div class="flex items-center justify-between mb-3 lg:mb-6">
                         <div class="flex items-center justify-center size-[50px] rounded-lg bg-accent/60">
@@ -88,7 +112,7 @@
                     </div>
 
                     <div class="flex flex-col mb-3 lg:mb-6">
-                        <a href="{{ route('families.projects.show', [$family, $project]) }}"
+                        <a href="{{ route('families.projects.show', $project) }}"
                            class="text-lg font-semibold text-mono hover:text-primary mb-px">
                             {{ $project->name }}
                         </a>
@@ -138,11 +162,15 @@
                     </div>
                 </div>
                 @empty
-                <div class="col-span-full kt-card rounded-xl border border-border shadow-sm overflow-hidden p-12 text-center">
+                <div class="col-span-full kt-card fin-pulse-kt-card rounded-xl border border-border shadow-sm overflow-hidden text-center">
+                    <div class="kt-card-content py-12 px-6">
                     <i class="ki-filled ki-folder text-4xl text-muted-foreground mb-4"></i>
                     <h3 class="text-base font-semibold text-foreground">No projects yet</h3>
                     <p class="text-sm text-muted-foreground mt-1">Create a project to track funding, budget, and expenses for a goal.</p>
-                    <a href="{{ route('families.projects.create', $family) }}" class="kt-btn kt-btn-primary mt-6">New project</a>
+                    <div class="mt-6">
+                        <x-famledger.pulse-button variant="primary" :href="route('families.projects.create')">New project</x-famledger.pulse-button>
+                    </div>
+                    </div>
                 </div>
                 @endforelse
             </div>

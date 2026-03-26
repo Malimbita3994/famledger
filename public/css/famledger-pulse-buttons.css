@@ -1,0 +1,117 @@
+/**
+ * FamLedger pulse buttons — use <x-famledger.pulse-button> or these classes:
+ *   Primary:  fin-pulse-btn-primary
+ *   Outline:  fin-pulse-btn-outline
+ *   Danger:   fin-pulse-btn-outline fin-pulse-btn-outline-danger
+ *   Compact:  fin-pulse-btn-sm (with any variant)
+ * Aliases:  fmem-pulse-btn-primary, fmem-pulse-btn-primary-sm (legacy)
+ */
+:root {
+    --fin-accent: #009ef7;
+    --fin-accent-2: #0ea5e9;
+}
+
+.fin-pulse-btn-primary,
+.fmem-pulse-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.15rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border-radius: 12px;
+    color: #fff !important;
+    background: linear-gradient(135deg, var(--fin-accent) 0%, var(--fin-accent-2) 100%);
+    border: none;
+    box-shadow: 0 4px 14px rgba(0, 158, 247, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    text-decoration: none !important;
+    cursor: pointer;
+    line-height: 1.25;
+}
+
+.fmem-pulse-btn-primary-sm {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.75rem;
+    border-radius: 10px;
+}
+
+.fin-pulse-btn-primary:hover,
+.fmem-pulse-btn-primary:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 6px 20px rgba(0, 158, 247, 0.42);
+    transform: translateY(-1px);
+}
+
+.fin-pulse-btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.15rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: rgba(255, 255, 255, 0.95);
+    color: #334155 !important;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none !important;
+    cursor: pointer;
+    line-height: 1.25;
+}
+
+.fin-pulse-btn-outline:hover {
+    border-color: var(--fin-accent);
+    background: rgba(0, 158, 247, 0.06);
+    box-shadow: 0 0 0 1px rgba(0, 158, 247, 0.12);
+}
+
+.dark .fin-pulse-btn-outline {
+    background: rgba(30, 41, 59, 0.9);
+    color: #e2e8f0 !important;
+    border-color: rgba(148, 163, 184, 0.35);
+}
+
+.fin-pulse-btn-sm {
+    padding: 0.45rem 0.85rem !important;
+    font-size: 0.75rem !important;
+    border-radius: 10px !important;
+}
+
+.fin-pulse-btn-outline.fin-pulse-btn-outline-danger {
+    color: #dc2626 !important;
+    border-color: rgba(220, 38, 38, 0.42);
+}
+
+.fin-pulse-btn-outline.fin-pulse-btn-outline-danger:hover {
+    border-color: #dc2626;
+    background: rgba(220, 38, 38, 0.08);
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.15);
+}
+
+.dark .fin-pulse-btn-outline.fin-pulse-btn-outline-danger {
+    color: #fca5a5 !important;
+    border-color: rgba(248, 113, 113, 0.45);
+}
+
+.dark .fin-pulse-btn-outline.fin-pulse-btn-outline-danger:hover {
+    background: rgba(248, 113, 113, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fin-pulse-btn-primary:hover,
+    .fmem-pulse-btn-primary:hover {
+        transform: none;
+    }
+}
+
+button.fin-pulse-btn-primary:disabled,
+button.fin-pulse-btn-outline:disabled,
+a.fin-pulse-btn-primary[aria-disabled='true'],
+a.fin-pulse-btn-outline[aria-disabled='true'] {
+    opacity: 0.55;
+    pointer-events: none;
+    transform: none;
+}

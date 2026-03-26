@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reconciliations.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.reconciliations.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to reconciliation
     </a>
@@ -36,7 +36,7 @@
     }
     </style>
 
-    <form action="{{ route('families.reconciliations.store', $family) }}" method="POST" id="reconcile-form">
+    <form action="{{ route('families.reconciliations.store') }}" method="POST" id="reconcile-form">
         @csrf
 
         <div class="kt-card p-5 lg:p-7.5 max-w-4xl">
@@ -56,7 +56,7 @@
                             Wallet <span class="text-destructive">*</span>
                         </label>
                         <select name="wallet_id" id="wallet_id" required class="kt-select w-full"
-                                onchange="window.location.href='{{ route('families.reconciliations.create', $family) }}?wallet_id='+this.value">
+                                onchange="window.location.href='{{ route('families.reconciliations.create') }}?wallet_id='+this.value">
                             @foreach ($wallets as $w)
                                 <option value="{{ $w->id }}" {{ $selectedWallet && $selectedWallet->id == $w->id ? 'selected' : '' }}>
                                     {{ $w->name }} ({{ $w->currency_code }})
@@ -115,7 +115,7 @@
                 </div>
 
                 <div class="flex justify-end pt-2 gap-2">
-                    <a href="{{ route('families.reconciliations.index', $family) }}" class="kt-btn kt-btn-outline">Cancel</a>
+                    <a href="{{ route('families.reconciliations.index') }}" class="kt-btn kt-btn-outline">Cancel</a>
                     <button type="submit" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
                         <i class="ki-filled ki-check"></i>
                         Reconcile

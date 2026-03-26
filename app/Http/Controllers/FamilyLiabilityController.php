@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
 use App\Models\FamilyLiability;
 use App\Models\Property;
@@ -10,12 +11,7 @@ use Illuminate\Validation\Rule;
 
 class FamilyLiabilityController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family)
     {
@@ -84,7 +80,7 @@ class FamilyLiabilityController extends Controller
         ]);
 
         return redirect()
-            ->route('families.liabilities.index', $family)
+            ->route('families.liabilities.index')
             ->with('success', 'Liability recorded successfully.');
     }
 
@@ -149,7 +145,7 @@ class FamilyLiabilityController extends Controller
         ]);
 
         return redirect()
-            ->route('families.liabilities.show', [$family, $liability])
+            ->route('families.liabilities.show', $liability)
             ->with('success', 'Liability updated successfully.');
     }
 
@@ -162,7 +158,7 @@ class FamilyLiabilityController extends Controller
         $liability->delete();
 
         return redirect()
-            ->route('families.liabilities.index', $family)
+            ->route('families.liabilities.index')
             ->with('success', 'Liability removed.');
     }
 }

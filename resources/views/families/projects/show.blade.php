@@ -34,7 +34,7 @@
 }
 </style>
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.projects.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.projects.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to projects
     </a>
@@ -55,8 +55,8 @@
             </p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('families.projects.funding.create', $family) }}?project_id={{ $project->id }}" class="kt-btn kt-btn-outline">Add funding</a>
-            <a href="{{ route('families.projects.edit', [$family, $project]) }}" class="kt-btn kt-btn-outline">Edit</a>
+            <a href="{{ route('families.projects.funding.create') }}?project_id={{ $project->id }}" class="kt-btn kt-btn-outline">Add funding</a>
+            <a href="{{ route('families.projects.edit', $project) }}" class="kt-btn kt-btn-outline">Edit</a>
         </div>
     </div>
 
@@ -79,24 +79,33 @@
     @endphp
 
     <div class="project-kpi-grid">
-        <div class="project-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <p class="text-muted-foreground text-sm font-medium">Planned budget</p>
-            <p class="text-xl font-bold tabular-nums text-foreground mt-1">{{ number_format($planned, 0) }} {{ $project->currency_code }}</p>
-        </div>
-        <div class="project-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <p class="text-muted-foreground text-sm font-medium">Total funding</p>
-            <p class="text-xl font-bold tabular-nums text-green-600 mt-1">{{ number_format($totalFunding, 0) }} {{ $project->currency_code }}</p>
-            <p class="text-muted-foreground text-xs mt-0.5">{{ $fundingPct }}% of budget</p>
-        </div>
-        <div class="project-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <p class="text-muted-foreground text-sm font-medium">Total expenses</p>
-            <p class="text-xl font-bold tabular-nums text-destructive mt-1">{{ number_format($totalExpenses, 0) }} {{ $project->currency_code }}</p>
-            <p class="text-muted-foreground text-xs mt-0.5">{{ $spendingPct }}% of budget</p>
-        </div>
-        <div class="project-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <p class="text-muted-foreground text-sm font-medium">Remaining funds</p>
-            <p class="text-xl font-bold tabular-nums mt-1 {{ $remaining >= 0 ? 'text-green-600' : 'text-destructive' }}">{{ number_format($remaining, 0) }} {{ $project->currency_code }}</p>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="project-kpi-card"
+            label="Planned budget"
+            :value="number_format($planned, 0) . ' ' . $project->currency_code"
+        />
+
+        <x-famledger.pulse-stat-card
+            class="project-kpi-card"
+            label="Total funding"
+            :value="number_format($totalFunding, 0) . ' ' . $project->currency_code"
+        >
+            {{ $fundingPct }}% of budget
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="project-kpi-card"
+            label="Total expenses"
+            :value="number_format($totalExpenses, 0) . ' ' . $project->currency_code"
+        >
+            {{ $spendingPct }}% of budget
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="project-kpi-card"
+            label="Remaining funds"
+            :value="number_format($remaining, 0) . ' ' . $project->currency_code"
+        />
     </div>
 
     <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card mb-6" style="padding: 1.25rem 1.5rem;">
@@ -112,9 +121,12 @@
                 $budgetPct = (float) $linkedBudget->amount > 0 ? min(100, round(($budgetUsed / (float) $linkedBudget->amount) * 100, 1)) : 0;
             @endphp
             <div class="mt-4 pt-3 border-t border-dashed border-border text-sm text-muted-foreground">
-                <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
                     <span>Linked budget: <span class="font-medium text-foreground">{{ $linkedBudget->name }}</span></span>
-                    <span class="tabular-nums">{{ number_format($budgetPct, 1) }}%</span>
+                    <span class="flex items-center gap-2">
+                        <a href="{{ route('families.budgets.show', $linkedBudget) }}" class="text-xs text-primary hover:underline whitespace-nowrap">Open in budgets</a>
+                        <span class="tabular-nums text-muted-foreground">{{ number_format($budgetPct, 1) }}%</span>
+                    </span>
                 </div>
                 <div class="flex items-center justify-between text-xs mb-1">
                     <span>Allocated: <span class="font-semibold text-foreground">{{ number_format($linkedBudget->amount, 0) }} {{ $linkedBudget->currency_code }}</span></span>
@@ -143,7 +155,7 @@
                     <span class="text-xs text-muted-foreground">{{ $f->funding_date->format('M j, Y') }} · {{ $f->wallet->name ?? '—' }}</span>
                 </div>
                 @empty
-                <div class="px-5 py-6 text-center text-muted-foreground text-sm">No funding yet. <a href="{{ route('families.projects.funding.create', $family) }}?project_id={{ $project->id }}" class="text-primary hover:underline">Add funding</a></div>
+                <div class="px-5 py-6 text-center text-muted-foreground text-sm">No funding yet. <a href="{{ route('families.projects.funding.create') }}?project_id={{ $project->id }}" class="text-primary hover:underline">Add funding</a></div>
                 @endforelse
             </div>
         </div>

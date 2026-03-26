@@ -3,6 +3,164 @@
 @section('title', 'Dashboard')
 @section('page_title', 'Dashboard')
 
+@push('styles')
+<style>
+    .dashboard-pulse-page {
+        --dp-accent: #009ef7;
+        --dp-accent-2: #0ea5e9;
+    }
+    .dashboard-pulse-page .dashboard-pulse-frame {
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .dashboard-pulse-eyebrow {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .dashboard-pulse-title {
+        font-size: clamp(1.35rem, 2.8vw, 1.7rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        color: var(--dp-accent);
+    }
+    .dashboard-pulse-frame {
+        padding: 3px;
+        border-radius: 24px;
+        background: linear-gradient(
+            135deg,
+            rgba(0, 158, 247, 0.42) 0%,
+            rgba(255, 255, 255, 0.96) 46%,
+            rgba(14, 165, 233, 0.3) 100%
+        );
+        box-shadow:
+            0 4px 24px rgba(0, 158, 247, 0.12),
+            0 24px 48px rgba(15, 23, 42, 0.08);
+        width: 100%;
+    }
+    .dark .dashboard-pulse-frame {
+        box-shadow:
+            0 4px 24px rgba(0, 158, 247, 0.1),
+            0 24px 48px rgba(0, 0, 0, 0.25);
+    }
+    .dashboard-pulse-card-inner {
+        background: #fff;
+        border-radius: 21px;
+        padding: 1.5rem 1.35rem 1.65rem;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+    @media (min-width: 640px) {
+        .dashboard-pulse-card-inner {
+            padding: 1.75rem 1.65rem 1.85rem;
+        }
+    }
+    .dark .dashboard-pulse-card-inner {
+        background: rgb(15 23 42 / 0.96);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .dashboard-pulse-section-title {
+        font-size: clamp(1.05rem, 2vw, 1.2rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--dp-accent);
+    }
+    .dashboard-pulse-card-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+        .dashboard-pulse-card-stack {
+            gap: 2rem;
+        }
+    }
+    .dashboard-kpi-grid {
+        display: grid !important;
+        width: 100% !important;
+        gap: 1rem !important;
+        margin: 0 !important;
+    }
+    @media (min-width: 1024px) {
+        .dashboard-kpi-grid { grid-template-columns: repeat(4, 1fr) !important; }
+    }
+    @media (min-width: 768px) and (max-width: 1023px) {
+        .dashboard-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+    @media (max-width: 767px) {
+        .dashboard-kpi-grid { grid-template-columns: 1fr !important; }
+    }
+    .dashboard-kpi-grid .dashboard-kpi-card {
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .dashboard-pulse-page .dashboard-pulse-kpi-card {
+        border-radius: 16px !important;
+        border: 1px solid rgba(14, 165, 233, 0.2) !important;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fcff 100%) !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .dashboard-pulse-page .dashboard-pulse-kpi-card:hover {
+        border-color: rgba(0, 158, 247, 0.35) !important;
+        box-shadow: 0 8px 24px rgba(0, 158, 247, 0.1);
+        transform: translateY(-1px);
+    }
+    .dark .dashboard-pulse-page .dashboard-pulse-kpi-card {
+        background: linear-gradient(180deg, rgb(30 41 59 / 0.55) 0%, rgb(15 23 42 / 0.72) 100%) !important;
+        border-color: rgba(14, 165, 233, 0.22) !important;
+    }
+    .dashboard-pulse-page .dashboard-pulse-kt-card {
+        border-radius: 16px !important;
+        border: 1px solid rgba(14, 165, 233, 0.16) !important;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fcff 100%) !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+    .dark .dashboard-pulse-page .dashboard-pulse-kt-card {
+        background: linear-gradient(180deg, rgb(30 41 59 / 0.5) 0%, rgb(15 23 42 / 0.85) 100%) !important;
+        border-color: rgba(14, 165, 233, 0.2) !important;
+    }
+    .dashboard-pulse-page .dashboard-pulse-kt-card .border-b {
+        border-bottom-color: rgba(14, 165, 233, 0.12) !important;
+    }
+    .dark .dashboard-pulse-page .dashboard-pulse-kt-card .border-b {
+        border-bottom-color: rgba(14, 165, 233, 0.18) !important;
+    }
+    .dashboard-pulse-btn-outline-sm {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(255, 255, 255, 0.95);
+        color: #334155 !important;
+        text-decoration: none !important;
+        transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .dashboard-pulse-btn-outline-sm:hover {
+        border-color: var(--dp-accent);
+        background: rgba(0, 158, 247, 0.08);
+    }
+    .dark .dashboard-pulse-btn-outline-sm {
+        background: rgba(30, 41, 59, 0.9);
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.35);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .dashboard-pulse-page .dashboard-pulse-kpi-card:hover {
+            transform: none;
+        }
+    }
+</style>
+@endpush
+
 @php
     $currency = $currency ?? config('currencies.default', 'TZS');
     $totalIncome = $totalIncome ?? 0;
@@ -21,156 +179,156 @@
 @endphp
 
 @section('content')
-<style>
-.dashboard-kpi-grid {
-    display: grid !important;
-    width: 100% !important;
-    gap: 1.25rem !important;
-    margin-top: 0.5rem !important;
-    margin-bottom: 1.5rem !important;
-}
-.dashboard-kpi-grid .dashboard-kpi-card {
-    min-width: 0 !important;
-    box-sizing: border-box !important;
-}
-@media (min-width: 768px) {
-    .dashboard-kpi-grid .dashboard-kpi-card {
-        /* keep natural padding, no extra margin to avoid overflow */
-    }
-}
-@media (min-width: 1024px) {
-    .dashboard-kpi-grid { grid-template-columns: repeat(4, 1fr) !important; }
-}
-@media (min-width: 768px) and (max-width: 1023px) {
-    .dashboard-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
-}
-@media (max-width: 767px) {
-    .dashboard-kpi-grid { grid-template-columns: 1fr !important; }
-}
-</style>
-<div class="kt-container-fixed px-4 lg:px-6 pb-8 max-w-full overflow-x-hidden">
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold text-foreground">FamLedger Dashboard</h2>
-        <p class="text-muted-foreground mt-1">Welcome to your Family Finance & Budget Management System. Default currency: {{ $currency }}.</p>
+<div class="dashboard-pulse-page min-w-0 w-full max-w-full overflow-x-hidden">
+    <div class="famledger-page-header">
+        <div class="kt-container-fixed flex flex-row flex-wrap items-start gap-4 w-full min-w-0 px-4 sm:px-6 lg:px-8">
+            <div class="min-w-0 flex-1">
+                <p class="dashboard-pulse-eyebrow mb-1.5">{{ __('Overview') }}</p>
+                <h1 class="dashboard-pulse-title">{{ __('Dashboard') }}</h1>
+                <p class="text-sm text-muted-foreground mt-2 max-w-3xl">
+                    {{ __('Welcome to your family finance overview. Default currency: :currency.', ['currency' => $currency]) }}
+                </p>
+            </div>
+        </div>
     </div>
 
-    @if (!isset($currentFamily) || !$currentFamily)
-        <div class="mb-6 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-amber-800 dark:text-amber-200">
-            <a href="{{ route('families.create') }}" class="font-medium underline">Create or join a family</a> to see income, expenses, and budgets here.
-        </div>
-    @endif
-
-    <div class="dashboard-kpi-grid">
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="income" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Income</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-arrow-up"></i></span>
+    <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 pb-10 max-w-full overflow-x-hidden dashboard-pulse-card-stack">
+        @if (!isset($currentFamily) || !$currentFamily)
+            <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-amber-800 dark:text-amber-200">
+                <a href="{{ route('families.create') }}" class="font-medium underline">{{ __('Create or join a family') }}</a>
+                {{ __('to see income, expenses, and budgets here.') }}
             </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $formatAmount($totalIncome, $currency) }}</div>
-            <div class="text-muted-foreground text-sm mt-2">This month</div>
-        </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="expenses" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Expenses</span>
-                <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-arrow-down"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $formatAmount($totalExpenses, $currency) }}</div>
-            <div class="text-muted-foreground text-sm mt-2">This month</div>
-        </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="budget" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Budget Used</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-chart-pie"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $budgetUsedPercent }}%</div>
-            <div class="text-gray-600 dark:text-gray-300 text-sm mt-2">{{ $budgetUsedLabel }}</div>
-        </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="wallets" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Balance</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-safe"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white">{{ $formatAmount($totalSavings, $currency) }}</div>
-            <div class="text-muted-foreground text-sm mt-2">All wallets</div>
-        </div>
-        @if(isset($currentFamily) && $currentFamily)
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="projects" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Projects</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-briefcase"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white tabular-nums">{{ $projectCount ?? 0 }}</div>
-            <div class="text-muted-foreground text-sm mt-2">{{ $activeProjectCount ?? 0 }} active</div>
-        </div>
-        <div class="dashboard-kpi-card card bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer js-dashboard-card" data-card-type="properties" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Properties</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-home-3"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-gray-900 dark:text-white tabular-nums">{{ $propertyCount ?? 0 }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Value: {{ number_format($propertyTotalValue ?? 0, 0) }} {{ $currency }}</div>
-        </div>
         @endif
-    </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-5 mb-6">
-        <div class="xl:col-span-2 kt-card flex flex-col rounded-xl border border-border shadow-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-border">
-                <h3 class="text-base font-semibold text-foreground">Income vs Expenses</h3>
-                <p class="text-sm text-muted-foreground mt-0.5">Monthly comparison (last 6 months) — {{ $currency }}</p>
-            </div>
-            <div class="p-4 min-h-[280px]">
-                <div id="famledger_income_expense_chart" class="w-full" style="min-height: 260px;"></div>
-            </div>
-        </div>
-        <div class="kt-card flex flex-col rounded-xl border border-border shadow-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-border">
-                <h3 class="text-base font-semibold text-foreground">Expenses by Category</h3>
-                <p class="text-sm text-muted-foreground mt-0.5">This month</p>
-            </div>
-            <div class="p-4 flex items-center justify-center min-h-[280px]">
-                <div id="famledger_category_chart" class="w-full max-w-[260px] mx-auto" style="min-height: 260px;"></div>
-            </div>
-        </div>
-    </div>
+        <div class="dashboard-pulse-frame shrink-0 min-w-0 max-w-full">
+            <div class="dashboard-pulse-card-inner min-w-0 max-w-full overflow-hidden">
+                <h2 class="dashboard-pulse-section-title mb-4">{{ __('This month at a glance') }}</h2>
+                <div class="dashboard-kpi-grid">
+                    <x-famledger.pulse-stat-card
+                        class="dashboard-kpi-card dashboard-pulse-kpi-card cursor-pointer js-dashboard-card"
+                        data-card-type="income"
+                        label="{{ __('Total Income') }}"
+                        :value="$formatAmount($totalIncome, $currency)"
+                    >
+                        {{ __('This month') }}
+                    </x-famledger.pulse-stat-card>
 
-    <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div class="px-5 py-4 border-b border-border flex items-center justify-between flex-wrap gap-2">
-            <div>
-                <h3 class="text-base font-semibold text-foreground">Recent Activity</h3>
-                <p class="text-sm text-muted-foreground mt-0.5">Latest transactions</p>
+                    <x-famledger.pulse-stat-card
+                        class="dashboard-kpi-card dashboard-pulse-kpi-card cursor-pointer js-dashboard-card"
+                        data-card-type="expenses"
+                        label="{{ __('Total Expenses') }}"
+                        :value="$formatAmount($totalExpenses, $currency)"
+                    >
+                        {{ __('This month') }}
+                    </x-famledger.pulse-stat-card>
+
+                    <x-famledger.pulse-stat-card
+                        class="dashboard-kpi-card dashboard-pulse-kpi-card cursor-pointer js-dashboard-card"
+                        data-card-type="budget"
+                        label="{{ __('Budget Used') }}"
+                        :value="(string) $budgetUsedPercent . '%'"
+                    >
+                        {{ $budgetUsedLabel }}
+                    </x-famledger.pulse-stat-card>
+
+                    <x-famledger.pulse-stat-card
+                        class="dashboard-kpi-card dashboard-pulse-kpi-card cursor-pointer js-dashboard-card"
+                        data-card-type="wallets"
+                        label="{{ __('Total Balance') }}"
+                        :value="$formatAmount($totalSavings, $currency)"
+                    >
+                        {{ __('All wallets') }}
+                    </x-famledger.pulse-stat-card>
+                    @if(isset($currentFamily) && $currentFamily)
+                        <x-famledger.pulse-stat-card
+                            class="dashboard-kpi-card dashboard-pulse-kpi-card cursor-pointer js-dashboard-card"
+                            data-card-type="projects"
+                            label="{{ __('Projects') }}"
+                            :value="(string) ($projectCount ?? 0)"
+                        >
+                            {{ $activeProjectCount ?? 0 }} {{ __('active') }}
+                        </x-famledger.pulse-stat-card>
+
+                        <x-famledger.pulse-stat-card
+                            class="dashboard-kpi-card dashboard-pulse-kpi-card cursor-pointer js-dashboard-card"
+                            data-card-type="properties"
+                            label="{{ __('Properties') }}"
+                            :value="(string) ($propertyCount ?? 0)"
+                        >
+                            {{ __('Value') }}: {{ number_format($propertyTotalValue ?? 0, 0) }} {{ $currency }}
+                        </x-famledger.pulse-stat-card>
+                    @endif
+                </div>
             </div>
-            @if (isset($currentFamily) && $currentFamily)
-                <a href="{{ route('families.accounts.transactions', $currentFamily) }}" class="kt-btn kt-btn-sm kt-btn-ghost text-primary">Transactions</a>
-            @endif
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="border-b border-border bg-muted/30">
-                        <th class="text-start font-medium text-muted-foreground px-5 py-3">Description</th>
-                        <th class="text-start font-medium text-muted-foreground px-5 py-3">Category</th>
-                        <th class="text-end font-medium text-muted-foreground px-5 py-3">Amount</th>
-                        <th class="text-end font-medium text-muted-foreground px-5 py-3">Date</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-border">
-                    @forelse ($recentActivity as $item)
-                    <tr class="hover:bg-muted/30">
-                        <td class="px-5 py-3 text-foreground">{{ $item->description }}</td>
-                        <td class="px-5 py-3 text-muted-foreground">{{ $item->category }}</td>
-                        <td class="px-5 py-3 text-end font-medium {{ $item->type === 'income' ? 'text-green-600' : 'text-destructive' }}">
-                            {{ $item->type === 'income' ? '+' : '-' }}{{ $formatAmount($item->amount, $item->currency_code) }}
-                        </td>
-                        <td class="px-5 py-3 text-end text-muted-foreground">{{ $item->date?->format('M j, Y') }}</td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="4" class="px-5 py-8 text-center text-muted-foreground">No transactions yet.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+
+        <div class="dashboard-pulse-frame shrink-0 min-w-0 max-w-full">
+            <div class="dashboard-pulse-card-inner min-w-0 max-w-full overflow-hidden">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-5">
+                    <div class="xl:col-span-2 kt-card famledger-chart-card flex flex-col dashboard-pulse-kt-card overflow-hidden">
+                        <div class="px-5 py-4 border-b border-border">
+                            <h3 class="dashboard-pulse-section-title text-base mb-0.5">{{ __('Income vs Expenses') }}</h3>
+                            <p class="text-sm text-muted-foreground mt-0.5">{{ __('Monthly comparison (last 6 months) — :currency', ['currency' => $currency]) }}</p>
+                        </div>
+                        <div class="p-4 min-h-[280px] famledger-chart-panel">
+                            <div id="famledger_income_expense_chart" class="w-full" style="min-height: 260px;"></div>
+                        </div>
+                    </div>
+                    <div class="kt-card famledger-chart-card flex flex-col dashboard-pulse-kt-card overflow-hidden">
+                        <div class="px-5 py-4 border-b border-border">
+                            <h3 class="dashboard-pulse-section-title text-base mb-0.5">{{ __('Expenses by Category') }}</h3>
+                            <p class="text-sm text-muted-foreground mt-0.5">{{ __('This month') }}</p>
+                        </div>
+                        <div class="p-4 flex items-center justify-center min-h-[280px] famledger-chart-panel">
+                            <div id="famledger_category_chart" class="w-full max-w-[260px] mx-auto" style="min-height: 260px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-pulse-frame shrink-0 min-w-0 max-w-full">
+            <div class="dashboard-pulse-card-inner min-w-0 max-w-full overflow-hidden p-0">
+                <div class="kt-card dashboard-pulse-kt-card border-0 shadow-none rounded-[18px] overflow-hidden bg-transparent">
+                    <div class="px-5 py-4 border-b border-border flex items-center justify-between flex-wrap gap-2">
+                        <div>
+                            <h3 class="dashboard-pulse-section-title text-base mb-0.5">{{ __('Recent Activity') }}</h3>
+                            <p class="text-sm text-muted-foreground mt-0.5">{{ __('Latest transactions') }}</p>
+                        </div>
+                        @if (isset($currentFamily) && $currentFamily)
+                            <a href="{{ route('families.transactions.index') }}" class="dashboard-pulse-btn-outline-sm shrink-0">{{ __('Transactions') }}</a>
+                        @endif
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-border bg-muted/30">
+                                    <th class="text-start font-medium text-muted-foreground px-5 py-3">{{ __('Description') }}</th>
+                                    <th class="text-start font-medium text-muted-foreground px-5 py-3">{{ __('Category') }}</th>
+                                    <th class="text-end font-medium text-muted-foreground px-5 py-3">{{ __('Amount') }}</th>
+                                    <th class="text-end font-medium text-muted-foreground px-5 py-3">{{ __('Date') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border">
+                                @forelse ($recentActivity as $item)
+                                <tr class="hover:bg-muted/30">
+                                    <td class="px-5 py-3 text-foreground">{{ $item->description }}</td>
+                                    <td class="px-5 py-3 text-muted-foreground">{{ $item->category }}</td>
+                                    <td class="px-5 py-3 text-end font-medium {{ $item->type === 'income' ? 'text-green-600' : 'text-destructive' }}">
+                                        {{ $item->type === 'income' ? '+' : '-' }}{{ $formatAmount($item->amount, $item->currency_code) }}
+                                    </td>
+                                    <td class="px-5 py-3 text-end text-muted-foreground">{{ $item->date?->format('M j, Y') }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="px-5 py-8 text-center text-muted-foreground">{{ __('No transactions yet.') }}</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

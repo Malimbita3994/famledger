@@ -5,12 +5,12 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.liabilities.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+    <a href="{{ route('families.liabilities.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
         Back to liabilities
     </a>
 
-    <form action="{{ route('families.liabilities.store', $family) }}" method="POST" class="space-y-6">
+    <form action="{{ route('families.liabilities.store') }}" method="POST" class="space-y-6">
         @csrf
 
         <div class="kt-card p-5 lg:p-7.5 max-w-5xl mx-auto">
@@ -23,9 +23,9 @@
             </div>
 
             <div class="grid gap-5 lg:gap-7.5">
-                {{-- Basic details --}}
-                <div class="grid gap-5 lg:grid-cols-2">
-                    <div class="grid gap-1.5">
+                {{-- Row 1: three fields (famledger-form-row-3: Metronic CSS lacks grid-cols-3) --}}
+                <div class="famledger-form-row-3">
+                    <div class="grid gap-1.5 famledger-form-field">
                         <label for="name" class="kt-form-label">Liability name <span class="text-destructive">*</span></label>
                         <input
                             type="text"
@@ -40,7 +40,7 @@
                         @error('name')<p class="kt-form-message">{{ $message }}</p>@enderror
                     </div>
 
-                    <div class="grid gap-1.5">
+                    <div class="grid gap-1.5 famledger-form-field">
                         <label for="type" class="kt-form-label">Type <span class="text-destructive">*</span></label>
                         <input
                             type="text"
@@ -54,10 +54,27 @@
                         />
                         @error('type')<p class="kt-form-message">{{ $message }}</p>@enderror
                     </div>
+
+                    <div class="grid gap-1.5 famledger-form-field">
+                        <label for="status" class="kt-form-label">Status <span class="text-destructive">*</span></label>
+                        <select
+                            name="status"
+                            id="status"
+                            class="kt-select"
+                            aria-invalid="{{ $errors->has('status') ? 'true' : 'false' }}"
+                            required
+                        >
+                            <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="overdue" {{ old('status') === 'overdue' ? 'selected' : '' }}>Overdue</option>
+                            <option value="closed" {{ old('status') === 'closed' ? 'selected' : '' }}>Closed</option>
+                        </select>
+                        @error('status')<p class="kt-form-message">{{ $message }}</p>@enderror
+                    </div>
                 </div>
 
-                <div class="grid gap-5 lg:grid-cols-3">
-                    <div class="grid gap-1.5">
+                {{-- Row 2: three fields --}}
+                <div class="famledger-form-row-3">
+                    <div class="grid gap-1.5 famledger-form-field">
                         <label for="principal_amount" class="kt-form-label">Principal amount <span class="text-destructive">*</span></label>
                         <input
                             type="number"
@@ -74,7 +91,7 @@
                         @error('principal_amount')<p class="kt-form-message">{{ $message }}</p>@enderror
                     </div>
 
-                    <div class="grid gap-1.5">
+                    <div class="grid gap-1.5 famledger-form-field">
                         <label for="interest_rate" class="kt-form-label">Interest rate (% per year)</label>
                         <input
                             type="number"
@@ -90,7 +107,7 @@
                         @error('interest_rate')<p class="kt-form-message">{{ $message }}</p>@enderror
                     </div>
 
-                    <div class="grid gap-1.5">
+                    <div class="grid gap-1.5 famledger-form-field">
                         <label for="due_date" class="kt-form-label">Due date</label>
                         <input
                             type="date"
@@ -104,33 +121,16 @@
                     </div>
                 </div>
 
-                {{-- Status --}}
-                <div class="grid gap-1.5 max-w-xs">
-                    <label for="status" class="kt-form-label">Status <span class="text-destructive">*</span></label>
-                    <select
-                        name="status"
-                        id="status"
-                        class="kt-select"
-                        aria-invalid="{{ $errors->has('status') ? 'true' : 'false' }}"
-                        required
-                    >
-                        <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Active</option>
-                        <option value="overdue" {{ old('status') === 'overdue' ? 'selected' : '' }}>Overdue</option>
-                        <option value="closed" {{ old('status') === 'closed' ? 'selected' : '' }}>Closed</option>
-                    </select>
-                    @error('status')<p class="kt-form-message">{{ $message }}</p>@enderror
-                </div>
-
-                {{-- Linked to --}}
+                {{-- Linked to (optional) --}}
                 <div class="border-t border-border pt-4 mt-2">
                     <h2 class="text-sm font-semibold text-foreground mb-3">Link to asset, wallet or budget (optional)</h2>
                     <p class="text-xs text-muted-foreground mb-3">
                         Linking a liability helps reports explain what the debt belongs to (wallet, project, property, budget or savings goal).
                     </p>
 
-                    <div class="grid gap-4 lg:grid-cols-2">
-                        {{-- Wallet --}}
-                        <div class="grid gap-1.5">
+                    {{-- Row 3: three selects --}}
+                    <div class="famledger-form-row-3">
+                        <div class="grid gap-1.5 famledger-form-field">
                             <label for="wallet_id" class="kt-form-label">Wallet</label>
                             <select name="wallet_id" id="wallet_id" class="kt-select">
                                 <option value="">— None —</option>
@@ -143,8 +143,7 @@
                             @error('wallet_id')<p class="kt-form-message">{{ $message }}</p>@enderror
                         </div>
 
-                        {{-- Project --}}
-                        <div class="grid gap-1.5">
+                        <div class="grid gap-1.5 famledger-form-field">
                             <label for="project_id" class="kt-form-label">Project</label>
                             <select name="project_id" id="project_id" class="kt-select">
                                 <option value="">— None —</option>
@@ -157,8 +156,7 @@
                             @error('project_id')<p class="kt-form-message">{{ $message }}</p>@enderror
                         </div>
 
-                        {{-- Property --}}
-                        <div class="grid gap-1.5">
+                        <div class="grid gap-1.5 famledger-form-field">
                             <label for="property_id" class="kt-form-label">Property</label>
                             <select name="property_id" id="property_id" class="kt-select">
                                 <option value="">— None —</option>
@@ -170,9 +168,11 @@
                             </select>
                             @error('property_id')<p class="kt-form-message">{{ $message }}</p>@enderror
                         </div>
+                    </div>
 
-                        {{-- Budget --}}
-                        <div class="grid gap-1.5">
+                    {{-- Row 4: two selects --}}
+                    <div class="famledger-form-row-3 mt-5">
+                        <div class="grid gap-1.5 famledger-form-field">
                             <label for="budget_id" class="kt-form-label">Budget</label>
                             <select name="budget_id" id="budget_id" class="kt-select">
                                 <option value="">— None —</option>
@@ -185,8 +185,7 @@
                             @error('budget_id')<p class="kt-form-message">{{ $message }}</p>@enderror
                         </div>
 
-                        {{-- Savings goal --}}
-                        <div class="grid gap-1.5">
+                        <div class="grid gap-1.5 famledger-form-field">
                             <label for="savings_goal_id" class="kt-form-label">Savings goal</label>
                             <select name="savings_goal_id" id="savings_goal_id" class="kt-select">
                                 <option value="">— None —</option>
@@ -202,7 +201,7 @@
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <a href="{{ route('families.liabilities.index', $family) }}" class="kt-btn kt-btn-outline">Cancel</a>
+                    <a href="{{ route('families.liabilities.index') }}" class="kt-btn kt-btn-outline">Cancel</a>
                     <button type="submit" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
                         <i class="ki-filled ki-check"></i>
                         Save liability

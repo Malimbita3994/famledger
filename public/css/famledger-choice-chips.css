@@ -1,0 +1,88 @@
+/**
+ * FamLedger — pill-style radio groups (member Sex, Adult/child, etc.)
+ * Replaces kt-radio circles when selection state is hard to read.
+ */
+.fl-choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.fl-choice-chip {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fl-choice-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.fl-choice-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--background, #fff);
+  color: var(--foreground, #0f172a);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  font-weight: 500;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+  pointer-events: none;
+}
+
+.dark .fl-choice-text {
+  background: rgb(30 41 59 / 0.35);
+  border-color: rgb(148 163 184 / 0.35);
+  color: var(--foreground, #e2e8f0);
+}
+
+.fl-choice-chip:hover .fl-choice-text {
+  border-color: rgba(0, 158, 247, 0.4);
+}
+
+.fl-choice-input:checked + .fl-choice-text {
+  border-color: #009ef7;
+  background: rgba(0, 158, 247, 0.12);
+  color: #009ef7;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(0, 158, 247, 0.2);
+}
+
+.dark .fl-choice-input:checked + .fl-choice-text {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  color: #7dd3fc;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+}
+
+.fl-choice-chip:has(.fl-choice-input:focus-visible) .fl-choice-text {
+  outline: 2px solid var(--ring, #009ef7);
+  outline-offset: 2px;
+}
+
+.fl-choice-input:disabled + .fl-choice-text {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fl-choice-chip:has(.fl-choice-input:disabled) {
+  cursor: not-allowed;
+}

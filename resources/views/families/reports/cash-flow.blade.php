@@ -24,7 +24,7 @@
 }
 </style>
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reports.index', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.reports.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to Reports
     </a>
@@ -33,7 +33,7 @@
         <div>
             <h1 class="font-medium text-lg text-mono">Cash Flow Report</h1>
         </div>
-        <a href="{{ route('families.reports.cash-flow.export-pdf', $family) . '?' . http_build_query(request()->only(['from','to','wallet_id'])) }}"
+        <a href="{{ route('families.reports.cash-flow.export-pdf') . '?' . http_build_query(request()->only(['from','to','wallet_id'])) }}"
            class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
             <i class="ki-filled ki-file-down text-base"></i>
             Export PDF
@@ -46,7 +46,7 @@
             <h3 class="kt-card-title text-sm">Filter report</h3>
         </div>
         <div class="kt-card-content">
-            <form method="get" action="{{ route('families.reports.cash-flow', $family) }}" class="flex flex-wrap items-end gap-4">
+            <form method="get" action="{{ route('families.reports.cash-flow') }}" class="flex flex-wrap items-end gap-4">
                 <div>
                     <label class="block text-sm text-muted-foreground mb-1">From</label>
                     <input type="date" name="from" value="{{ $dateFrom }}" class="kt-input rounded-lg border border-border px-3 py-2 text-sm min-w-[140px]">
@@ -65,52 +65,48 @@
                     </select>
                 </div>
                 <button type="submit" class="kt-btn kt-btn-primary">Apply</button>
-                <a href="{{ route('families.reports.cash-flow', $family) }}" class="kt-btn kt-btn-ghost">Reset</a>
+                <a href="{{ route('families.reports.cash-flow') }}" class="kt-btn kt-btn-ghost">Reset</a>
             </form>
         </div>
     </div>
 
     {{-- KPI cards — one row, four columns (forced layout) --}}
     <div class="cash-flow-kpi-grid">
-        <div class="cash-flow-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Opening balance</span>
-                <span class="text-primary text-lg shrink-0"><i class="ki-filled ki-wallet"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums">{{ number_format($openingBalance, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">Start of period</div>
-        </div>
-        <div class="cash-flow-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total income</span>
-                <span class="text-green-500 text-lg shrink-0"><i class="ki-filled ki-arrow-up"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-green-600">+ {{ number_format($totalIncome, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">In period</div>
-        </div>
-        <div class="cash-flow-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Total expenses</span>
-                <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-arrow-down"></i></span>
-            </div>
-            <div class="text-xl font-bold mt-3 text-foreground tabular-nums text-red-600">− {{ number_format($totalExpenses, 0) }} {{ $currency }}</div>
-            <div class="text-muted-foreground text-sm mt-2">In period</div>
-        </div>
-        <div class="cash-flow-kpi-card kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card" style="padding: 1.25rem 1.5rem;">
-            <div class="flex items-center justify-between gap-3">
-                <span class="text-muted-foreground text-sm font-medium">Liabilities</span>
-                <span class="text-red-500 text-lg shrink-0"><i class="ki-filled ki-debit"></i></span>
-            </div>
-            <div class="text-sm font-medium mt-3 text-foreground tabular-nums">
-                Change this period:
-                <span class="{{ $liabilityChange >= 0 ? 'text-red-600' : 'text-green-600' }}">
-                    {{ $liabilityChange >= 0 ? '+' : '' }}{{ number_format($liabilityChange, 0) }} {{ $currency }}
-                </span>
-            </div>
-            <div class="text-sm text-muted-foreground mt-2">
-                Closing outstanding: <span class="font-semibold text-red-600">{{ number_format($periodLiabilityTotal, 0) }} {{ $currency }}</span>
-            </div>
-        </div>
+        <x-famledger.pulse-stat-card
+            class="cash-flow-kpi-card"
+            label="Opening balance"
+            :value="number_format($openingBalance, 0) . ' ' . $currency"
+        >
+            Start of period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="cash-flow-kpi-card"
+            label="Total income"
+            :value="'+' . ' ' . number_format($totalIncome, 0) . ' ' . $currency"
+        >
+            In period
+        </x-famledger.pulse-stat-card>
+
+        <x-famledger.pulse-stat-card
+            class="cash-flow-kpi-card"
+            label="Total expenses"
+            :value="'− ' . number_format($totalExpenses, 0) . ' ' . $currency"
+        >
+            In period
+        </x-famledger.pulse-stat-card>
+
+        @php
+            $liabilitySign = $liabilityChange >= 0 ? '+' : '−';
+            $liabilityAbs = abs($liabilityChange);
+        @endphp
+        <x-famledger.pulse-stat-card
+            class="cash-flow-kpi-card"
+            label="Liabilities"
+            :value="$liabilitySign . ' ' . number_format($liabilityAbs, 0) . ' ' . $currency"
+        >
+            Closing outstanding: {{ number_format($periodLiabilityTotal, 0) }} {{ $currency }}
+        </x-famledger.pulse-stat-card>
     </div>
 
     {{-- Cash flow summary table (income index card/table style) --}}

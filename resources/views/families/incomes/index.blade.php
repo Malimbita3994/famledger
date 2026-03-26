@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
     </a>
@@ -15,7 +15,7 @@
             <h1 class="font-medium text-lg text-mono">Income</h1>
             <p class="text-sm text-muted-foreground mt-0.5">All income is recorded into a wallet. No wallet → no valid income.</p>
         </div>
-        <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-primary">
+        <a href="{{ route('families.incomes.create') }}" class="kt-btn kt-btn-primary">
             <i class="ki-filled ki-plus"></i>
             Record income
         </a>
@@ -35,7 +35,7 @@
             <div class="kt-card-content">
                 <div class="flex flex-wrap gap-4">
                     @foreach ($wallets as $w)
-                        <a href="{{ route('families.wallets.show', [$family, $w]) }}" class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 hover:bg-muted/50 transition-colors">
+                        <a href="{{ route('families.wallets.show', $w) }}" class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 hover:bg-muted/50 transition-colors">
                             <i class="ki-filled ki-wallet text-muted-foreground"></i>
                             <span class="font-medium text-sm">{{ $w->name }}</span>
                             <span class="tabular-nums text-sm {{ $w->balance >= 0 ? 'text-success' : 'text-destructive' }}">{{ number_format($w->balance, 2) }} {{ $w->currency_code }}</span>
@@ -49,7 +49,7 @@
     <div class="kt-card kt-card-grid min-w-full mt-4">
         <div class="kt-card-header flex-wrap gap-2">
             <h3 class="kt-card-title text-sm">Income records</h3>
-            <form method="get" action="{{ route('families.incomes.index', $family) }}" class="flex flex-wrap items-center gap-2 justify-end w-full md:w-auto">
+            <form method="get" action="{{ route('families.incomes.index') }}" class="flex flex-wrap items-center gap-2 justify-end w-full md:w-auto">
                 <label for="wallet_id" class="text-sm text-muted-foreground">Wallet</label>
                 <div class="inline-flex">
                     <select name="wallet_id" id="wallet_id" class="kt-select kt-select-sm" style="width: 180px;" onchange="this.form.submit()">
@@ -66,7 +66,7 @@
                 <div class="py-12 text-center text-muted-foreground">
                     <i class="ki-filled ki-arrow-up text-4xl mb-2"></i>
                     <p class="text-sm">No income recorded yet.</p>
-                    <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-outline mt-4">Record income</a>
+                    <a href="{{ route('families.incomes.create') }}" class="kt-btn kt-btn-outline mt-4">Record income</a>
                 </div>
             @else
                 {{-- Desktop / tablet table --}}
@@ -87,10 +87,16 @@
                             <tr>
                                 <td class="text-foreground">{{ $income->received_date->format('M j, Y') }}</td>
                                 <td>
-                                    <a href="{{ route('families.wallets.show', [$family, $income->wallet]) }}" class="text-primary hover:underline">{{ $income->wallet->name }}</a>
+                                    <a href="{{ route('families.wallets.show', $income->wallet) }}" class="text-primary hover:underline">{{ $income->wallet->name }}</a>
                                     <span class="text-muted-foreground text-xs">({{ $income->wallet->currency_code }})</span>
                                 </td>
-                                <td class="text-foreground">{{ $income->category?->name ?? '—' }}</td>
+                                <td class="text-foreground">
+                                    @if ($income->category)
+                                        {{ $income->category->parent ? $income->category->parent->name.' › '.$income->category->name : $income->category->name }}
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td class="font-medium tabular-nums text-success">+ {{ number_format($income->amount, 2) }} {{ $income->currency_code }}</td>
                                 <td class="text-foreground">{{ $income->source ?? '—' }}</td>
                                 <td class="text-muted-foreground text-sm">{{ $income->createdBy?->name ?? '—' }}</td>
@@ -112,9 +118,9 @@
                                     <span class="text-[11px] text-muted-foreground">
                                         {{ $income->received_date->format('M j, Y') }}
                                     </span>
-                                    @if ($income->category?->name)
+                                    @if ($income->category)
                                         <span class="text-[11px] text-secondary-foreground mt-0.5">
-                                            {{ $income->category->name }}
+                                            {{ $income->category->parent ? $income->category->parent->name.' › '.$income->category->name : $income->category->name }}
                                         </span>
                                     @endif
                                 </div>
@@ -135,7 +141,7 @@
                                     {{ __('Recorded by:') }}
                                     <span class="font-medium text-foreground">{{ $income->createdBy?->name ?? '—' }}</span>
                                 </span>
-                                <a href="{{ route('families.wallets.show', [$family, $income->wallet]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                <a href="{{ route('families.wallets.show', $income->wallet) }}" class="kt-btn kt-btn-xs kt-btn-outline">
                                     Wallet
                                 </a>
                             </div>

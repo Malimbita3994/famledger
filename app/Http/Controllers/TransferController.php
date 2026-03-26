@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
+use App\Services\WalletBalanceGuard;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,12 +12,7 @@ use Illuminate\Validation\Rule;
 
 class TransferController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family, Request $request)
     {
@@ -93,7 +90,7 @@ class TransferController extends Controller
         $wallets = $family->wallets()->where('status', 'active')->orderBy('name')->get();
         if ($wallets->count() < 2) {
             return redirect()
-                ->route('families.wallets.index', $family)
+                ->route('families.wallets.index')
                 ->with('error', 'You need at least two wallets to make a transfer. Create another wallet first.');
         }
 
@@ -131,31 +128,35 @@ class TransferController extends Controller
             return back()->withInput()->withErrors(['to_wallet_id' => 'Both wallets must use the same currency. Multi-currency transfers are not supported yet.']);
         }
 
-        if (! $fromWallet->canAffordDebit((float) $validated['amount'])) {
-            $available = $fromWallet->balance;
-            $message = 'Insufficient funds in the source wallet. Available balance is '.number_format($available, 2).' '.strtoupper($fromWallet->currency_code).'.';
+        return DB::transaction(function () use ($family, $validated, $fromWallet, $toWallet) {
+            $locked = WalletBalanceGuard::lockWalletsForUpdate([$fromWallet->id, $toWallet->id]);
+            $from = $locked->get($fromWallet->id);
+            if (! $from || ! $from->canAffordDebit((float) $validated['amount'])) {
+                $available = $from ? $from->balance : 0;
+                $message = 'Insufficient funds in the source wallet. Available balance is '.number_format($available, 2).' '.strtoupper($fromWallet->currency_code).'.';
 
-            return back()
-                ->withInput()
-                ->withErrors([
-                    'amount' => $message,
-                ])
-                ->with('error', $message);
-        }
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'amount' => $message,
+                    ])
+                    ->with('error', $message);
+            }
 
-        $family->transfers()->create([
-            'from_wallet_id' => $validated['from_wallet_id'],
-            'to_wallet_id' => $validated['to_wallet_id'],
-            'amount' => $validated['amount'],
-            'currency_code' => strtoupper($validated['currency_code']),
-            'transfer_date' => $validated['transfer_date'],
-            'description' => $validated['description'] ?? null,
-            'reference' => $validated['reference'] ?? null,
-            'created_by' => auth()->id(),
-        ]);
+            $family->transfers()->create([
+                'from_wallet_id' => $validated['from_wallet_id'],
+                'to_wallet_id' => $validated['to_wallet_id'],
+                'amount' => $validated['amount'],
+                'currency_code' => strtoupper($validated['currency_code']),
+                'transfer_date' => $validated['transfer_date'],
+                'description' => $validated['description'] ?? null,
+                'reference' => $validated['reference'] ?? null,
+                'created_by' => auth()->id(),
+            ]);
 
-        return redirect()
-            ->route('families.transfers.index', $family)
-            ->with('success', 'Transfer recorded. Both wallet balances updated.');
+            return redirect()
+                ->route('families.transfers.index')
+                ->with('success', 'Transfer recorded. Both wallet balances updated.');
+        });
     }
 }

@@ -1,43 +1,74 @@
 @extends('layouts.metronic')
 
-@section('title', $wallet->name)
-@section('page_title', $wallet->name)
+@section('title', $wallet->display_name)
+@section('page_title', $wallet->display_name)
 
 @section('content')
+@php
+    $walletModalRows = [
+        ['l' => __('Name'), 'v' => $wallet->name],
+        ['l' => __('Family'), 'v' => $family->name],
+        ['l' => __('Type'), 'v' => $walletTypes[$wallet->type] ?? $wallet->type],
+        ['l' => __('Currency'), 'v' => $wallet->currency_code],
+        ['l' => __('Current balance'), 'v' => number_format((float) $wallet->balance, 2) . ' ' . $wallet->currency_code],
+        ['l' => __('Initial balance'), 'v' => number_format((float) $wallet->initial_balance, 2) . ' ' . $wallet->currency_code],
+        ['l' => __('Status'), 'v' => ucfirst((string) $wallet->status)],
+        ['l' => __('Primary wallet'), 'v' => $wallet->is_primary ? __('Yes') : __('No')],
+        ['l' => __('Shared'), 'v' => $wallet->is_shared ? __('Yes — family') : __('No — personal')],
+        ['l' => __('Created by'), 'v' => $wallet->creator?->name ?? '—'],
+        ['l' => __('Created'), 'v' => $wallet->created_at?->timezone(config('app.timezone'))->format('M j, Y g:i A') ?? '—'],
+    ];
+    if ($wallet->description) {
+        $walletModalRows[] = ['l' => __('Description'), 'v' => $wallet->description];
+    }
+@endphp
+
 <div class="pb-5">
     <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
         <div class="flex items-center flex-wrap gap-1 lg:gap-5">
-            <h1 class="font-medium text-lg text-mono">{{ $wallet->name }}</h1>
+            <h1 class="font-medium text-lg text-mono">{{ $wallet->display_name }}</h1>
             <div class="flex items-center gap-1 text-sm font-normal">
                 <a class="text-secondary-foreground hover:text-primary" href="{{ route('dashboard') }}">Home</a>
                 <span class="text-muted-foreground text-sm">/</span>
-                <a class="text-secondary-foreground hover:text-primary" href="{{ route('families.wallets.index', $family) }}">Wallets</a>
+                <a class="text-secondary-foreground hover:text-primary" href="{{ route('families.wallets.index') }}">Wallets</a>
                 <span class="text-muted-foreground text-sm">/</span>
-                <span class="text-mono">{{ $wallet->name }}</span>
+                <span class="text-mono">{{ $wallet->display_name }}</span>
             </div>
         </div>
         <div class="flex items-center flex-wrap gap-1.5 lg:gap-3.5">
             @if($wallet->is_primary)
-            <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-primary">
+            <a href="{{ route('families.incomes.create') }}" class="kt-btn kt-btn-primary">
                 <i class="ki-filled ki-arrow-down"></i>
                 Record income
             </a>
             @else
             <span class="text-xs text-muted-foreground self-center max-w-[200px]">
-                Income is recorded to the main wallet only. Use <a href="{{ route('families.transfers.create', $family) }}" class="text-primary hover:underline">Transfer</a> to move money here.
+                Income is recorded to the main wallet only. Use <a href="{{ route('families.transfers.create') }}" class="text-primary hover:underline">Transfer</a> to move money here.
             </span>
             @endif
-            <a href="{{ route('families.expenses.create', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-outline">
+            <a href="{{ route('families.expenses.create') }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-outline">
                 <i class="ki-filled ki-arrow-up"></i>
                 Record expense
             </a>
-            <a href="{{ route('families.wallets.edit', [$family, $wallet]) }}" class="kt-btn kt-btn-outline">
+            <button type="button" class="kt-btn kt-btn-outline js-open-wallet-details-modal" title="{{ __('Wallet details') }}">
+                <i class="ki-filled ki-eye"></i>
+                {{ __('Details') }}
+            </button>
+            <a href="{{ route('families.wallets.edit', $wallet) }}" class="kt-btn kt-btn-outline">
                 <i class="ki-filled ki-pencil"></i>
                 Edit
             </a>
         </div>
     </div>
 </div>
+
+    <x-famledger.detail-modal
+        id="wallet_details_modal"
+        :title="__('Wallet details')"
+        title-id="wallet_details_modal_title"
+        body-id="wallet_details_modal_body"
+        :close-label="__('Close')"
+    />
 
 <div class="kt-container-fixed">
     <style>
@@ -81,7 +112,7 @@
                 <div class="min-w-0 flex flex-col gap-2.5 sm:gap-3">
                     <div class="space-y-1">
                         <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                            <h2 class="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">{{ $wallet->name }}</h2>
+                            <h2 class="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">{{ $wallet->display_name }}</h2>
                             <span class="kt-badge {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-full shrink-0 text-[11px]">
                                 <span class="kt-badge-dot size-1.5"></span>
                                 {{ ucfirst($wallet->status) }}
@@ -175,8 +206,8 @@
                 <div class="kt-card-header flex-wrap gap-2">
                     <h3 class="kt-card-title text-sm">Recent activity</h3>
                     <div class="flex items-center gap-2 ml-auto text-xs">
-                        <a href="{{ route('families.incomes.index', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-xs kt-btn-ghost">All income</a>
-                        <a href="{{ route('families.expenses.index', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-xs kt-btn-ghost">All expenses</a>
+                        <a href="{{ route('families.incomes.index') }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-xs kt-btn-ghost">All income</a>
+                        <a href="{{ route('families.expenses.index') }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-xs kt-btn-ghost">All expenses</a>
                     </div>
                 </div>
                 <div class="kt-card-content space-y-6">
@@ -235,7 +266,7 @@
             <div class="kt-card">
                 <div class="kt-card-header flex-wrap gap-2">
                     <h3 class="kt-card-title text-sm">Transfers</h3>
-                    <a href="{{ route('families.transfers.index', $family) }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-sm kt-btn-ghost">View all</a>
+                    <a href="{{ route('families.transfers.index') }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-sm kt-btn-ghost">View all</a>
                 </div>
                 <div class="kt-card-content">
                     @if ($outgoingTransfers->isNotEmpty())
@@ -243,7 +274,7 @@
                     <ul class="space-y-1.5 mb-4">
                         @foreach ($outgoingTransfers as $t)
                         <li class="flex items-center justify-between text-sm">
-                            <span>To <a href="{{ route('families.wallets.show', [$family, $t->toWallet]) }}" class="text-primary hover:underline">{{ $t->toWallet->name }}</a></span>
+                            <span>To <a href="{{ route('families.wallets.show', $t->toWallet) }}" class="text-primary hover:underline">{{ $t->toWallet->display_name }}</a></span>
                             <span class="tabular-nums text-destructive">− {{ number_format($t->amount, 2) }} {{ $t->currency_code }}</span>
                         </li>
                         @endforeach
@@ -254,7 +285,7 @@
                     <ul class="space-y-1.5">
                         @foreach ($incomingTransfers as $t)
                         <li class="flex items-center justify-between text-sm">
-                            <span>From <a href="{{ route('families.wallets.show', [$family, $t->fromWallet]) }}" class="text-primary hover:underline">{{ $t->fromWallet->name }}</a></span>
+                            <span>From <a href="{{ route('families.wallets.show', $t->fromWallet) }}" class="text-primary hover:underline">{{ $t->fromWallet->display_name }}</a></span>
                             <span class="tabular-nums text-success">+ {{ number_format($t->amount, 2) }} {{ $t->currency_code }}</span>
                         </li>
                         @endforeach
@@ -266,4 +297,28 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+(function () {
+    var rows = @json($walletModalRows);
+    var walletName = @json($wallet->display_name);
+    var modalId = 'wallet_details_modal';
+    var btn = document.querySelector('.js-open-wallet-details-modal');
+    if (!btn || !window.FamLedgerDetailModal) return;
+    btn.addEventListener('click', function () {
+        var D = window.FamLedgerDetailModal;
+        var body = document.getElementById('wallet_details_modal_body');
+        var titleEl = document.getElementById('wallet_details_modal_title');
+        if (!body || !titleEl) return;
+        titleEl.textContent = walletName;
+        body.innerHTML = '';
+        rows.forEach(function (r) {
+            body.appendChild(D.row(r.l, D.fmt(r.v)));
+        });
+        D.show(modalId);
+    });
+})();
+</script>
+@endpush
 @endsection

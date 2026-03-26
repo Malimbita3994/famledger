@@ -18,11 +18,11 @@
             </div>
         </div>
         <div class="flex items-center flex-wrap gap-1.5 lg:gap-3.5">
-            <a href="{{ route('families.wallets.index', $family) }}" class="kt-btn kt-btn-primary">
+            <a href="{{ route('families.wallets.index') }}" class="kt-btn kt-btn-primary">
                 <i class="ki-filled ki-wallet"></i>
                 Wallets
             </a>
-            <a href="{{ route('families.projects.index', $family) }}" class="kt-btn kt-btn-outline">
+            <a href="{{ route('families.projects.index') }}" class="kt-btn kt-btn-outline">
                 <i class="ki-filled ki-briefcase"></i>
                 Projects
             </a>
@@ -372,7 +372,7 @@
                 <div class="kt-card-header flex-wrap gap-2">
                     <h3 class="kt-card-title text-sm">Members ({{ $family->familyMembers->count() }})</h3>
                     @if ($canManageMembers ?? false)
-                        <a href="{{ route('families.members.create', $family) }}" class="kt-btn kt-btn-sm kt-btn-primary" title="Owner and co-owner can add members">
+                        <a href="{{ route('families.members.create') }}" class="kt-btn kt-btn-sm kt-btn-primary" title="Owner and co-owner can add members">
                             <i class="ki-filled ki-plus"></i>
                             Add member
                         </a>
@@ -385,7 +385,7 @@
                                 <i class="ki-filled ki-people text-2xl"></i>
                             </span>
                             <p class="text-sm font-medium text-foreground">No members yet</p>
-                            <p class="text-sm text-secondary-foreground mt-1">@if ($canManageMembers ?? false)<a href="{{ route('families.members.create', $family) }}" class="text-primary hover:underline">Add a member</a>@else Invite members from Settings (coming soon).@endif</p>
+                            <p class="text-sm text-secondary-foreground mt-1">@if ($canManageMembers ?? false)<a href="{{ route('families.members.create') }}" class="text-primary hover:underline">Add a member</a>@else Invite members from Settings (coming soon).@endif</p>
                         </div>
                     @else
                         {{-- Desktop / tablet table --}}
@@ -442,14 +442,14 @@
                                                     </button>
                                                     <div class="kt-menu-dropdown kt-menu-default w-[220px]" data-kt-menu-dismiss="true">
                                                         <div class="kt-menu-item">
-                                                            <a class="kt-menu-link" href="{{ route('families.members.edit', [$family, $member]) }}">
+                                                            <a class="kt-menu-link" href="{{ route('families.members.edit', $member) }}">
                                                                 <span class="kt-menu-icon"><i class="ki-filled ki-pencil"></i></span>
                                                                 <span class="kt-menu-title">Edit</span>
                                                             </a>
                                                         </div>
                                                         <div class="kt-menu-item">
                                                             @if (! $member->is_primary)
-                                                            <form action="{{ route('families.members.transfer-ownership', [$family, $member]) }}" method="POST" class="inline-block w-full">
+                                                            <form action="{{ route('families.members.transfer-ownership', $member) }}" method="POST" class="inline-block w-full">
                                                                 @csrf
                                                                 @method('PATCH')
                                                                 <button type="submit" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer">
@@ -466,7 +466,7 @@
                                                         </div>
                                                         <div class="kt-menu-item">
                                                             @if (($member->status ?? 'active') === 'active')
-                                                            <form action="{{ route('families.members.deactivate', [$family, $member]) }}" method="POST" class="inline-block w-full">
+                                                            <form action="{{ route('families.members.deactivate', $member) }}" method="POST" class="inline-block w-full">
                                                                 @csrf
                                                                 @method('PATCH')
                                                                 <button type="submit" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer">
@@ -475,7 +475,7 @@
                                                                 </button>
                                                             </form>
                                                             @else
-                                                            <form action="{{ route('families.members.activate', [$family, $member]) }}" method="POST" class="inline-block w-full">
+                                                            <form action="{{ route('families.members.activate', $member) }}" method="POST" class="inline-block w-full">
                                                                 @csrf
                                                                 @method('PATCH')
                                                                 <button type="submit" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer">
@@ -487,7 +487,7 @@
                                                         </div>
                                                         <div class="kt-menu-separator"></div>
                                                         <div class="kt-menu-item">
-                                                            <form action="{{ route('families.members.destroy', [$family, $member]) }}" method="POST" class="js-confirm-delete inline-block w-full" data-confirm-title="Delete this member?" data-confirm-message="They will be removed from this family and lose access.">
+                                                            <form action="{{ route('families.members.destroy', $member) }}" method="POST" class="js-confirm-delete inline-block w-full" data-confirm-title="Delete this member?" data-confirm-message="They will be removed from this family and lose access.">
                                                                 @csrf
                                                                 @method('DELETE')
                                                                 <button type="submit" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer text-destructive hover:!bg-destructive/10">
@@ -550,11 +550,11 @@
 
                                     @if ($canManageMembers ?? false)
                                         <div class="flex flex-wrap justify-end gap-2 pt-1">
-                                            <a href="{{ route('families.members.edit', [$family, $member]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                            <a href="{{ route('families.members.edit', $member) }}" class="kt-btn kt-btn-xs kt-btn-outline">
                                                 Edit
                                             </a>
                                             @if (! $member->is_primary)
-                                            <form action="{{ route('families.members.transfer-ownership', [$family, $member]) }}" method="POST" class="inline-block js-confirm-delete" data-confirm-title="Transfer ownership?" data-confirm-message="Current owner role will be downgraded.">
+                                            <form action="{{ route('families.members.transfer-ownership', $member) }}" method="POST" class="inline-block js-confirm-delete" data-confirm-title="Transfer ownership?" data-confirm-message="Current owner role will be downgraded.">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="kt-btn kt-btn-xs kt-btn-outline">
@@ -562,7 +562,7 @@
                                                 </button>
                                             </form>
                                             @endif
-                                            <form action="{{ route('families.members.destroy', [$family, $member]) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Delete this member?" data-confirm-message="They will be removed from this family and lose access.">
+                                            <form action="{{ route('families.members.destroy', $member) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Delete this member?" data-confirm-message="They will be removed from this family and lose access.">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="kt-btn kt-btn-xs kt-btn-ghost text-destructive">

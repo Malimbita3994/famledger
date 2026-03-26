@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * Budgets = planning layer. They guide decisions; they do not move money.
- * Monitors expenses only. Used amount = sum of expenses in period matching scope.
+ * Used amount = sum of expenses in period matching scope, plus savings→budget allocations in that period.
  */
 class Budget extends Model
 {
@@ -70,6 +70,12 @@ class Budget extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** Project this budget tracks (type = project). */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     /** Wallets this budget applies to (type = wallet). */
     public function wallets(): BelongsToMany
     {
@@ -83,46 +89,61 @@ class Budget extends Model
     }
 
     /**
-     * Sum of expenses in [start_date, end_date] matching this budget's scope.
+     * Expenses in period matching scope, plus savings→budget allocations in that period.
      */
     public function getUsedAmountAttribute(): float
     {
-        $query = $this->family->expenses()
+        $baseQuery = $this->family->expenses()
             ->whereBetween('expense_date', [$this->start_date, $this->end_date]);
 
+        // 1) Primary relationship (clear & explicit):
+        //    If expenses are tagged with this budget, always use that.
+        $taggedSum = (float) (clone $baseQuery)
+            ->where('budget_id', $this->id)
+            ->sum('amount');
+
+        if ($taggedSum > 0) {
+            return $taggedSum;
+        }
+
+        // 2) Fallback relationship (when budget_id isn't set on expenses yet):
+        //    Use the budget's scope (wallet/category/project) based on its pivots.
         switch ($this->type) {
             case self::TYPE_FAMILY:
-                // All family expenses in period
-                break;
+                return (float) $baseQuery->sum('amount');
+
             case self::TYPE_WALLET:
                 $walletIds = $this->wallets->pluck('id')->toArray();
                 if (empty($walletIds)) {
-                    return 0;
+                    return (float) $baseQuery->sum('amount');
                 }
-                $query->whereIn('wallet_id', $walletIds);
-                break;
+
+                return (float) (clone $baseQuery)
+                    ->whereIn('wallet_id', $walletIds)
+                    ->sum('amount');
+
             case self::TYPE_CATEGORY:
                 $categoryIds = $this->categories->pluck('id')->toArray();
                 if (empty($categoryIds)) {
-                    return 0;
+                    return (float) $baseQuery->sum('amount');
                 }
-                $query->whereIn('category_id', $categoryIds);
-                break;
+
+                return (float) (clone $baseQuery)
+                    ->whereIn('category_id', $categoryIds)
+                    ->sum('amount');
+
             case self::TYPE_PROJECT:
                 if ($this->project_id) {
-                    $query->where('project_id', $this->project_id);
+                    return (float) (clone $baseQuery)
+                        ->where('project_id', (int) $this->project_id)
+                        ->sum('amount');
                 }
-                break;
+
+                return 0.0;
+
             default:
-                break;
+                return 0.0;
         }
-
-        return (float) $query->sum('amount');
-    }
-
-    public function getRemainingAmountAttribute(): float
-    {
-        return max(0, (float) $this->amount - $this->used_amount);
     }
 
     public function getUtilizationPercentAttribute(): float
@@ -136,5 +157,10 @@ class Budget extends Model
     public function getIsExceededAttribute(): bool
     {
         return $this->used_amount >= (float) $this->amount;
+    }
+
+    public function getRemainingAmountAttribute(): float
+    {
+        return round((float) $this->amount - $this->used_amount, 2);
     }
 }

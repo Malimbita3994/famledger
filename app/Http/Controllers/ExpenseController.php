@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Budget;
 use App\Models\ExpenseCategory;
 use App\Models\Family;
+use App\Services\WalletBalanceGuard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ExpenseController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family, Request $request)
     {
@@ -41,7 +39,7 @@ class ExpenseController extends Controller
         $wallets = $family->wallets()->where('status', 'active')->orderBy('name')->get();
         if ($wallets->isEmpty()) {
             return redirect()
-                ->route('families.wallets.index', $family)
+                ->route('families.wallets.index')
                 ->with('error', 'Create at least one wallet before recording expenses. Every expense must reduce a wallet.');
         }
         $categories = ExpenseCategory::defaults();
@@ -49,9 +47,9 @@ class ExpenseController extends Controller
         $projects = $family->projects()->whereIn('status', ['planning', 'active'])->orderBy('name')->get(['id', 'name']);
         $budgets = $family->budgets()
             ->where('status', 'active')
-            ->where('type', '!=', Budget::TYPE_FAMILY)
+            ->with(['wallets:id', 'categories:id'])
             ->orderBy('name')
-            ->get(['id', 'name', 'type', 'amount', 'currency_code']);
+            ->get(['id', 'name', 'type', 'amount', 'currency_code', 'project_id']);
 
         return view('families.expenses.create', compact('family', 'wallets', 'categories', 'members', 'projects', 'budgets'));
     }
@@ -89,34 +87,93 @@ class ExpenseController extends Controller
             'category_id.required' => 'Please choose a category for this expense.',
         ]);
 
-        if (! $wallet->canAffordDebit((float) $validated['amount'])) {
-            $message = 'Insufficient funds in the selected wallet. Available balance is '
-                .number_format($wallet->balance, 2).' '.strtoupper($wallet->currency_code).'.';
+        // Keep Project <-> Budget source consistent for project budgets.
+        if (! empty($validated['budget_id'])) {
+            $budget = $family->budgets()->whereKey($validated['budget_id'])->first();
+            if ($budget && $budget->type === Budget::TYPE_PROJECT && $budget->project_id) {
+                $linkedProjectId = (int) $budget->project_id;
+                $selectedProjectId = isset($validated['project_id']) && $validated['project_id'] !== null
+                    ? (int) $validated['project_id']
+                    : null;
 
-            return back()->withInput()->withErrors(['amount' => $message])->with('error', $message);
+                if ($selectedProjectId === null) {
+                    $validated['project_id'] = $linkedProjectId;
+                } elseif ($selectedProjectId !== $linkedProjectId) {
+                    return back()
+                        ->withInput()
+                        ->withErrors([
+                            'budget_id' => 'Selected budget is linked to a different project.',
+                        ]);
+                }
+            }
+
+            // If the chosen budget source is scope-limited (wallet/category), ensure
+            // the expense points at something inside that scope. This makes
+            // Budget "Used" figures update reliably.
+            if ($budget) {
+                if ($budget->type === Budget::TYPE_WALLET) {
+                    $walletOk = $budget->wallets()->whereKey($validated['wallet_id'])->exists();
+                    if (! $walletOk) {
+                        return back()
+                            ->withInput()
+                            ->withErrors([
+                                'budget_id' => 'Selected budget source is linked to different wallet(s).',
+                            ]);
+                    }
+                }
+
+                if ($budget->type === Budget::TYPE_CATEGORY) {
+                    $categoryOk = $budget->categories()->whereKey($validated['category_id'])->exists();
+                    if (! $categoryOk) {
+                        return back()
+                            ->withInput()
+                            ->withErrors([
+                                'budget_id' => 'Selected budget source is linked to different expense category/ies.',
+                            ]);
+                    }
+                }
+            }
         }
 
-        $family->expenses()->create([
-            'wallet_id' => $validated['wallet_id'],
-            'category_id' => $validated['category_id'] ?? null,
-            'subcategory' => $validated['subcategory'] ?? null,
-            'project_id' => $validated['project_id'] ?? null,
-            'family_liability_id' => $validated['family_liability_id'] ?? null,
-            'budget_id' => $validated['budget_id'] ?? null,
-            'amount' => $validated['amount'],
-            'currency_code' => strtoupper($validated['currency_code']),
-            'description' => $validated['description'] ?? null,
-            'expense_date' => $validated['expense_date'],
-            'merchant' => $validated['merchant'] ?? null,
-            'paid_by' => $validated['paid_by'] ?? auth()->id(),
-            'payment_method' => $validated['payment_method'] ?? null,
-            'reference' => $validated['reference'] ?? null,
-            'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
-            'created_by' => auth()->id(),
-        ]);
+        return DB::transaction(function () use ($family, $validated) {
+            $locked = WalletBalanceGuard::lockWalletsForUpdate([(int) $validated['wallet_id']]);
+            $w = $locked->get((int) $validated['wallet_id']);
+            if (! $w || $w->status !== 'active') {
+                return back()
+                    ->withInput()
+                    ->withErrors(['wallet_id' => 'Selected wallet is missing or inactive.'])
+                    ->with('error', 'Selected wallet is missing or inactive.');
+            }
 
-        return redirect()
-            ->route('families.expenses.index', $family)
-            ->with('success', 'Expense recorded. Wallet balance updated.');
+            if (! $w->canAffordDebit((float) $validated['amount'])) {
+                $message = 'Insufficient funds in the selected wallet. Available balance is '
+                    .number_format($w->balance, 2).' '.strtoupper($w->currency_code).'.';
+
+                return back()->withInput()->withErrors(['amount' => $message])->with('error', $message);
+            }
+
+            $family->expenses()->create([
+                'wallet_id' => $validated['wallet_id'],
+                'category_id' => $validated['category_id'] ?? null,
+                'subcategory' => $validated['subcategory'] ?? null,
+                'project_id' => $validated['project_id'] ?? null,
+                'family_liability_id' => $validated['family_liability_id'] ?? null,
+                'budget_id' => $validated['budget_id'] ?? null,
+                'amount' => $validated['amount'],
+                'currency_code' => strtoupper($validated['currency_code']),
+                'description' => $validated['description'] ?? null,
+                'expense_date' => $validated['expense_date'],
+                'merchant' => $validated['merchant'] ?? null,
+                'paid_by' => $validated['paid_by'] ?? auth()->id(),
+                'payment_method' => $validated['payment_method'] ?? null,
+                'reference' => $validated['reference'] ?? null,
+                'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
+                'created_by' => auth()->id(),
+            ]);
+
+            return redirect()
+                ->route('families.expenses.index')
+                ->with('success', 'Expense recorded. Wallet balance updated.');
+        });
     }
 }

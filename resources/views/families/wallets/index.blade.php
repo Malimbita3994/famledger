@@ -5,41 +5,38 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12 w-full max-w-full min-w-0">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
     </a>
 
-    <div class="flex flex-wrap items-center gap-3 mb-4">
-        <div>
-            <h1 class="font-medium text-lg text-mono">Family Wallets</h1>
-            <p class="text-sm text-muted-foreground mt-0.5">Stand-alone wallets where family money lives. No bank link.</p>
-        </div>
-        <div class="ml-auto flex flex-wrap justify-end gap-1.5">
-            <a href="{{ route('families.incomes.create', $family) }}" class="kt-btn kt-btn-outline">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 w-full min-w-0">
+        <h1 class="font-medium text-lg text-mono shrink-0">Family Wallets</h1>
+        <div class="flex flex-wrap justify-end gap-1.5 w-full sm:w-auto sm:ms-auto min-w-0">
+            <x-famledger.pulse-button variant="outline" :href="route('families.incomes.create')">
                 <i class="ki-filled ki-arrow-up"></i>
                 Record income
-            </a>
-            <a href="{{ route('families.expenses.create', $family) }}" class="kt-btn kt-btn-outline">
+            </x-famledger.pulse-button>
+            <x-famledger.pulse-button variant="outline" :href="route('families.expenses.create')">
                 <i class="ki-filled ki-arrow-down"></i>
                 Record expense
-            </a>
-            <a href="{{ route('families.transfers.create', $family) }}" class="kt-btn kt-btn-outline">
+            </x-famledger.pulse-button>
+            <x-famledger.pulse-button variant="outline" :href="route('families.transfers.create')">
                 <i class="ki-filled ki-arrow-right-left"></i>
                 Transfer
-            </a>
-            <a href="{{ route('families.reconciliations.create', $family) }}" class="kt-btn kt-btn-outline">
+            </x-famledger.pulse-button>
+            <x-famledger.pulse-button variant="outline" :href="route('families.reconciliations.create')">
                 <i class="ki-filled ki-check-circle"></i>
                 Reconcile
-            </a>
-            <a href="{{ route('families.savings-goals.index', $family) }}" class="kt-btn kt-btn-outline">
+            </x-famledger.pulse-button>
+            <x-famledger.pulse-button variant="outline" :href="route('families.savings-goals.index')">
                 <i class="ki-filled ki-safe"></i>
                 Savings goals
-            </a>
-            <a href="{{ route('families.wallets.create', $family) }}" class="kt-btn kt-btn-primary">
+            </x-famledger.pulse-button>
+            <x-famledger.pulse-button variant="primary" :href="route('families.wallets.create')">
                 <i class="ki-filled ki-plus"></i>
                 Add wallet
-            </a>
+            </x-famledger.pulse-button>
         </div>
     </div>
 
@@ -56,46 +53,10 @@
                 <i class="ki-filled ki-wallet text-5xl text-muted-foreground mb-4"></i>
                 <p class="font-semibold text-foreground">No wallets yet</p>
                 <p class="text-sm text-secondary-foreground mt-1">Create a wallet to start tracking income, expenses, and transfers for this family.</p>
-                <a href="{{ route('families.wallets.create', $family) }}" class="kt-btn kt-btn-primary mt-6">Add wallet</a>
+                <x-famledger.pulse-button variant="primary" class="mt-6" :href="route('families.wallets.create')">Add wallet</x-famledger.pulse-button>
             </div>
         </div>
     @else
-        {{-- flex + min-w-0/basis-0 keeps each chart in exactly one third; grid can let one column steal width --}}
-        <div class="flex flex-col md:flex-row gap-4 lg:gap-5 mt-4 mb-6 w-full max-w-full min-w-0">
-            <div class="famledger-chart-card w-full md:flex-1 md:min-w-0 md:basis-0 max-w-full kt-card flex flex-col rounded-xl border border-border shadow-sm min-w-0">
-                <div class="px-4 py-3 border-b border-border shrink-0">
-                    <h2 class="text-sm font-semibold text-foreground leading-snug">Balance by wallet</h2>
-                    <p class="text-xs text-muted-foreground mt-0.5">
-                        Per wallet
-                        @if ($chartCurrencyLabel)
-                            · {{ $chartCurrencyLabel }}
-                        @endif
-                    </p>
-                </div>
-                <div class="famledger-chart-panel p-3 min-h-[220px]">
-                    <div id="famledger_wallets_balance_chart" class="w-full max-w-full min-w-0" style="min-height: 200px;"></div>
-                </div>
-            </div>
-            <div class="famledger-chart-card w-full md:flex-1 md:min-w-0 md:basis-0 max-w-full kt-card flex flex-col rounded-xl border border-border shadow-sm min-w-0">
-                <div class="px-4 py-3 border-b border-border shrink-0">
-                    <h2 class="text-sm font-semibold text-foreground leading-snug">Share of positive balances</h2>
-                    <p class="text-xs text-muted-foreground mt-0.5">Wallets above zero</p>
-                </div>
-                <div class="famledger-chart-panel p-3 flex items-center justify-center min-h-[220px]">
-                    <div id="famledger_wallets_share_chart" class="w-full max-w-full min-w-0" style="min-height: 200px;"></div>
-                </div>
-            </div>
-            <div class="famledger-chart-card w-full md:flex-1 md:min-w-0 md:basis-0 max-w-full kt-card flex flex-col rounded-xl border border-border shadow-sm min-w-0">
-                <div class="px-4 py-3 border-b border-border shrink-0">
-                    <h2 class="text-sm font-semibold text-foreground leading-snug">Total by type</h2>
-                    <p class="text-xs text-muted-foreground mt-0.5">Sum by wallet type</p>
-                </div>
-                <div class="famledger-chart-panel p-3 min-h-[220px]">
-                    <div id="famledger_wallets_type_chart" class="w-full max-w-full min-w-0" style="min-height: 200px;"></div>
-                </div>
-            </div>
-        </div>
-
         <div class="kt-card kt-card-grid w-full min-w-0 max-w-full mt-4">
             <div class="kt-card-content p-0">
                 {{-- Desktop / tablet table --}}
@@ -103,7 +64,8 @@
                     <table class="kt-table table-auto kt-table-border">
                         <thead>
                             <tr>
-                                <th class="min-w-[200px]">Wallet</th>
+                                <th class="min-w-[160px]">Wallet</th>
+                                <th class="min-w-[220px]">Description</th>
                                 <th class="min-w-[120px]">Type</th>
                                 <th class="min-w-[100px]">Currency</th>
                                 <th class="min-w-[120px]">Balance</th>
@@ -117,17 +79,27 @@
                             @foreach ($wallets as $wallet)
                             <tr>
                                 <td>
-                                    <a href="{{ route('families.wallets.show', [$family, $wallet]) }}" class="flex items-center gap-2.5 hover:opacity-90">
-                                        <span class="flex items-center justify-center rounded-full size-9 shrink-0 bg-muted text-foreground font-medium text-sm">
-                                            <i class="ki-filled ki-wallet text-lg"></i>
-                                        </span>
-                                        <div class="flex flex-col min-w-0">
-                                            <span class="text-sm font-medium text-mono hover:text-primary">{{ $wallet->name }}</span>
-                                            @if ($wallet->description)
-                                                <span class="text-sm text-secondary-foreground truncate max-w-[220px] block">{{ Str::limit($wallet->description, 35) }}</span>
-                                            @endif
-                                        </div>
-                                    </a>
+                                    <div class="flex flex-col gap-0.5 min-w-0">
+                                        <a href="{{ route('families.wallets.show', $wallet) }}" class="flex items-center gap-2.5 hover:opacity-90">
+                                            <span class="flex items-center justify-center rounded-full size-9 shrink-0 bg-muted text-foreground font-medium text-sm">
+                                                <i class="ki-filled ki-wallet text-lg"></i>
+                                            </span>
+                                            <span class="text-sm font-medium text-mono hover:text-primary min-w-0 truncate">{{ $wallet->name }}</span>
+                                        </a>
+                                        @if ($wallet->dedicatedProject)
+                                            <p class="text-xs text-muted-foreground mt-0.5 ps-11">
+                                                <span class="text-muted-foreground">Holds funds for</span>
+                                                <a href="{{ route('families.projects.show', $wallet->dedicatedProject) }}" class="text-primary hover:underline font-medium">{{ $wallet->dedicatedProject->name }}</a>
+                                            </p>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="align-top text-sm text-secondary-foreground">
+                                    @if (filled($wallet->description))
+                                        <span class="line-clamp-3 max-w-[22rem] break-words" title="{{ e($wallet->description) }}">{{ $wallet->description }}</span>
+                                    @else
+                                        <span class="text-muted-foreground">—</span>
+                                    @endif
                                 </td>
                                 <td class="text-foreground font-normal">{{ $walletTypes[$wallet->type] ?? $wallet->type }}</td>
                                 <td class="text-foreground font-normal">{{ $wallet->currency_code }}</td>
@@ -155,20 +127,20 @@
                                             </button>
                                             <div class="kt-menu-dropdown kt-menu-default w-full max-w-[175px]" data-kt-menu-dismiss="true">
                                                 <div class="kt-menu-item">
-                                                    <a class="kt-menu-link" href="{{ route('families.wallets.show', [$family, $wallet]) }}">
+                                                    <a class="kt-menu-link" href="{{ route('families.wallets.show', $wallet) }}">
                                                         <span class="kt-menu-icon"><i class="ki-filled ki-eye"></i></span>
                                                         <span class="kt-menu-title">View</span>
                                                     </a>
                                                 </div>
                                                 <div class="kt-menu-item">
-                                                    <a class="kt-menu-link" href="{{ route('families.wallets.edit', [$family, $wallet]) }}">
+                                                    <a class="kt-menu-link" href="{{ route('families.wallets.edit', $wallet) }}">
                                                         <span class="kt-menu-icon"><i class="ki-filled ki-pencil"></i></span>
                                                         <span class="kt-menu-title">Edit</span>
                                                     </a>
                                                 </div>
                                                 <div class="kt-menu-separator"></div>
                                                 <div class="kt-menu-item">
-                                                    <form action="{{ route('families.wallets.destroy', [$family, $wallet]) }}" method="POST" class="js-confirm-delete inline-block w-full" data-confirm-title="Remove this wallet?" data-confirm-message="This cannot be undone.">
+                                                    <form action="{{ route('families.wallets.destroy', $wallet) }}" method="POST" class="js-confirm-delete inline-block w-full" data-confirm-title="Remove this wallet?" data-confirm-message="This cannot be undone.">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer text-destructive hover:!bg-destructive/10">
@@ -198,11 +170,12 @@
                                         <i class="ki-filled ki-wallet text-lg"></i>
                                     </span>
                                     <div class="flex flex-col min-w-0">
-                                        <a href="{{ route('families.wallets.show', [$family, $wallet]) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
-                                            {{ $wallet->name }}
+                                        <a href="{{ route('families.wallets.show', $wallet) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
+                                            {{ $wallet->display_name }}
                                         </a>
-                                        @if ($wallet->description)
-                                            <span class="text-[11px] text-secondary-foreground mt-0.5 line-clamp-2">
+                                        @if (filled($wallet->description))
+                                            <span class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mt-1">{{ __('Description') }}</span>
+                                            <span class="text-[11px] text-secondary-foreground line-clamp-3">
                                                 {{ $wallet->description }}
                                             </span>
                                         @endif
@@ -248,18 +221,16 @@
 
                             {{-- Actions --}}
                             <div class="flex flex-wrap justify-end gap-2 pt-1">
-                                <a href="{{ route('families.wallets.show', [$family, $wallet]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                <x-famledger.pulse-button variant="outline" size="sm" :href="route('families.wallets.show', $wallet)">
                                     View
-                                </a>
-                                <a href="{{ route('families.wallets.edit', [$family, $wallet]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                </x-famledger.pulse-button>
+                                <x-famledger.pulse-button variant="outline" size="sm" :href="route('families.wallets.edit', $wallet)">
                                     Edit
-                                </a>
-                                <form action="{{ route('families.wallets.destroy', [$family, $wallet]) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Remove this wallet?" data-confirm-message="This cannot be undone.">
+                                </x-famledger.pulse-button>
+                                <form action="{{ route('families.wallets.destroy', $wallet) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Remove this wallet?" data-confirm-message="This cannot be undone.">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="kt-btn kt-btn-xs kt-btn-ghost text-destructive">
-                                        Remove
-                                    </button>
+                                    <x-famledger.pulse-button variant="danger" size="sm" type="submit">Remove</x-famledger.pulse-button>
                                 </form>
                             </div>
                         </div>
@@ -271,234 +242,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    if (typeof ApexCharts === 'undefined') return;
-
-    var currency = @json($chartCurrencyLabel);
-    var walletNames = @json($chartWalletNames);
-    var walletBalances = @json($chartWalletBalances);
-    var typeLabels = @json($chartTypeLabels);
-    var typeBalances = @json($chartTypeBalances);
-    var shareLabels = @json($chartShareLabels);
-    var shareValues = @json($chartShareValues);
-
-    var palette = ['#009EF7', '#38bdf8', '#0ea5e9', '#0369a1', '#22c55e', '#a855f7', '#f97316', '#ef4444', '#14b8a6', '#eab308'];
-
-    function famledgerCompactAxis(v) {
-        v = Number(v) || 0;
-        var a = Math.abs(v);
-        if (a >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
-        if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
-        if (a >= 1e3) return (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
-        return (v % 1 === 0 ? String(v) : v.toFixed(1));
-    }
-
-    var balanceEl = document.getElementById('famledger_wallets_balance_chart');
-    if (balanceEl && walletNames.length && walletBalances.length) {
-        new ApexCharts(balanceEl, {
-            series: [{ name: 'Balance', data: walletBalances.map(Number) }],
-            chart: {
-                type: 'bar',
-                width: '100%',
-                height: 300,
-                toolbar: { show: false },
-                redrawOnParentResize: true,
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: false,
-                    borderRadius: 4,
-                    columnWidth: '55%',
-                    distributed: true,
-                },
-            },
-            colors: walletBalances.map(function (b, i) {
-                return Number(b) < 0 ? '#ef4444' : palette[i % palette.length];
-            }),
-            dataLabels: {
-                enabled: walletNames.length <= 10,
-                offsetY: -4,
-                style: { colors: ['var(--color-foreground)'], fontSize: '10px' },
-                formatter: function (val) {
-                    return (val || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
-                },
-            },
-            xaxis: {
-                categories: walletNames,
-                labels: {
-                    rotate: walletNames.length > 3 ? -40 : 0,
-                    rotateAlways: walletNames.length > 3,
-                    hideOverlappingLabels: true,
-                    trim: true,
-                    maxHeight: 72,
-                    style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
-                },
-                axisBorder: { show: false },
-                axisTicks: { show: false },
-            },
-            yaxis: {
-                labels: {
-                    style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
-                    formatter: function (v) {
-                        return famledgerCompactAxis(v);
-                    },
-                },
-                axisBorder: { show: false },
-                axisTicks: { show: false },
-            },
-            grid: {
-                borderColor: 'var(--color-border)',
-                strokeDashArray: 4,
-                xaxis: { lines: { show: false } },
-                yaxis: { lines: { show: true } },
-                padding: { top: 8, right: 8, left: 4 },
-            },
-            tooltip: {
-                theme: 'dark',
-                y: {
-                    formatter: function (v) {
-                        return (v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + (currency ? ' ' + currency : '');
-                    },
-                },
-            },
-            legend: { show: false },
-        }).render();
-    } else if (balanceEl) {
-        balanceEl.innerHTML = '<div class="flex items-center justify-center h-[200px] text-muted-foreground text-sm">No wallet data</div>';
-    }
-
-    var shareEl = document.getElementById('famledger_wallets_share_chart');
-    if (shareEl) {
-        if (shareLabels.length && shareValues.length) {
-            new ApexCharts(shareEl, {
-                series: shareValues.map(Number),
-                labels: shareLabels,
-                chart: {
-                    type: 'donut',
-                    width: '100%',
-                    height: 240,
-                    toolbar: { show: false },
-                    redrawOnParentResize: true,
-                },
-                colors: palette,
-                plotOptions: {
-                    pie: {
-                        donut: {
-                            size: '70%',
-                            labels: {
-                                show: true,
-                                total: {
-                                    show: true,
-                                    label: 'Total',
-                                    formatter: function () {
-                                        var t = shareValues.reduce(function (a, b) { return a + Number(b); }, 0);
-                                        return t.toLocaleString(undefined, { maximumFractionDigits: 2 }) + (currency ? ' ' + currency : '');
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-                dataLabels: {
-                    enabled: true,
-                    formatter: function (val) {
-                        return (val != null ? val.toFixed(0) : '0') + '%';
-                    },
-                },
-                stroke: { width: 0 },
-                legend: {
-                    position: 'bottom',
-                    labels: { colors: 'var(--color-muted-foreground)' },
-                },
-                tooltip: {
-                    theme: 'dark',
-                    y: {
-                        formatter: function (v) {
-                            return (v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + (currency ? ' ' + currency : '');
-                        },
-                    },
-                },
-            }).render();
-        } else {
-            shareEl.innerHTML = '<div class="flex items-center justify-center h-[200px] text-muted-foreground text-sm text-center px-4">No wallets with a positive balance to chart.</div>';
-        }
-    }
-
-    var typeEl = document.getElementById('famledger_wallets_type_chart');
-    if (typeEl && typeLabels.length && typeBalances.length) {
-        new ApexCharts(typeEl, {
-            series: [{ name: 'Balance', data: typeBalances.map(Number) }],
-            chart: {
-                type: 'bar',
-                width: '100%',
-                height: 300,
-                toolbar: { show: false },
-                redrawOnParentResize: true,
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: false,
-                    borderRadius: 4,
-                    columnWidth: '55%',
-                    distributed: true,
-                },
-            },
-            colors: typeBalances.map(function (b, i) {
-                return Number(b) < 0 ? '#ef4444' : palette[i % palette.length];
-            }),
-            dataLabels: {
-                enabled: typeLabels.length <= 12,
-                offsetY: -4,
-                style: { colors: ['var(--color-foreground)'], fontSize: '10px' },
-                formatter: function (val) {
-                    return (val || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
-                },
-            },
-            xaxis: {
-                categories: typeLabels,
-                labels: {
-                    rotate: typeLabels.length > 3 ? -40 : 0,
-                    rotateAlways: typeLabels.length > 3,
-                    hideOverlappingLabels: true,
-                    trim: true,
-                    maxHeight: 72,
-                    style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
-                },
-                axisBorder: { show: false },
-                axisTicks: { show: false },
-            },
-            yaxis: {
-                labels: {
-                    style: { colors: 'var(--color-muted-foreground)', fontSize: '10px' },
-                    formatter: function (v) {
-                        return famledgerCompactAxis(v);
-                    },
-                },
-                axisBorder: { show: false },
-                axisTicks: { show: false },
-            },
-            grid: {
-                borderColor: 'var(--color-border)',
-                strokeDashArray: 4,
-                xaxis: { lines: { show: false } },
-                yaxis: { lines: { show: true } },
-                padding: { top: 8, right: 8, left: 4 },
-            },
-            tooltip: {
-                theme: 'dark',
-                y: {
-                    formatter: function (v) {
-                        return (v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) + (currency ? ' ' + currency : '');
-                    },
-                },
-            },
-            legend: { show: false },
-        }).render();
-    } else if (typeEl) {
-        typeEl.innerHTML = '<div class="flex items-center justify-center h-[180px] text-muted-foreground text-sm">No type breakdown</div>';
-    }
-});
-</script>
-@endpush

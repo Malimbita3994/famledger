@@ -2,27 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Budget;
 use App\Models\ExpenseCategory;
 use App\Models\Family;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class BudgetController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family)
     {
         $this->authorizeFamilyMember($family);
 
         $budgets = $family->budgets()
-            ->with(['wallets:id,name,currency_code', 'categories:id,name'])
+            ->with(['wallets:id,name,currency_code', 'categories:id,name', 'project:id,name'])
             ->orderByDesc('start_date')
             ->orderByDesc('id')
             ->paginate(15);
@@ -59,7 +56,9 @@ class BudgetController extends Controller
             $currencies = [$family->currency_code => $family->currency_code] + $currencies;
         }
 
-        return view('families.budgets.create', compact('family', 'wallets', 'categories', 'currencies'));
+        $projects = $family->projects()->orderBy('name')->get(['id', 'name']);
+
+        return view('families.budgets.create', compact('family', 'wallets', 'categories', 'currencies', 'projects'));
     }
 
     public function store(Request $request, Family $family)
@@ -78,6 +77,12 @@ class BudgetController extends Controller
             'wallet_ids.*' => ['nullable', Rule::exists('wallets', 'id')->where('family_id', $family->id)],
             'category_ids' => ['nullable', 'array'],
             'category_ids.*' => ['nullable', Rule::exists('expense_categories', 'id')],
+            'project_id' => [
+                'nullable',
+                'integer',
+                Rule::requiredIf(fn () => $request->input('type') === Budget::TYPE_PROJECT),
+                Rule::exists('projects', 'id')->where('family_id', $family->id),
+            ],
         ];
 
         // Only require category when type = Expenses (category)
@@ -113,6 +118,9 @@ class BudgetController extends Controller
         }
         if ($validated['type'] === Budget::TYPE_CATEGORY && empty(array_filter($validated['category_ids'] ?? []))) {
             return back()->withInput()->withErrors(['category_ids' => 'Select at least one category for a category budget.']);
+        }
+        if ($validated['type'] === Budget::TYPE_PROJECT && empty($validated['project_id'])) {
+            return back()->withInput()->withErrors(['project_id' => 'Select a project for a project budget.']);
         }
 
         // Enforce that all non-family budgets depend on the main family budget
@@ -159,6 +167,7 @@ class BudgetController extends Controller
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'recurrence' => $validated['recurrence'] ?? 'none',
+            'project_id' => $validated['type'] === Budget::TYPE_PROJECT ? ($validated['project_id'] ?? null) : null,
             'status' => 'active',
             'created_by' => auth()->id(),
         ]);
@@ -169,25 +178,31 @@ class BudgetController extends Controller
         if ($budget->type === Budget::TYPE_CATEGORY && ! empty($validated['category_ids'])) {
             $budget->categories()->sync($validated['category_ids']);
         }
+        if ($budget->type === Budget::TYPE_PROJECT && $budget->project_id) {
+            $this->attachBudgetToProject($family, $budget);
+        }
 
         return redirect()
-            ->route('families.budgets.show', [$family, $budget])
+            ->route('families.budgets.show', $budget)
             ->with('success', 'Budget created. You can now track spending against it.');
     }
 
-    public function show(Family $family, Budget $budget)
+    /**
+     * Route params: {budget} from URI, then session family from BindAccountFamilyFromSession (same as wallets/projects).
+     */
+    public function show(Budget $budget, Family $family)
     {
         $this->authorizeFamilyMember($family);
         if ($budget->family_id !== $family->id) {
             abort(404);
         }
 
-        $budget->load(['wallets:id,name,currency_code', 'categories:id,name', 'createdBy:id,name']);
+        $budget->load(['wallets:id,name,currency_code', 'categories:id,name', 'createdBy:id,name', 'project:id,name']);
 
         return view('families.budgets.show', compact('family', 'budget'));
     }
 
-    public function edit(Family $family, Budget $budget)
+    public function edit(Budget $budget, Family $family)
     {
         $this->authorizeFamilyMember($family);
         if ($budget->family_id !== $family->id) {
@@ -200,12 +215,13 @@ class BudgetController extends Controller
         if ($family->currency_code && ! isset($currencies[$family->currency_code])) {
             $currencies = [$family->currency_code => $family->currency_code] + $currencies;
         }
-        $budget->load(['wallets', 'categories']);
+        $projects = $family->projects()->orderBy('name')->get(['id', 'name']);
+        $budget->load(['wallets', 'categories', 'project:id,name']);
 
-        return view('families.budgets.edit', compact('family', 'budget', 'wallets', 'categories', 'currencies'));
+        return view('families.budgets.edit', compact('family', 'budget', 'wallets', 'categories', 'currencies', 'projects'));
     }
 
-    public function update(Request $request, Family $family, Budget $budget)
+    public function update(Request $request, Budget $budget, Family $family)
     {
         $this->authorizeFamilyMember($family);
         if ($budget->family_id !== $family->id) {
@@ -225,6 +241,12 @@ class BudgetController extends Controller
             'wallet_ids.*' => ['nullable', Rule::exists('wallets', 'id')->where('family_id', $family->id)],
             'category_ids' => ['nullable', 'array'],
             'category_ids.*' => ['nullable', Rule::exists('expense_categories', 'id')],
+            'project_id' => [
+                'nullable',
+                'integer',
+                Rule::requiredIf(fn () => $request->input('type') === Budget::TYPE_PROJECT),
+                Rule::exists('projects', 'id')->where('family_id', $family->id),
+            ],
         ];
 
         if ($request->input('type') === Budget::TYPE_CATEGORY) {
@@ -253,6 +275,9 @@ class BudgetController extends Controller
         }
         if ($validated['type'] === Budget::TYPE_CATEGORY && empty(array_filter($validated['category_ids'] ?? []))) {
             return back()->withInput()->withErrors(['category_ids' => 'Select at least one category for a category budget.']);
+        }
+        if ($validated['type'] === Budget::TYPE_PROJECT && empty($validated['project_id'])) {
+            return back()->withInput()->withErrors(['project_id' => 'Select a project for a project budget.']);
         }
 
         // Enforce main vs sub-budget relationship on update
@@ -307,6 +332,8 @@ class BudgetController extends Controller
             }
         }
 
+        $prevProjectId = $budget->project_id;
+
         $budget->update([
             'name' => $validated['name'],
             'type' => $validated['type'],
@@ -316,6 +343,7 @@ class BudgetController extends Controller
             'end_date' => $validated['end_date'],
             'recurrence' => $validated['recurrence'] ?? 'none',
             'status' => $validated['status'] ?? $budget->status,
+            'project_id' => $validated['type'] === Budget::TYPE_PROJECT ? ($validated['project_id'] ?? null) : null,
         ]);
 
         if ($budget->type === Budget::TYPE_WALLET) {
@@ -329,16 +357,30 @@ class BudgetController extends Controller
             $budget->categories()->detach();
         }
 
+        $budget->refresh();
+
+        $stillProject = $budget->type === Budget::TYPE_PROJECT;
+        if ($prevProjectId && (! $stillProject || (int) $prevProjectId !== (int) ($budget->project_id ?? 0))) {
+            $this->detachBudgetFromProject($family, $budget, $prevProjectId);
+        }
+        if ($budget->type === Budget::TYPE_PROJECT && $budget->project_id) {
+            $this->attachBudgetToProject($family, $budget);
+        }
+
         return redirect()
-            ->route('families.budgets.show', [$family, $budget])
+            ->route('families.budgets.show', $budget)
             ->with('success', 'Budget updated.');
     }
 
-    public function destroy(Family $family, Budget $budget)
+    public function destroy(Budget $budget, Family $family)
     {
         $this->authorizeFamilyMember($family);
         if ($budget->family_id !== $family->id) {
             abort(404);
+        }
+
+        if ($budget->project_id) {
+            $this->detachBudgetFromProject($family, $budget, $budget->project_id);
         }
 
         $budget->wallets()->detach();
@@ -346,7 +388,28 @@ class BudgetController extends Controller
         $budget->delete();
 
         return redirect()
-            ->route('families.budgets.index', $family)
+            ->route('families.budgets.index')
             ->with('success', 'Budget removed.');
+    }
+
+    private function attachBudgetToProject(Family $family, Budget $budget): void
+    {
+        if ($budget->type !== Budget::TYPE_PROJECT || ! $budget->project_id) {
+            return;
+        }
+
+        Project::query()
+            ->where('family_id', $family->id)
+            ->whereKey($budget->project_id)
+            ->update(['budget_id' => $budget->id]);
+    }
+
+    private function detachBudgetFromProject(Family $family, Budget $budget, int $projectId): void
+    {
+        Project::query()
+            ->where('family_id', $family->id)
+            ->whereKey($projectId)
+            ->where('budget_id', $budget->id)
+            ->update(['budget_id' => null]);
     }
 }

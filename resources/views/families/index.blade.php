@@ -4,22 +4,71 @@
 @section('page_title', 'Families')
 
 @section('content')
+@push('styles')
+<style>
+    .families-pulse-hero {
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(0, 158, 247, 0.04) 55%, rgba(255, 255, 255, 0.9) 100%);
+        border-radius: 1rem;
+        box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
+    }
+    .families-pulse-metric {
+        position: relative;
+        overflow: hidden;
+    }
+    .families-pulse-metric::after {
+        content: "";
+        position: absolute;
+        inset: auto -30% -35% auto;
+        width: 90px;
+        height: 90px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(14, 165, 233, 0.16) 0%, rgba(14, 165, 233, 0) 72%);
+        pointer-events: none;
+    }
+    .families-grid-card {
+        transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.2s ease;
+    }
+    .families-grid-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+        border-color: rgba(0, 158, 247, 0.35);
+    }
+    .families-narrow-wrap {
+        width: 100%;
+        /* Force a visible shrink even if Metronic sizing utilities try to stretch. */
+        max-width: 720px !important;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    /* The workspace hero uses a bordered wrapper + a standalone kt-card-content div.
+       Increase left/right padding so text/breadcrumb/buttons don't feel glued to the border. */
+    .families-pulse-hero .kt-card-content {
+        padding-inline: 1.75rem !important;
+    }
+</style>
+@endpush
 {{-- Toolbar (Metronic Team Crew style) --}}
 <div class="pb-5">
-    <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
-        <div class="flex items-center flex-wrap gap-1 lg:gap-5">
-            <h1 class="font-medium text-lg text-mono">Families</h1>
-            <div class="flex items-center gap-1 text-sm font-normal">
-                <a class="text-secondary-foreground hover:text-primary" href="{{ route('dashboard') }}">Home</a>
-                <span class="text-muted-foreground text-sm">/</span>
-                <span class="text-mono">Families</span>
+    <div class="kt-container-fixed families-pulse-hero py-4 sm:py-5">
+        <div class="kt-card-content flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center flex-wrap gap-1 lg:gap-5">
+                <div>
+                    <p class="fin-pulse-eyebrow mb-1">Workspace</p>
+                    <h1 class="font-semibold text-xl text-mono leading-tight">Families</h1>
+                </div>
+                <div class="flex items-center gap-1 text-sm font-normal">
+                    <a class="text-secondary-foreground hover:text-primary" href="{{ route('dashboard') }}">Home</a>
+                    <span class="text-muted-foreground text-sm">/</span>
+                    <span class="text-mono">Families</span>
+                </div>
             </div>
-        </div>
-        <div class="flex items-center flex-wrap gap-1.5 lg:gap-3.5">
-            <a href="{{ route('families.create') }}" class="kt-btn kt-btn-primary">
-                <i class="ki-filled ki-plus"></i>
-                Register a family
-            </a>
+            <div class="flex items-center flex-wrap gap-1.5 lg:gap-3.5">
+                <x-famledger.pulse-button variant="primary" :href="route('families.create')">
+                    <i class="ki-filled ki-plus"></i>
+                    Register a family
+                </x-famledger.pulse-button>
+            </div>
         </div>
     </div>
 </div>
@@ -33,7 +82,7 @@
     @endif
 
     @if ($families->isEmpty())
-        <div class="kt-card">
+        <div class="kt-card fin-pulse-kt-card families-narrow-wrap">
             <div class="kt-card-content py-16 text-center">
                 <div class="mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center mb-6">
                     <i class="ki-filled ki-people text-4xl text-blue-600 dark:text-blue-400"></i>
@@ -41,14 +90,14 @@
                 <h2 class="text-xl font-semibold text-foreground mb-2">No families yet</h2>
                 <p class="text-muted-foreground mb-8 max-w-md mx-auto">Create your first household to start managing finances together. Invite family members and track expenses, incomes, and savings goals collaboratively.</p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                    <a href="{{ route('families.create') }}" class="kt-btn kt-btn-primary">
+                    <x-famledger.pulse-button variant="primary" :href="route('families.create')">
                         <i class="ki-filled ki-plus"></i>
                         Create Your First Family
-                    </a>
-                    <a href="{{ route('dashboard') }}" class="kt-btn kt-btn-outline">
+                    </x-famledger.pulse-button>
+                    <x-famledger.pulse-button variant="outline" :href="route('dashboard')">
                         <i class="ki-filled ki-home"></i>
                         Back to Dashboard
-                    </a>
+                    </x-famledger.pulse-button>
                 </div>
             </div>
         </div>
@@ -63,26 +112,16 @@
             }
         </style>
         <div class="stats-summary-grid">
-            <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
-                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Families</div>
-                <div class="mt-1.5 text-lg font-semibold tabular-nums">{{ $families->count() }}</div>
-            </div>
-            <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
-                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Active Families</div>
-                <div class="mt-1.5 text-lg font-semibold tabular-nums text-green-600">{{ $families->where('status', 'active')->count() }}</div>
-            </div>
-            <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
-                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Members</div>
-                <div class="mt-1.5 text-lg font-semibold tabular-nums">{{ $families->sum('family_members_count') }}</div>
-            </div>
-            <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
-                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Currencies Used</div>
-                <div class="mt-1.5 text-lg font-semibold tabular-nums">{{ $families->pluck('currency_code')->unique()->count() }}</div>
-            </div>
+            <x-famledger.pulse-stat-card label="Total Families" :value="$families->count()" class="rounded-xl" />
+            <x-famledger.pulse-stat-card label="Active Families" :value="$families->where('status', 'active')->count()" class="rounded-xl">
+                <span class="famledger-pulse-stat-card__extra" style="color:#16a34a; font-weight:600;">Active</span>
+            </x-famledger.pulse-stat-card>
+            <x-famledger.pulse-stat-card label="Total Members" :value="$families->sum('family_members_count')" class="rounded-xl" />
+            <x-famledger.pulse-stat-card label="Currencies Used" :value="$families->pluck('currency_code')->unique()->count()" class="rounded-xl" />
         </div>
 
         {{-- Families List --}}
-            <div class="kt-card kt-card-grid min-w-full">
+            <div class="kt-card fin-pulse-kt-card kt-card-grid min-w-full">
                 <div class="kt-card-header flex-wrap gap-2">
                     <h3 class="kt-card-title text-sm">Your Families</h3>
                     <div class="flex flex-wrap gap-2 lg:gap-5">
@@ -90,7 +129,7 @@
                             <span class="text-sm text-secondary-foreground">View:</span>
                             <div class="kt-menu kt-menu-default" data-kt-menu="true">
                                 <div class="kt-menu-item" data-kt-menu-item-offset="0, 4" data-kt-menu-item-placement="bottom-start" data-kt-menu-item-toggle="dropdown" data-kt-menu-item-trigger="click">
-                                    <button type="button" class="kt-menu-toggle kt-btn kt-btn-outline kt-btn-sm flex-nowrap" id="families_view_toggle" aria-haspopup="true" aria-expanded="false">
+                                    <button type="button" class="kt-menu-toggle fin-pulse-btn-outline fin-pulse-btn-sm flex-nowrap" id="families_view_toggle" aria-haspopup="true" aria-expanded="false">
                                         <span class="families-view-label">Table</span>
                                         <i class="ki-filled ki-down text-xs ms-1"></i>
                                     </button>
@@ -194,16 +233,16 @@
                     <div id="families_cards_view" class="families-view-panel md:hidden">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 families-grid">
                             @foreach ($families as $family)
-                            <div class="group rounded-2xl border border-border bg-background shadow-sm overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300 relative min-h-[180px] flex flex-col">
+                            <div class="group families-grid-card rounded-2xl border border-border bg-background shadow-sm overflow-hidden relative min-h-[180px] flex flex-col">
                                 <div class="absolute top-4 right-4 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <a href="{{ route('families.edit', $family) }}" onclick="event.stopPropagation()" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost hover:bg-primary/10" title="Edit">
-                                        <i class="ki-filled ki-pencil text-sm"></i>
+                                    <a href="{{ route('families.edit', $family) }}" onclick="event.stopPropagation()" class="fin-pulse-btn-outline fin-pulse-btn-sm" title="Edit">
+                                        Edit
                                     </a>
                                     <form action="{{ route('families.destroy', $family) }}" method="POST" class="inline js-confirm-delete" data-confirm-title="Delete this family?" data-confirm-message="This cannot be undone." onclick="event.stopPropagation()">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost text-destructive hover:!bg-destructive/10" title="Delete">
-                                            <i class="ki-filled ki-trash text-sm"></i>
+                                        <button type="submit" class="fin-pulse-btn-outline fin-pulse-btn-sm fin-pulse-btn-outline-danger" title="Delete">
+                                            Remove
                                         </button>
                                     </form>
                                 </div>

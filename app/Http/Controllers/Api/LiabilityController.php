@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Concerns\AuthorizesFamilyMember;
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Http\Controllers\Controller;
 use App\Models\Family;
 use App\Models\FamilyLiability;

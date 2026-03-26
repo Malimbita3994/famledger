@@ -2,22 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
+use App\Models\SavingsBudgetAllocation;
 use App\Models\SavingsContribution;
 use App\Models\SavingsGoal;
 use App\Models\Wallet;
+use App\Services\WalletTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class SavingsGoalController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family)
     {
@@ -40,7 +38,7 @@ class SavingsGoalController extends Controller
         $wallets = $family->wallets()->where('status', 'active')->orderBy('name')->get(['id', 'name', 'currency_code']);
         if ($wallets->isEmpty()) {
             return redirect()
-                ->route('families.wallets.index', $family)
+                ->route('families.wallets.index')
                 ->with('error', 'Create at least one wallet before creating a savings goal. Goals accumulate funds in a wallet.');
         }
         $currencies = config('currencies', []);
@@ -82,7 +80,7 @@ class SavingsGoalController extends Controller
         ]);
 
         return redirect()
-            ->route('families.savings-goals.index', $family)
+            ->route('families.savings-goals.index')
             ->with('success', 'Savings goal created. You can now contribute to it.');
     }
 
@@ -149,7 +147,7 @@ class SavingsGoalController extends Controller
         ]);
 
         return redirect()
-            ->route('families.savings-goals.show', [$family, $savingsGoal])
+            ->route('families.savings-goals.show', $savingsGoal)
             ->with('success', 'Savings goal updated.');
     }
 
@@ -163,7 +161,7 @@ class SavingsGoalController extends Controller
         $savingsGoal->delete();
 
         return redirect()
-            ->route('families.savings-goals.index', $family)
+            ->route('families.savings-goals.index')
             ->with('success', 'Savings goal removed.');
     }
 
@@ -179,7 +177,7 @@ class SavingsGoalController extends Controller
 
         if ($wallets->isEmpty()) {
             return redirect()
-                ->route('families.savings-goals.show', [$family, $savingsGoal])
+                ->route('families.savings-goals.show', $savingsGoal)
                 ->with('error', 'You need another wallet to transfer from. The goal wallet is where funds accumulate.');
         }
 
@@ -256,7 +254,113 @@ class SavingsGoalController extends Controller
         }
 
         return redirect()
-            ->route('families.savings-goals.show', [$family, $savingsGoal])
+            ->route('families.savings-goals.show', $savingsGoal)
             ->with('success', 'Contribution recorded. Funds transferred to goal wallet; progress updated.');
+    }
+
+    public function allocateForm(Family $family, SavingsGoal $savingsGoal)
+    {
+        $this->authorizeFamilyMember($family);
+        if ($savingsGoal->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $savingsGoal->load('wallet:id,name,currency_code');
+        if (! $savingsGoal->wallet) {
+            return redirect()
+                ->route('families.savings-goals.show', $savingsGoal)
+                ->with('error', 'This goal has no wallet. Edit the goal to assign one.');
+        }
+
+        $goalCurrency = strtoupper($savingsGoal->wallet->currency_code);
+        $budgets = $family->budgets()
+            ->where('status', 'active')
+            ->whereRaw('UPPER(currency_code) = ?', [$goalCurrency])
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'currency_code']);
+
+        if ($budgets->isEmpty()) {
+            return redirect()
+                ->route('families.savings-goals.show', $savingsGoal)
+                ->with('error', 'Create an active budget in '.$goalCurrency.' before allocating from this goal.');
+        }
+
+        $allocations = $savingsGoal->budgetAllocations()
+            ->with('budget:id,name')
+            ->orderByDesc('allocated_date')
+            ->orderByDesc('id')
+            ->limit(25)
+            ->get();
+
+        $availableToAllocate = (float) $savingsGoal->wallet->balance;
+
+        return view('families.savings-goals.allocate', compact(
+            'family',
+            'savingsGoal',
+            'budgets',
+            'allocations',
+            'availableToAllocate'
+        ));
+    }
+
+    public function allocateStore(Request $request, Family $family, SavingsGoal $savingsGoal, WalletTransactionService $walletTransactionService)
+    {
+        $this->authorizeFamilyMember($family);
+        if ($savingsGoal->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $savingsGoal->load('wallet');
+        if (! $savingsGoal->wallet) {
+            return redirect()
+                ->route('families.savings-goals.show', $savingsGoal)
+                ->with('error', 'This goal has no wallet.');
+        }
+
+        $validated = $request->validate([
+            'budget_id' => ['required', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'reason' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $budget = $family->budgets()->where('status', 'active')->findOrFail($validated['budget_id']);
+
+        if (strtoupper($budget->currency_code) !== strtoupper($savingsGoal->wallet->currency_code)) {
+            return back()
+                ->withInput()
+                ->withErrors(['budget_id' => 'Budget currency must match the goal wallet currency.']);
+        }
+
+        $balance = (float) $savingsGoal->wallet->balance;
+        if ((float) $validated['amount'] > $balance) {
+            return back()
+                ->withInput()
+                ->withErrors(['amount' => 'Amount cannot exceed the goal wallet balance.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $allocation = SavingsBudgetAllocation::create([
+                'family_id' => $family->id,
+                'savings_goal_id' => $savingsGoal->id,
+                'budget_id' => $budget->id,
+                'amount' => $validated['amount'],
+                'currency_code' => strtoupper($savingsGoal->wallet->currency_code),
+                'allocated_date' => now()->toDateString(),
+                'reason' => $validated['reason'] ?? null,
+                'created_by' => auth()->id(),
+            ]);
+
+            $walletTransactionService->recordSavingsAllocation($allocation);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        return redirect()
+            ->route('families.savings-goals.allocate', $savingsGoal)
+            ->with('success', 'Funds allocated to the budget.');
     }
 }

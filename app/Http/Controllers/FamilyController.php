@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
 use App\Models\FamilyMember;
 use App\Models\FamilyRole;
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rule;
 
 class FamilyController extends Controller
 {
+    use AuthorizesFamilyMember;
+
     /**
      * Families the current user belongs to.
      */
@@ -141,6 +144,14 @@ class FamilyController extends Controller
     }
 
     /**
+     * Current session family overview (/family/overview).
+     */
+    public function overview(Family $family)
+    {
+        return $this->show($family);
+    }
+
+    /**
      * Show edit family form.
      */
     public function edit(Family $family)
@@ -224,20 +235,4 @@ class FamilyController extends Controller
         return redirect()->route('families.index')->with('success', 'Family deleted.');
     }
 
-    /**
-     * Ensure current user is a member of the family.
-     */
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        $user = auth()->user();
-
-        if ($user && $user->hasRole(['Super Admin', 'super-admin'])) {
-            // Super administrators can access any family
-            return;
-        }
-
-        if (! $family->members()->where('user_id', $user?->id)->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
 use App\Models\Project;
 use App\Models\ProjectFunding;
@@ -12,12 +13,7 @@ use Illuminate\Validation\Rule;
 
 class ProjectFundingController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family)
     {
@@ -33,7 +29,22 @@ class ProjectFundingController extends Controller
         $wallets = $family->wallets()->where('status', 'active')->orderBy('name')->get(['id', 'name', 'currency_code']);
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
 
-        return view('families.projects.funding-index', compact('family', 'projects', 'wallets', 'currency'));
+        $projectFundingIndexModalPayloads = $projects->isEmpty()
+            ? []
+            : $projects->mapWithKeys(fn (Project $p) => [
+                $p->id => [
+                    'title' => $p->name,
+                    'rows' => $p->fundingFormDetailRows(),
+                ],
+            ])->all();
+
+        return view('families.projects.funding-index', compact(
+            'family',
+            'projects',
+            'wallets',
+            'currency',
+            'projectFundingIndexModalPayloads',
+        ));
     }
 
     public function create(Family $family)
@@ -42,8 +53,9 @@ class ProjectFundingController extends Controller
 
         $projects = $family->projects()
             ->whereIn('status', [Project::STATUS_PLANNING, Project::STATUS_ACTIVE])
+            ->with('wallet:id,name,currency_code')
             ->orderBy('name')
-            ->get(['id', 'name', 'currency_code', 'planned_budget', 'wallet_id']);
+            ->get();
 
         $projects->each(fn (Project $p) => $p->loadSum('fundings', 'amount'));
 
@@ -51,24 +63,34 @@ class ProjectFundingController extends Controller
 
         if ($projects->isEmpty()) {
             return redirect()
-                ->route('families.projects.index', $family)
+                ->route('families.projects.index')
                 ->with('error', 'Create at least one project (Planning or Active) before adding funding.');
         }
 
         if ($wallets->count() < 1) {
             return redirect()
-                ->route('families.wallets.index', $family)
+                ->route('families.wallets.index')
                 ->with('error', 'Create at least one wallet before funding a project.');
         }
 
-        $projectId = request('project_id');
-        $selectedProject = $projectId ? $family->projects()->find($projectId) : null;
+        $projectId = request()->query('project_id');
+        $selectedProject = $projectId
+            ? $projects->firstWhere('id', (int) $projectId)
+            : null;
+
+        $projectFundingModalPayloads = $projects->mapWithKeys(fn (Project $p) => [
+            $p->id => [
+                'title' => $p->name,
+                'rows' => $p->fundingFormDetailRows(),
+            ],
+        ])->all();
 
         return view('families.projects.funding-create', [
             'family' => $family,
             'projects' => $projects,
             'wallets' => $wallets,
             'selectedProject' => $selectedProject,
+            'projectFundingModalPayloads' => $projectFundingModalPayloads,
             'sourceTypes' => ProjectFunding::sourceTypes(),
         ]);
     }
@@ -102,10 +124,10 @@ class ProjectFundingController extends Controller
             $projectWallet = $project->wallet;
             if (! $projectWallet) {
                 $projectWallet = $family->wallets()->create([
-                    'name' => 'Project: ' . $project->name,
+                    'name' => $project->name,
                     'type' => 'project_fund',
                     'currency_code' => $currency,
-                    'description' => 'Dedicated wallet for project: ' . $project->name,
+                    'description' => 'Fund bucket for: ' . $project->name,
                     'initial_balance' => 0,
                     'is_shared' => true,
                     'status' => 'active',
@@ -152,7 +174,7 @@ class ProjectFundingController extends Controller
         }
 
         return redirect()
-            ->route('families.projects.funding.index', $family)
+            ->route('families.projects.funding.index')
             ->with('success', 'Project funded successfully. Funds have been transferred to the project.');
     }
 }

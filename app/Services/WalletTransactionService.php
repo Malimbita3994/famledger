@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\SavingsBudgetAllocation;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\DB;
@@ -144,23 +145,43 @@ class WalletTransactionService
     }
 
     /**
-     * Record savings allocation (money moving from savings goal back to budget/wallet).
+     * Record wallet ledger entries for a savings→budget allocation.
+     * When the goal wallet differs from the family primary wallet, funds move out of the goal wallet and into the primary wallet.
      */
-    public function recordSavingsAllocation($allocation): array
+    public function recordSavingsAllocation(SavingsBudgetAllocation $allocation): array
     {
-        $transactions = [];
+        $allocation->loadMissing(['savingsGoal.wallet', 'budget', 'family']);
 
-        // Record allocation from savings goal (this would be handled by SavingsGoal logic)
-        // For now, just record the wallet receiving the funds
-        $transactions[] = $this->recordTransaction(
-            $allocation->budget->family->mainWallet(),
-            'savings_allocation',
-            $allocation->amount,
-            "Savings allocation from {$allocation->goal->name} to budget {$allocation->budget->name}",
-            'savings_budget_allocation',
-            $allocation->id,
-            $allocation->created_by
-        );
+        $goalWallet = $allocation->savingsGoal->wallet;
+        $mainWallet = $allocation->family->mainWallet();
+        $transactions = [];
+        $amount = (float) $allocation->amount;
+        $userId = $allocation->created_by;
+
+        if (! $goalWallet || $amount <= 0) {
+            return $transactions;
+        }
+
+        if ($mainWallet && $goalWallet->id !== $mainWallet->id) {
+            $transactions[] = $this->recordTransaction(
+                $goalWallet,
+                'transfer_out',
+                $amount,
+                "Savings allocation to budget: {$allocation->budget->name}",
+                'savings_budget_allocation',
+                $allocation->id,
+                $userId
+            );
+            $transactions[] = $this->recordTransaction(
+                $mainWallet,
+                'savings_allocation',
+                $amount,
+                "From savings goal: {$allocation->savingsGoal->name}",
+                'savings_budget_allocation',
+                $allocation->id,
+                $userId
+            );
+        }
 
         return $transactions;
     }

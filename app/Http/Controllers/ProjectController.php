@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
+use App\Models\Budget;
 use App\Models\Project;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
@@ -10,12 +12,7 @@ use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Request $request, Family $family)
     {
@@ -114,11 +111,15 @@ class ProjectController extends Controller
         ]);
 
         return redirect()
-            ->route('families.projects.index', [$family, 'filter' => 'all'])
+            ->route('families.projects.index', ['filter' => 'all'])
             ->with('success', 'Project created successfully.');
     }
 
-    public function show(Family $family, Project $project)
+    /**
+     * Route params order: {project} from URI, then session "family" from BindAccountFamilyFromSession.
+     * Same for edit(), update(), destroy().
+     */
+    public function show(Project $project, Family $family)
     {
         $this->authorizeFamilyMember($family);
         if ($project->family_id !== $family->id) {
@@ -132,7 +133,7 @@ class ProjectController extends Controller
         return view('families.projects.show', compact('family', 'project'));
     }
 
-    public function edit(Family $family, Project $project)
+    public function edit(Project $project, Family $family)
     {
         $this->authorizeFamilyMember($family);
         if ($project->family_id !== $family->id) {
@@ -158,7 +159,7 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function update(Request $request, Family $family, Project $project)
+    public function update(Request $request, Project $project, Family $family)
     {
         $this->authorizeFamilyMember($family);
         if ($project->family_id !== $family->id) {
@@ -191,12 +192,40 @@ class ProjectController extends Controller
             'priority' => $validated['priority'] ?? null,
         ]);
 
+        // Keep any project-scoped budgets (type=project, budgets.project_id=project.id)
+        // in sync with planning fields so /account/budgets reflects up-to-date values.
+        $projectBudgets = Budget::query()
+            ->where('family_id', $family->id)
+            ->where('type', Budget::TYPE_PROJECT)
+            ->where('project_id', $project->id)
+            ->get();
+
+        if ($projectBudgets->isNotEmpty()) {
+            $update = [
+                'amount' => $project->planned_budget,
+                'currency_code' => strtoupper($project->currency_code),
+                'project_id' => $project->id,
+            ];
+
+            // Budget start/end dates are non-nullable in DB; only update when project has values.
+            if ($project->start_date) {
+                $update['start_date'] = $project->start_date;
+            }
+            if ($project->target_end_date) {
+                $update['end_date'] = $project->target_end_date;
+            }
+
+            foreach ($projectBudgets as $linkedBudget) {
+                $linkedBudget->update($update);
+            }
+        }
+
         return redirect()
-            ->route('families.projects.show', [$family, $project])
+            ->route('families.projects.show', $project)
             ->with('success', 'Project updated successfully.');
     }
 
-    public function destroy(Family $family, Project $project)
+    public function destroy(Project $project, Family $family)
     {
         $this->authorizeFamilyMember($family);
         if ($project->family_id !== $family->id) {
@@ -215,7 +244,7 @@ class ProjectController extends Controller
         $project->delete();
 
         return redirect()
-            ->route('families.projects.index', $family)
+            ->route('families.projects.index')
             ->with('success', 'Project removed.');
     }
 }

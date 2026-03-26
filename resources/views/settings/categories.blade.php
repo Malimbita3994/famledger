@@ -3,84 +3,272 @@
 @section('title', __('Categories'))
 @section('page_title', __('Categories'))
 
+@push('styles')
+<style>
+    .cat-pulse-page.admin-pulse-page {
+        --ap-accent: #009ef7;
+        --ap-accent-2: #0ea5e9;
+        --ap-soft: #f0f9ff;
+        --ap-ring: rgba(0, 158, 247, 0.28);
+    }
+    /* Inner section cards (Currencies, roles, categories, custom lookups, quick-add panel) */
+    .cat-pulse-page .cat-pulse-lookup-card {
+        border-radius: 16px !important;
+        border: 1px solid rgba(14, 165, 233, 0.2) !important;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fcff 100%) !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+    }
+    .cat-pulse-page .cat-pulse-lookup-card:hover {
+        border-color: rgba(0, 158, 247, 0.35) !important;
+        box-shadow: 0 8px 24px rgba(0, 158, 247, 0.1);
+    }
+    .dark .cat-pulse-page .cat-pulse-lookup-card {
+        background: linear-gradient(180deg, rgb(30 41 59 / 0.55) 0%, rgb(15 23 42 / 0.72) 100%) !important;
+        border-color: rgba(14, 165, 233, 0.22) !important;
+    }
+    .cat-pulse-page .cat-pulse-lookup-card .kt-card-header {
+        border-bottom: 1px solid rgba(14, 165, 233, 0.14);
+        background: linear-gradient(180deg, rgba(240, 249, 255, 0.65) 0%, rgba(248, 252, 255, 0.2) 100%);
+    }
+    .dark .cat-pulse-page .cat-pulse-lookup-card .kt-card-header {
+        border-bottom-color: rgba(14, 165, 233, 0.18);
+        background: linear-gradient(180deg, rgba(14, 165, 233, 0.1) 0%, transparent 100%);
+    }
+    .cat-pulse-page .cat-pulse-lookup-card .kt-card-title {
+        color: var(--ap-accent);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+    /* Text inputs (incl. datalist) — use background-color to avoid clearing Metronic background-image on selects if added later */
+    .cat-pulse-page .kt-input {
+        border-radius: 12px !important;
+        background-color: var(--ap-soft) !important;
+        border: 1px solid transparent !important;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+    }
+    .cat-pulse-page .kt-input:hover:not([readonly]):not(:disabled) {
+        background-color: #e0f2fe !important;
+    }
+    .cat-pulse-page .kt-input:focus {
+        outline: none;
+        border-color: var(--ap-accent) !important;
+        box-shadow: 0 0 0 3px var(--ap-ring) !important;
+        background-color: #fff !important;
+    }
+    .cat-pulse-page .kt-input[readonly],
+    .cat-pulse-page .kt-input:disabled {
+        background-color: rgba(241, 245, 249, 0.75) !important;
+        color: var(--foreground, #334155);
+        opacity: 1;
+    }
+    .dark .cat-pulse-page .kt-input[readonly],
+    .dark .cat-pulse-page .kt-input:disabled {
+        background-color: rgba(30, 41, 59, 0.55) !important;
+        color: var(--foreground, #e2e8f0);
+    }
+    /* Solid primary actions inside cards (Add / Save where Metronic uses kt-btn-primary without ghost) */
+    .cat-pulse-page .kt-btn.kt-btn-primary:not(.kt-btn-ghost) {
+        background: linear-gradient(135deg, var(--ap-accent) 0%, var(--ap-accent-2) 100%) !important;
+        border-color: transparent !important;
+        color: #fff !important;
+        box-shadow: 0 4px 12px rgba(0, 158, 247, 0.32);
+    }
+    .cat-pulse-page .kt-btn.kt-btn-primary:not(.kt-btn-ghost):hover {
+        filter: brightness(1.05);
+        box-shadow: 0 6px 18px rgba(0, 158, 247, 0.4);
+    }
+    /* Outline row actions: accent on hover */
+    .cat-pulse-page .kt-btn.kt-btn-outline {
+        border-radius: 10px;
+        transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .cat-pulse-page .kt-btn.kt-btn-outline:hover {
+        border-color: var(--ap-accent);
+        background-color: rgba(0, 158, 247, 0.06);
+    }
+    .admin-pulse-eyebrow {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .admin-pulse-title {
+        font-size: clamp(1.35rem, 2.8vw, 1.7rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        color: var(--ap-accent);
+    }
+    .cat-pulse-page .cat-pulse-intro {
+        font-size: 0.875rem;
+        line-height: 1.55;
+        color: #64748b;
+        margin-top: 0.35rem;
+        max-width: 42rem;
+    }
+    .dark .cat-pulse-page .cat-pulse-intro {
+        color: #94a3b8;
+    }
+    .admin-pulse-btn-outline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.65rem 1.15rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(255, 255, 255, 0.95);
+        color: #334155 !important;
+        text-decoration: none !important;
+        transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+    .admin-pulse-btn-outline:hover {
+        border-color: var(--ap-accent);
+        background: rgba(0, 158, 247, 0.06);
+        box-shadow: 0 0 0 1px rgba(0, 158, 247, 0.12);
+    }
+    .dark .admin-pulse-btn-outline {
+        background: rgba(30, 41, 59, 0.9);
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.35);
+    }
+    .admin-pulse-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.65rem 1.25rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        border-radius: 12px;
+        color: #fff !important;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--ap-accent) 0%, var(--ap-accent-2) 100%);
+        box-shadow: 0 4px 14px rgba(0, 158, 247, 0.35);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+    .admin-pulse-btn-primary:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 6px 20px rgba(0, 158, 247, 0.42);
+        transform: translateY(-1px);
+    }
+    .cat-pulse-page .cat-pulse-shell.admin-pulse-frame {
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .admin-pulse-frame {
+        padding: 3px;
+        border-radius: 24px;
+        background: linear-gradient(
+            135deg,
+            rgba(0, 158, 247, 0.42) 0%,
+            rgba(255, 255, 255, 0.96) 46%,
+            rgba(14, 165, 233, 0.3) 100%
+        );
+        box-shadow:
+            0 4px 24px rgba(0, 158, 247, 0.12),
+            0 24px 48px rgba(15, 23, 42, 0.08);
+        width: 100%;
+    }
+    .admin-pulse-card-inner {
+        background: #fff;
+        border-radius: 21px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+    .dark .admin-pulse-card-inner {
+        background: rgb(15 23 42 / 0.96);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .lookup-inline-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+    @media (min-width: 900px) {
+        .lookup-inline-row {
+            flex-direction: row;
+            align-items: center;
+        }
+        .lookup-inline-row .lookup-type {
+            flex: 0 0 200px;
+        }
+        .lookup-inline-row .lookup-name {
+            flex: 1 1 160px;
+        }
+        .lookup-inline-row .lookup-desc {
+            flex: 2 1 240px;
+        }
+        .lookup-inline-row .lookup-actions {
+            flex: 0 0 auto;
+        }
+    }
+    .lookup-card {
+        max-height: 420px;
+        display: flex;
+        flex-direction: column;
+    }
+    .lookup-card .lookup-card-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .admin-pulse-btn-primary:hover {
+            transform: none;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
- <div class="pb-5">
-  <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
-   <div class="flex flex-col gap-1">
-    <h1 class="font-medium text-lg text-foreground">
-     {{ __('Categories') }}
-    </h1>
-    <p class="text-sm text-secondary-foreground">
-     {{ __('Define income and expense categories to keep reports, budgets and savings goals organised.') }}
-    </p>
-   </div>
-   <div class="flex items-center gap-2">
-    <button type="button" class="kt-btn kt-btn-primary" id="open_add_lookup">
-     <i class="ki-filled ki-plus text-base"></i>
-     <span>{{ __('Add lookup') }}</span>
-    </button>
-    <a href="{{ route('settings.index') }}" class="kt-btn kt-btn-outline">
-     <i class="ki-filled ki-left text-base"></i>
-     <span>{{ __('Back to settings') }}</span>
-    </a>
-   </div>
-  </div>
- </div>
+<div class="settings-pulse cat-pulse-page admin-pulse-page">
+    <div class="famledger-page-header">
+        <div class="kt-container-fixed flex flex-row flex-wrap items-start gap-4 w-full min-w-0 px-4 sm:px-6 lg:px-8">
+            <div class="min-w-0 flex-1">
+                <p class="admin-pulse-eyebrow mb-1.5">{{ __('Settings') }}</p>
+                <h1 class="admin-pulse-title">{{ __('Categories') }}</h1>
+                <p class="cat-pulse-intro">
+                    {{ __('Define income and expense categories to keep reports, budgets and savings goals organised.') }}
+                </p>
+            </div>
+            <div class="shrink-0 ms-auto flex flex-wrap items-center gap-2 justify-end">
+                <button type="button" class="admin-pulse-btn-primary" id="open_add_lookup">
+                    <i class="ki-filled ki-plus text-base"></i>
+                    {{ __('Add lookup') }}
+                </button>
+                <a href="{{ route('settings.index') }}" class="admin-pulse-btn-outline inline-flex">
+                    <i class="ki-filled ki-left text-base"></i>
+                    {{ __('Back to settings') }}
+                </a>
+            </div>
+        </div>
+    </div>
 
- <style>
-  .lookup-inline-row {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      align-items: stretch;
-  }
-
-  @media (min-width: 900px) {
-      .lookup-inline-row {
-          flex-direction: row;
-          align-items: center;
-      }
-      .lookup-inline-row .lookup-type {
-          flex: 0 0 200px;
-      }
-      .lookup-inline-row .lookup-name {
-          flex: 1 1 160px;
-      }
-      .lookup-inline-row .lookup-desc {
-          flex: 2 1 240px;
-      }
-      .lookup-inline-row .lookup-actions {
-          flex: 0 0 auto;
-      }
-  }
-
-  .lookup-card {
-      max-height: 420px;
-      display: flex;
-      flex-direction: column;
-  }
-
-  .lookup-card .lookup-card-body {
-      flex: 1 1 auto;
-      overflow-y: auto;
-  }
- </style>
-
-<div class="kt-container-fixed pb-6">
+<div class="kt-container-fixed px-4 sm:px-6 lg:px-8 pb-14">
  @if (session('success'))
-  <div class="mb-4 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-4 py-2">
+  <div class="mb-4 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 text-sm text-green-800 dark:text-green-200">
    {{ session('success') }}
   </div>
  @endif
  @if (session('error'))
-  <div class="mb-4 text-xs text-red-700 bg-red-50 border border-red-200 rounded px-4 py-2">
+  <div class="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-800 dark:text-red-200">
    {{ session('error') }}
   </div>
  @endif
 
+  <div class="admin-pulse-frame cat-pulse-shell min-w-0 max-w-full">
+   <div class="admin-pulse-card-inner min-w-0 overflow-hidden p-4 sm:p-5 lg:p-6 flex flex-col gap-5">
+
  {{-- Quick add lookup panel (hidden by default) --}}
- <div id="add_lookup_panel" class="kt-card mb-5 hidden">
-  <div class="kt-card-content px-5 py-4 flex flex-wrap items-center gap-3">
+ <div id="add_lookup_panel" class="kt-card cat-pulse-lookup-card mb-0 hidden">
+  <div class="kt-card-content settings-lookup-panel-inner flex flex-wrap items-center gap-3">
    <form method="POST" action="{{ route('settings.categories.lookup.store') }}" class="lookup-inline-row w-full">
     @csrf
     <div class="lookup-type flex items-center gap-2">
@@ -114,10 +302,10 @@
      class="lookup-desc kt-input w-full text-xs"
     />
     <div class="lookup-actions ms-auto flex items-center gap-2">
-     <button type="submit" class="kt-btn kt-btn-sm kt-btn-primary">
+     <button type="submit" class="admin-pulse-btn-primary !py-2 !px-4 !text-xs">
       {{ __('Save') }}
      </button>
-     <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" id="close_add_lookup">
+     <button type="button" class="admin-pulse-btn-outline !py-2 !px-3 !text-xs" id="close_add_lookup">
       {{ __('Cancel') }}
      </button>
     </div>
@@ -125,9 +313,9 @@
   </div>
  </div>
 
- <div class="grid gap-5 lg:gap-7.5 lg:grid-cols-2">
+ <div class="settings-grid-2">
   {{-- Currencies lookup --}}
-  <div class="kt-card lookup-card">
+  <div class="kt-card lookup-card cat-pulse-lookup-card">
    <div class="kt-card-header items-center justify-between">
     <h3 class="kt-card-title text-sm">
      {{ __('Currencies') }}
@@ -173,7 +361,7 @@
   </div>
 
   {{-- Family roles lookup --}}
-  <div class="kt-card lookup-card">
+  <div class="kt-card lookup-card cat-pulse-lookup-card">
    <div class="kt-card-header items-center justify-between">
     <h3 class="kt-card-title text-sm">
      {{ __('Family roles') }}
@@ -275,7 +463,7 @@
   </div>
 
   {{-- Income categories lookup --}}
-  <div class="kt-card lookup-card">
+  <div class="kt-card lookup-card cat-pulse-lookup-card">
    <div class="kt-card-header items-center justify-between">
     <h3 class="kt-card-title text-sm">
      {{ __('Income categories') }}
@@ -379,7 +567,7 @@
   </div>
 
   {{-- Expense categories lookup --}}
-  <div class="kt-card lookup-card" id="expense_categories_card">
+  <div class="kt-card lookup-card cat-pulse-lookup-card" id="expense_categories_card">
    <div class="kt-card-header items-center justify-between">
     <h3 class="kt-card-title text-sm">
      {{ __('Expense categories') }}
@@ -485,9 +673,9 @@
 
  {{-- Other custom lookups (generic groups as their own cards) --}}
  @if (! empty($customLookups) && $customLookups->isNotEmpty())
-  <div class="grid gap-5 lg:gap-7.5 lg:grid-cols-2 mt-5">
+  <div class="settings-grid-2 settings-grid-2-mt">
    @foreach ($customLookups as $group => $items)
-   <div class="kt-card lookup-card">
+   <div class="kt-card lookup-card cat-pulse-lookup-card">
     <div class="kt-card-header items-center justify-between">
      <h3 class="kt-card-title text-sm">
       {{ $group }}
@@ -582,6 +770,9 @@
    @endforeach
   </div>
  @endif
+   </div>
+  </div>
+</div>
 </div>
 
 @push('scripts')

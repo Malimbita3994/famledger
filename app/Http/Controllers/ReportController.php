@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Budget;
 use App\Models\Expense;
 use App\Models\Family;
@@ -21,12 +22,7 @@ use Illuminate\View\View;
 
 class ReportController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     /**
      * Reports dashboard (landing) — analytics overview with filters.

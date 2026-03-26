@@ -5,10 +5,14 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
         <i class="ki-filled ki-left mr-1"></i>
         Back to {{ $family->name }}
     </a>
+
+    @php
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+    @endphp
 
     <style>
     .liability-kpi-grid {
@@ -22,15 +26,6 @@
             grid-template-columns: repeat(3, minmax(0, 1fr));
         }
     }
-    .liability-kpi-card {
-        transition: transform 160ms ease-out, box-shadow 160ms ease-out, border-color 160ms ease-out, background-color 160ms ease-out;
-    }
-    .liability-kpi-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.10);
-        border-color: rgba(239, 68, 68, 0.4);
-        background-color: rgba(254, 242, 242, 0.95);
-    }
     </style>
 
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -41,7 +36,7 @@
             </p>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{{ route('families.liabilities.create', $family) }}" class="kt-btn kt-btn-primary">
+            <a href="{{ route('families.liabilities.create') }}" class="kt-btn kt-btn-primary">
                 <i class="ki-filled ki-plus"></i>
                 New liability
             </a>
@@ -50,20 +45,20 @@
 
     {{-- KPI row --}}
     <div class="liability-kpi-grid mb-6">
-        <div class="liability-kpi-card kt-card rounded-xl border border-border bg-card p-5">
-            <div class="text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">Total outstanding</div>
-            <div class="text-xl font-semibold tabular-nums">
-                {{ number_format($totals['total_outstanding'], 0) }} {{ $family->currency_code ?? config('currencies.default', 'TZS') }}
-            </div>
-        </div>
-        <div class="liability-kpi-card kt-card rounded-xl border border-border bg-card p-5">
-            <div class="text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">Active liabilities</div>
-            <div class="text-lg font-semibold tabular-nums">{{ $totals['active_count'] }}</div>
-        </div>
-        <div class="liability-kpi-card kt-card rounded-xl border border-border bg-card p-5">
-            <div class="text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">Closed liabilities</div>
-            <div class="text-lg font-semibold tabular-nums">{{ $totals['closed_count'] }}</div>
-        </div>
+        <x-famledger.pulse-stat-card
+            label="Total outstanding"
+            :value="number_format($totals['total_outstanding'], 0) . ' ' . $currency"
+        />
+
+        <x-famledger.pulse-stat-card
+            label="Active liabilities"
+            :value="(string) $totals['active_count']"
+        />
+
+        <x-famledger.pulse-stat-card
+            label="Closed liabilities"
+            :value="(string) $totals['closed_count']"
+        />
     </div>
 
     {{-- List --}}
@@ -95,7 +90,7 @@
                             @foreach ($liabilities as $liability)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('families.liabilities.show', [$family, $liability]) }}" class="font-semibold text-foreground hover:text-primary">
+                                        <a href="{{ route('families.liabilities.show', $liability) }}" class="font-semibold text-foreground hover:text-primary">
                                             {{ $liability->name }}
                                         </a>
                                         <div class="text-[11px] text-muted-foreground">
@@ -137,7 +132,7 @@
                                         {{ $liability->due_date ? $liability->due_date->format('M j, Y') : '—' }}
                                     </td>
                                     <td class="text-right">
-                                        <a href="{{ route('families.liabilities.edit', [$family, $liability]) }}" class="kt-btn kt-btn-xs kt-btn-ghost">
+                                        <a href="{{ route('families.liabilities.edit', $liability) }}" class="kt-btn kt-btn-xs kt-btn-ghost">
                                             Edit
                                         </a>
                                     </td>
@@ -153,7 +148,7 @@
                         <div class="rounded-2xl border border-border bg-background shadow-sm px-5 py-4 flex flex-col gap-3">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex flex-col min-w-0">
-                                    <a href="{{ route('families.liabilities.show', [$family, $liability]) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
+                                    <a href="{{ route('families.liabilities.show', $liability) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
                                         {{ $liability->name }}
                                     </a>
                                     <span class="text-[11px] text-muted-foreground mt-0.5">
@@ -206,7 +201,7 @@
                             </div>
 
                             <div class="flex justify-end pt-1">
-                                <a href="{{ route('families.liabilities.edit', [$family, $liability]) }}" class="kt-btn kt-btn-xs kt-btn-outline">
+                                <a href="{{ route('families.liabilities.edit', $liability) }}" class="kt-btn kt-btn-xs kt-btn-outline">
                                     Edit
                                 </a>
                             </div>

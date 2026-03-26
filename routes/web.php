@@ -18,6 +18,7 @@ use App\Http\Controllers\FamilyLiabilityController;
 use App\Http\Controllers\FamilyMemberController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InviteJoinController;
+use App\Http\Controllers\LegacyFamilyScopedUrlRedirectController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFundingController;
@@ -54,6 +55,26 @@ Route::get('/favicon.ico', function () {
     abort(404);
 })->name('favicon');
 
+// Pulse UI Kit (Lottie helpers) — serve only the JS bundle files we need.
+// These files live under resources/views/components/dist and are not publicly
+// accessible by default, so we expose them via this narrow read-only route.
+Route::get('/pulse-ui-kit/{file}', function (string $file) {
+    $allowed = ['min.js', 'profile-lottie-data.js', 'profile.js'];
+    if (!in_array($file, $allowed, true)) {
+        abort(404);
+    }
+
+    $path = resource_path('views/components/dist/pulse-ui-kit/' . $file);
+    if (!is_file($path)) {
+        abort(404);
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'application/javascript',
+        'Cache-Control' => 'public, max-age=31536000',
+    ]);
+})->where('file', '[A-Za-z0-9_.-]+')->name('pulse-ui-kit.asset');
+
 Route::get('/', function () {
     if (config('services.contact_captcha.driver') === 'math') {
         if (! session()->has('contact_math_a')) {
@@ -88,7 +109,7 @@ Route::post('invite/join', [InviteJoinController::class, 'accept'])->name('invit
 
 Route::get('/dashboard', [MainDashboardController::class, 'index'])->middleware(['auth', 'sync.current.family'])->name('dashboard');
 
-Route::middleware(['auth', 'sync.current.family'])->group(function () {
+Route::middleware(['auth', 'bind.account.family', 'sync.current.family'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -153,26 +174,44 @@ Route::middleware(['auth', 'sync.current.family'])->group(function () {
     // Family currency switcher (updates display currency for this family)
     Route::patch('families/{family}/currency', [FamilyController::class, 'switchCurrency'])->name('families.currency.switch');
 
-    // Family wealth
-    Route::get('families/{family}/wealth', [WealthController::class, 'index'])->name('families.wealth.index');
-    Route::get('families/{family}/wealth/export-pdf', [WealthController::class, 'exportPdf'])->name('families.wealth.export-pdf');
+    // Session family: /family/... (members, invitations, overview)
+    Route::prefix('family')->name('families.')->group(function () {
+        Route::get('overview', [FamilyController::class, 'overview'])->name('overview');
 
-    // Family Members (add, edit role, remove)
-    Route::prefix('families/{family}')->name('families.')->group(function () {
+        Route::get('members', [FamilyMemberController::class, 'index'])->name('members.index');
         Route::get('members/create', [FamilyMemberController::class, 'create'])->name('members.create');
         Route::post('members', [FamilyMemberController::class, 'store'])->name('members.store');
-
-        // Invite members (owner/co-owner only; controller enforces)
-        Route::get('invites', [FamilyInvitationController::class, 'index'])->name('invites.index');
-        Route::post('invites', [FamilyInvitationController::class, 'store'])->name('invites.store');
-        Route::post('invites/reset-link', [FamilyInvitationController::class, 'resetLink'])->name('invites.reset-link');
-        Route::delete('invites/{invitation}', [FamilyInvitationController::class, 'destroy'])->name('invites.destroy');
         Route::get('members/{member}/edit', [FamilyMemberController::class, 'edit'])->name('members.edit');
         Route::put('members/{member}', [FamilyMemberController::class, 'update'])->name('members.update');
         Route::patch('members/{member}/deactivate', [FamilyMemberController::class, 'deactivate'])->name('members.deactivate');
         Route::patch('members/{member}/activate', [FamilyMemberController::class, 'activate'])->name('members.activate');
         Route::patch('members/{member}/transfer-ownership', [FamilyMemberController::class, 'transferOwnership'])->name('members.transfer-ownership');
         Route::delete('members/{member}', [FamilyMemberController::class, 'destroy'])->name('members.destroy');
+
+        Route::get('invitation', [FamilyInvitationController::class, 'index'])->name('invites.index');
+        Route::post('invitation', [FamilyInvitationController::class, 'store'])->name('invites.store');
+        Route::post('invitation/reset-link', [FamilyInvitationController::class, 'resetLink'])->name('invites.reset-link');
+        Route::delete('invitation/{invitation}', [FamilyInvitationController::class, 'destroy'])->name('invites.destroy');
+    });
+
+    // Ledger shortcuts: /accounts/...
+    Route::prefix('accounts')->name('families.')->group(function () {
+        Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
+        Route::post('transactions', [TransactionController::class, 'store'])->name('transactions.store');
+
+        Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
+        Route::get('transfers/create', [TransferController::class, 'create'])->name('transfers.create');
+        Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
+
+        Route::get('savings', [SavingsGoalController::class, 'index'])->name('accounts.savings');
+        Route::get('projects-funding', [ProjectFundingController::class, 'index'])->name('accounts.projects-funding');
+        Route::get('reconciliation', [ReconciliationController::class, 'index'])->name('accounts.reconciliation');
+    });
+
+    // Current account (session family): /account/...
+    Route::prefix('account')->name('families.')->group(function () {
+        Route::get('wealth', [WealthController::class, 'index'])->name('wealth.index');
+        Route::get('wealth/export-pdf', [WealthController::class, 'exportPdf'])->name('wealth.export-pdf');
 
         // Family Wallets (stand-alone internal ledger)
         Route::resource('wallets', WalletController::class)->names('wallets');
@@ -196,15 +235,6 @@ Route::middleware(['auth', 'sync.current.family'])->group(function () {
         Route::get('expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
         Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
 
-        // Transactions (Income + Expenses in one page)
-        Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
-        Route::post('transactions', [TransactionController::class, 'store'])->name('transactions.store');
-
-        // Transfers (move money between wallets; total wealth unchanged)
-        Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
-        Route::get('transfers/create', [TransferController::class, 'create'])->name('transfers.create');
-        Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
-
         // Budgets (planning layer; monitor spending vs plan)
         Route::resource('budgets', BudgetController::class)->names('budgets');
 
@@ -217,6 +247,8 @@ Route::middleware(['auth', 'sync.current.family'])->group(function () {
         Route::resource('savings-goals', SavingsGoalController::class)->names('savings-goals');
         Route::get('savings-goals/{savings_goal}/contribute', [SavingsGoalController::class, 'contributeForm'])->name('savings-goals.contribute');
         Route::post('savings-goals/{savings_goal}/contribute', [SavingsGoalController::class, 'contributeStore'])->name('savings-goals.contribute.store');
+        Route::get('savings-goals/{savings_goal}/allocate', [SavingsGoalController::class, 'allocateForm'])->name('savings-goals.allocate');
+        Route::post('savings-goals/{savings_goal}/allocate', [SavingsGoalController::class, 'allocateStore'])->name('savings-goals.allocate.store');
 
         // Family Projects
         Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
@@ -246,13 +278,6 @@ Route::middleware(['auth', 'sync.current.family'])->group(function () {
         Route::post('properties/depreciation', [PropertyController::class, 'storeDepreciation'])->name('properties.depreciation.store');
         Route::get('properties/{property}', [PropertyController::class, 'show'])->name('properties.show');
 
-        // Financial Accounts (sidebar links)
-        Route::get('accounts/transactions', [TransactionController::class, 'index'])->name('accounts.transactions');
-        Route::get('accounts/transfers', [TransferController::class, 'index'])->name('accounts.transfers');
-        Route::get('accounts/savings', [SavingsGoalController::class, 'index'])->name('accounts.savings');
-        Route::get('accounts/projects-funding', [ProjectFundingController::class, 'index'])->name('accounts.projects-funding');
-        Route::get('accounts/reconciliation', [ReconciliationController::class, 'index'])->name('accounts.reconciliation');
-
         // Reports & Analytics
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('reports/wallet-statement', [ReportController::class, 'walletStatement'])->name('reports.wallet-statement');
@@ -275,6 +300,38 @@ Route::middleware(['auth', 'sync.current.family'])->group(function () {
         Route::get('audit-trail', [AuditTrailController::class, 'index'])->name('audit-trail.index');
         Route::get('audit-trail/export', [AuditTrailController::class, 'exportPdf'])->name('audit-trail.export');
     });
+
+    // Old /account/... paths → /family/... or /accounts/...
+    $redirectAccountPath = function (string $targetBase) {
+        return function () use ($targetBase) {
+            $q = request()->getQueryString();
+            $suffix = request()->route('tail');
+            $path = $targetBase.($suffix ? '/'.$suffix : '');
+            return redirect()->to($path.($q ? '?'.$q : ''), 301);
+        };
+    };
+
+    Route::any('account/members', $redirectAccountPath('/family/members'));
+    Route::any('account/members/{tail}', $redirectAccountPath('/family/members'))->where('tail', '.*');
+
+    Route::any('account/invites', $redirectAccountPath('/family/invitation'));
+    Route::any('account/invites/{tail}', $redirectAccountPath('/family/invitation'))->where('tail', '.*');
+
+    Route::any('account/transactions', $redirectAccountPath('/accounts/transactions'));
+    Route::any('account/transactions/{tail}', $redirectAccountPath('/accounts/transactions'))->where('tail', '.*');
+
+    Route::any('account/transfers', $redirectAccountPath('/accounts/transfers'));
+    Route::any('account/transfers/{tail}', $redirectAccountPath('/accounts/transfers'))->where('tail', '.*');
+
+    Route::any('account/accounts/{tail?}', function (?string $tail = null) {
+        $q = request()->getQueryString();
+        $path = '/accounts'.($tail ? '/'.$tail : '');
+        return redirect()->to($path.($q ? '?'.$q : ''), 301);
+    })->where('tail', '.*');
+
+    Route::get('families/{family}/{path}', LegacyFamilyScopedUrlRedirectController::class)
+        ->where('path', '[A-Za-z0-9][A-Za-z0-9_\-/]*')
+        ->name('legacy.family-scoped');
 
     // Platform Administration (Super Admin / Admin only)
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {

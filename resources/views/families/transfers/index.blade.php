@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12 w-full max-w-full min-w-0">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
     </a>
@@ -15,7 +15,7 @@
             <h1 class="font-medium text-lg text-mono">Transfers</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Move money between wallets. Family wealth stays the same; only distribution changes.</p>
         </div>
-        <a href="{{ route('families.transfers.create', $family) }}" class="kt-btn kt-btn-primary">
+        <a href="{{ route('families.transfers.create') }}" class="kt-btn kt-btn-primary">
             <i class="ki-filled ki-arrow-right-left"></i>
             New transfer
         </a>
@@ -59,7 +59,7 @@
         <div class="kt-card kt-card-grid w-full min-w-0 max-w-full shrink-0">
         <div class="kt-card-header flex-wrap gap-2 min-w-0">
             <h3 class="kt-card-title text-sm shrink-0">Transfer history</h3>
-            <form method="get" action="{{ route('families.transfers.index', $family) }}" class="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
+            <form method="get" action="{{ route('families.transfers.index') }}" class="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
                 <label for="wallet_id" class="text-sm text-muted-foreground">Wallet</label>
                 <select name="wallet_id" id="wallet_id" class="kt-select kt-select-sm w-auto" onchange="this.form.submit()">
                     <option value="">All wallets</option>
@@ -74,7 +74,7 @@
                 <div class="py-12 text-center text-muted-foreground">
                     <i class="ki-filled ki-arrow-right-left text-4xl mb-2"></i>
                     <p class="text-sm">No transfers yet.</p>
-                    <a href="{{ route('families.transfers.create', $family) }}" class="kt-btn kt-btn-outline mt-4">New transfer</a>
+                    <a href="{{ route('families.transfers.create') }}" class="kt-btn kt-btn-outline mt-4">New transfer</a>
                 </div>
             @else
                 <div class="kt-scrollable-x-auto">
@@ -94,11 +94,11 @@
                             <tr>
                                 <td class="text-foreground">{{ $transfer->transfer_date->format('M j, Y') }}</td>
                                 <td>
-                                    <a href="{{ route('families.wallets.show', [$family, $transfer->fromWallet]) }}" class="text-primary hover:underline">{{ $transfer->fromWallet->name }}</a>
+                                    <a href="{{ route('families.wallets.show', $transfer->fromWallet) }}" class="text-primary hover:underline">{{ $transfer->fromWallet->name }}</a>
                                 </td>
                                 <td class="text-muted-foreground text-center"><i class="ki-filled ki-arrow-right text-sm"></i></td>
                                 <td>
-                                    <a href="{{ route('families.wallets.show', [$family, $transfer->toWallet]) }}" class="text-primary hover:underline">{{ $transfer->toWallet->name }}</a>
+                                    <a href="{{ route('families.wallets.show', $transfer->toWallet) }}" class="text-primary hover:underline">{{ $transfer->toWallet->name }}</a>
                                 </td>
                                 <td class="font-medium tabular-nums">{{ number_format($transfer->amount, 2) }} {{ $transfer->currency_code }}</td>
                                 <td class="text-foreground">{{ Str::limit($transfer->description ?? '—', 30) }}</td>

@@ -10,11 +10,13 @@ use App\Http\Controllers\Api\TransferController;
 use App\Http\Controllers\Api\LookupController;
 use Illuminate\Support\Facades\Route;
 
-// Public
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
+// Public (tighter limit to reduce brute-force / abuse)
+Route::middleware('throttle:auth-api')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
+});
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 

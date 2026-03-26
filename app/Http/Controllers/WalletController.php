@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
@@ -9,23 +10,21 @@ use Illuminate\Validation\Rule;
 
 class WalletController extends Controller
 {
-    protected function authorizeFamilyMember(Family $family): void
-    {
-        if (! $family->members()->where('user_id', auth()->id())->exists()) {
-            abort(403, 'You do not have access to this family.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Family $family)
     {
         $this->authorizeFamilyMember($family);
 
         $wallets = $family->wallets()->with('creator:id,name')
+            ->with('dedicatedProject:id,name,wallet_id')
             ->withSum('incomes', 'amount')
             ->withSum('expenses', 'amount')
             ->withSum('incomingTransfers', 'amount')
             ->withSum('outgoingTransfers', 'amount')
-            ->orderBy('name')->get();
+            ->orderByDesc('is_primary')
+            ->orderBy('name')
+            ->get();
         $walletTypes = Wallet::types();
 
         $chartCurrencyLabel = '';
@@ -46,7 +45,7 @@ class WalletController extends Controller
             }
             $chartCurrencyLabel = (string) ($walletsForChart->first()->currency_code ?? $chartCurrency ?? '');
 
-            $chartWalletNames = $walletsForChart->pluck('name')->values()->all();
+            $chartWalletNames = $walletsForChart->map(fn (Wallet $w) => $w->display_name)->values()->all();
             $chartWalletBalances = $walletsForChart->map(fn (Wallet $w) => round((float) $w->balance, 2))->values()->all();
 
             $byType = $walletsForChart->groupBy('type')->map(
@@ -56,7 +55,7 @@ class WalletController extends Controller
             $chartTypeBalances = $byType->values()->all();
 
             $positiveWallets = $walletsForChart->filter(fn (Wallet $w) => (float) $w->balance > 0)->values();
-            $chartShareLabels = $positiveWallets->pluck('name')->values()->all();
+            $chartShareLabels = $positiveWallets->map(fn (Wallet $w) => $w->display_name)->values()->all();
             $chartShareValues = $positiveWallets->map(fn (Wallet $w) => round((float) $w->balance, 2))->values()->all();
         }
 
@@ -121,11 +120,14 @@ class WalletController extends Controller
         }
 
         return redirect()
-            ->route('families.wallets.index', $family)
+            ->route('families.wallets.index')
             ->with('success', 'Wallet created successfully.');
     }
 
-    public function show(Family $family, Wallet $wallet)
+    /**
+     * Route params order matches array_values(): {wallet} from URI, then session "family" from BindAccountFamilyFromSession.
+     */
+    public function show(Wallet $wallet, Family $family)
     {
         $this->authorizeFamilyMember($family);
 
@@ -133,10 +135,14 @@ class WalletController extends Controller
             abort(404);
         }
 
-        $wallet->load('creator:id,name');
+        $wallet->load([
+            'creator:id,name',
+            'dedicatedProject:id,name,wallet_id',
+        ]);
         $walletTypes = Wallet::types();
-        $outgoingTransfers = $wallet->outgoingTransfers()->with('toWallet:id,name,currency_code')->orderByDesc('transfer_date')->limit(10)->get();
-        $incomingTransfers = $wallet->incomingTransfers()->with('fromWallet:id,name,currency_code')->orderByDesc('transfer_date')->limit(10)->get();
+        $walletLinkScope = fn ($q) => $q->select('id', 'name', 'currency_code')->with('dedicatedProject:id,name,wallet_id');
+        $outgoingTransfers = $wallet->outgoingTransfers()->with(['toWallet' => $walletLinkScope])->orderByDesc('transfer_date')->limit(10)->get();
+        $incomingTransfers = $wallet->incomingTransfers()->with(['fromWallet' => $walletLinkScope])->orderByDesc('transfer_date')->limit(10)->get();
 
         $recentIncomes = $wallet->incomes()->orderByDesc('received_date')->limit(10)->get();
         $recentExpenses = $wallet->expenses()->orderByDesc('expense_date')->limit(10)->get();
@@ -152,7 +158,7 @@ class WalletController extends Controller
         ));
     }
 
-    public function edit(Family $family, Wallet $wallet)
+    public function edit(Wallet $wallet, Family $family)
     {
         $this->authorizeFamilyMember($family);
 
@@ -168,7 +174,7 @@ class WalletController extends Controller
         return view('families.wallets.edit', compact('family', 'wallet', 'currencies'));
     }
 
-    public function update(Request $request, Family $family, Wallet $wallet)
+    public function update(Request $request, Wallet $wallet, Family $family)
     {
         $this->authorizeFamilyMember($family);
 
@@ -210,11 +216,11 @@ class WalletController extends Controller
         }
 
         return redirect()
-            ->route('families.wallets.index', $family)
+            ->route('families.wallets.index')
             ->with('success', 'Wallet updated successfully.');
     }
 
-    public function destroy(Family $family, Wallet $wallet)
+    public function destroy(Wallet $wallet, Family $family)
     {
         $this->authorizeFamilyMember($family);
 
@@ -225,7 +231,7 @@ class WalletController extends Controller
         $wallet->delete();
 
         return redirect()
-            ->route('families.wallets.index', $family)
+            ->route('families.wallets.index')
             ->with('success', 'Wallet removed.');
     }
 }

@@ -1,0 +1,23 @@
+/**
+ * Standard spacing below page title / actions (Metronic CSS may omit Tailwind mb-* / pb-*).
+ * - .famledger-page-toolbar: margin under title+actions rows
+ * - .famledger-page-header: pulse-style top strip (replaces pb-5 pt-1)
+ */
+.famledger-page-toolbar {
+    margin-bottom: 2rem;
+}
+@media (min-width: 640px) {
+    .famledger-page-toolbar {
+        margin-bottom: 2.5rem;
+    }
+}
+
+.famledger-page-header {
+    padding-top: 0.25rem;
+    padding-bottom: 2rem;
+}
+@media (min-width: 640px) {
+    .famledger-page-header {
+        padding-bottom: 2.5rem;
+    }
+}

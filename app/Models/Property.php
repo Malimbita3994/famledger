@@ -93,5 +93,67 @@ class Property extends Model
     {
         return $this->hasMany(PropertyDepreciation::class, 'property_id');
     }
+
+    /**
+     * Label/value rows for the read-only property detail modal (assets list & show).
+     *
+     * @return array<int, array{l: string, v: string}>
+     */
+    public function detailModalRows(Family $family): array
+    {
+        $ccy = $this->currency_code ?: $family->currency_code;
+
+        $categoryParts = array_filter([
+            $this->category?->name,
+            $this->subcategory?->name,
+        ]);
+        $categoryLine = $categoryParts !== [] ? implode(' / ', $categoryParts) : '—';
+
+        $ownership = $this->ownership_type
+            ? ucfirst(str_replace('_', ' ', (string) $this->ownership_type))
+            : '—';
+
+        $acqMethod = $this->acquisition_method
+            ? ucfirst(str_replace('_', ' ', (string) $this->acquisition_method))
+            : '—';
+
+        $purchase = $this->purchase_price !== null
+            ? number_format((float) $this->purchase_price, 2).' '.$ccy
+            : '—';
+
+        $estimated = $this->current_estimated_value !== null
+            ? number_format((float) $this->current_estimated_value, 2).' '.$ccy
+            : '—';
+
+        $gps = ($this->gps_lat !== null && $this->gps_lng !== null)
+            ? $this->gps_lat.', '.$this->gps_lng
+            : '—';
+
+        $rows = [
+            ['l' => __('Code'), 'v' => $this->property_code ?: '—'],
+            ['l' => __('Name'), 'v' => $this->name ?: '—'],
+            ['l' => __('Status'), 'v' => $this->status ? ucfirst((string) $this->status) : '—'],
+            ['l' => __('Category'), 'v' => $categoryLine],
+            ['l' => __('Ownership type'), 'v' => $ownership],
+            ['l' => __('Currency'), 'v' => $ccy],
+            ['l' => __('Acquisition date'), 'v' => $this->acquisition_date ? $this->acquisition_date->format('Y-m-d') : '—'],
+            ['l' => __('Acquisition method'), 'v' => $acqMethod],
+            ['l' => __('Purchase price'), 'v' => $purchase],
+            ['l' => __('Current estimated value'), 'v' => $estimated],
+        ];
+
+        if ($this->valuation_date) {
+            $rows[] = ['l' => __('Valuation date'), 'v' => $this->valuation_date->format('Y-m-d')];
+        }
+
+        $rows[] = ['l' => __('Country'), 'v' => $this->country ?: ($family->country ?: '—')];
+        $rows[] = ['l' => __('Region / City'), 'v' => $this->region_city ?: '—'];
+        $rows[] = ['l' => __('Address'), 'v' => $this->address ?: '—', 'full' => true];
+        $rows[] = ['l' => __('GPS'), 'v' => $gps];
+        $rows[] = ['l' => __('Title number / registration'), 'v' => $this->title_number ?: '—'];
+        $rows[] = ['l' => __('Notes'), 'v' => $this->notes !== null && $this->notes !== '' ? (string) $this->notes : '—', 'full' => true];
+
+        return $rows;
+    }
 }
 

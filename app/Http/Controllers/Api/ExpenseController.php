@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Concerns\AuthorizesFamilyMember;
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\Family;
+use App\Services\WalletBalanceGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ExpenseController extends Controller
@@ -81,49 +83,53 @@ class ExpenseController extends Controller
             'budget_id' => ['nullable', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
         ]);
 
-        if ($wallet->status !== 'active') {
-            return response()->json(['message' => 'Selected wallet is inactive.'], 422);
-        }
+        return DB::transaction(function () use ($family, $validated, $wallet) {
+            $locked = WalletBalanceGuard::lockWalletsForUpdate([(int) $validated['wallet_id']]);
+            $w = $locked->get((int) $validated['wallet_id']);
+            if (! $w || $w->status !== 'active') {
+                return response()->json(['message' => 'Selected wallet is missing or inactive.'], 422);
+            }
 
-        if (! $wallet->canAffordDebit((float) $validated['amount'])) {
+            if (! $w->canAffordDebit((float) $validated['amount'])) {
+                return response()->json([
+                    'message' => 'Insufficient funds in the selected wallet. Available: '
+                        .number_format($w->balance, 2).' '.$w->currency_code,
+                ], 422);
+            }
+
+            $expense = $family->expenses()->create([
+                'wallet_id' => $validated['wallet_id'],
+                'category_id' => $validated['category_id'],
+                'subcategory' => $validated['subcategory'] ?? null,
+                'project_id' => $validated['project_id'] ?? null,
+                'family_liability_id' => $validated['family_liability_id'] ?? null,
+                'budget_id' => $validated['budget_id'] ?? null,
+                'amount' => $validated['amount'],
+                'currency_code' => strtoupper($validated['currency_code']),
+                'expense_date' => $validated['expense_date'],
+                'description' => $validated['description'] ?? null,
+                'merchant' => $validated['merchant'] ?? null,
+                'paid_by' => $validated['paid_by'] ?? auth()->id(),
+                'payment_method' => $validated['payment_method'] ?? null,
+                'reference' => $validated['reference'] ?? null,
+                'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
+                'created_by' => auth()->id(),
+            ]);
+
+            $expense->load(['wallet:id,name,currency_code', 'category:id,name']);
+
             return response()->json([
-                'message' => 'Insufficient funds in the selected wallet. Available: '
-                    .number_format($wallet->balance, 2).' '.$wallet->currency_code,
-            ], 422);
-        }
-
-        $expense = $family->expenses()->create([
-            'wallet_id' => $validated['wallet_id'],
-            'category_id' => $validated['category_id'],
-            'subcategory' => $validated['subcategory'] ?? null,
-            'project_id' => $validated['project_id'] ?? null,
-            'family_liability_id' => $validated['family_liability_id'] ?? null,
-            'budget_id' => $validated['budget_id'] ?? null,
-            'amount' => $validated['amount'],
-            'currency_code' => strtoupper($validated['currency_code']),
-            'expense_date' => $validated['expense_date'],
-            'description' => $validated['description'] ?? null,
-            'merchant' => $validated['merchant'] ?? null,
-            'paid_by' => $validated['paid_by'] ?? auth()->id(),
-            'payment_method' => $validated['payment_method'] ?? null,
-            'reference' => $validated['reference'] ?? null,
-            'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
-            'created_by' => auth()->id(),
-        ]);
-
-        $expense->load(['wallet:id,name,currency_code', 'category:id,name']);
-
-        return response()->json([
-            'message' => 'Expense recorded.',
-            'expense' => [
-                'id' => $expense->id,
-                'amount' => (float) $expense->amount,
-                'currency_code' => $expense->currency_code,
-                'description' => $expense->description,
-                'expense_date' => $expense->expense_date?->format('Y-m-d'),
-                'wallet' => ['id' => $expense->wallet->id, 'name' => $expense->wallet->name],
-                'category' => ['id' => $expense->category->id, 'name' => $expense->category->name],
-            ],
-        ], 201);
+                'message' => 'Expense recorded.',
+                'expense' => [
+                    'id' => $expense->id,
+                    'amount' => (float) $expense->amount,
+                    'currency_code' => $expense->currency_code,
+                    'description' => $expense->description,
+                    'expense_date' => $expense->expense_date?->format('Y-m-d'),
+                    'wallet' => ['id' => $expense->wallet->id, 'name' => $expense->wallet->name],
+                    'category' => ['id' => $expense->category->id, 'name' => $expense->category->name],
+                ],
+            ], 201);
+        });
     }
 }

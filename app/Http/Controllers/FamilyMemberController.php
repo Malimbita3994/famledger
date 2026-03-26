@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Mail\MemberCredentialsMail;
 use App\Models\Family;
 use App\Models\FamilyMember;
@@ -15,9 +16,42 @@ use Illuminate\Validation\Rule;
 
 class FamilyMemberController extends Controller
 {
+    use AuthorizesFamilyMember;
+
     /**
-     * Only Owner or Co-Owner can manage members (add, edit role, remove).
-     * The owner has the role to create other family members; co-owner shares this permission.
+     * Some routes/middleware provide the family as an id/string instead of a resolved
+     * model instance. Normalize it so authorization and queries always use a Family.
+     */
+    private function resolveFamily(Family|string|int $family): Family
+    {
+        if ($family instanceof Family) {
+            return $family;
+        }
+
+        return Family::query()->findOrFail($family);
+    }
+
+    /**
+     * Members index for this family (dedicated page).
+     */
+    public function index(Family|string|int $family)
+    {
+        $family = $this->resolveFamily($family);
+        $this->authorizeFamilyMember($family);
+
+        $family->load('familyMembers.user:id,name,email', 'familyMembers.role');
+
+        $currentMembership = FamilyMember::where('family_id', $family->id)
+            ->where('user_id', auth()->id())
+            ->with('role')
+            ->first();
+        $canManageMembers = $currentMembership && in_array($currentMembership->role->name ?? '', ['Owner', 'Co-owner', 'Co-Owner'], true);
+
+        return view('families.members.index', compact('family', 'canManageMembers'));
+    }
+
+    /**
+     * Only Owner or Co-owner can manage members (add, edit role, remove).
      */
     protected function authorizeManageMembers(Family $family): void
     {
@@ -26,7 +60,7 @@ class FamilyMemberController extends Controller
             ->with('role')
             ->first();
 
-        if (! $membership || ! in_array($membership->role->name ?? '', ['Owner', 'Co-Owner'], true)) {
+        if (! $membership || ! in_array($membership->role->name ?? '', ['Owner', 'Co-owner', 'Co-Owner'], true)) {
             abort(403, 'Only the owner or co-owner can manage members.');
         }
     }
@@ -34,8 +68,9 @@ class FamilyMemberController extends Controller
     /**
      * Show form to add a member (by email).
      */
-    public function create(Family $family)
+    public function create(Family|string|int $family)
     {
+        $family = $this->resolveFamily($family);
         $this->authorizeManageMembers($family);
 
         $family->load('familyMembers.user');
@@ -47,8 +82,9 @@ class FamilyMemberController extends Controller
     /**
      * Add a member to the family. If the email has no account, create one and send credentials by email.
      */
-    public function store(Request $request, Family $family)
+    public function store(Request $request, Family|string|int $family)
     {
+        $family = $this->resolveFamily($family);
         $this->authorizeManageMembers($family);
 
         $validated = $request->validate([
@@ -111,15 +147,20 @@ class FamilyMemberController extends Controller
             : 'Member added successfully.';
 
         return redirect()
-            ->route('families.show', $family)
+            ->route('families.members.index')
             ->with('success', $message);
     }
 
     /**
      * Show form to edit a member's role.
      */
-    public function edit(Family $family, int $member)
+    /**
+     * Parameter order matches route array_values(): {member} from the URI, then session "family"
+     * injected by BindAccountFamilyFromSession (see middleware docblock).
+     */
+    public function edit(int $member, Family|string|int $family)
     {
+        $family = $this->resolveFamily($family);
         $this->authorizeManageMembers($family);
 
         $familyMember = FamilyMember::where('family_id', $family->id)
@@ -134,8 +175,9 @@ class FamilyMemberController extends Controller
     /**
      * Update a member's role and primary flag.
      */
-    public function update(Request $request, Family $family, int $member)
+    public function update(Request $request, int $member, Family|string|int $family)
     {
+        $family = $this->resolveFamily($family);
         $this->authorizeManageMembers($family);
 
         $familyMember = FamilyMember::where('family_id', $family->id)->findOrFail($member);
@@ -164,15 +206,16 @@ class FamilyMemberController extends Controller
         ]);
 
         return redirect()
-            ->route('families.show', $family)
+            ->route('families.members.index')
             ->with('success', 'Member updated successfully.');
     }
 
     /**
      * Deactivate a member (keep history but mark as inactive).
      */
-    public function deactivate(Family $family, int $member)
+    public function deactivate(int $member, Family|string|int $family)
     {
+        $family = $this->resolveFamily($family);
         $this->authorizeManageMembers($family);
 
         $familyMember = FamilyMember::where('family_id', $family->id)->findOrFail($member);
@@ -181,37 +224,39 @@ class FamilyMemberController extends Controller
         $primaryCount = FamilyMember::where('family_id', $family->id)->where('is_primary', true)->count();
         if ($familyMember->is_primary && $primaryCount <= 1) {
             return redirect()
-                ->route('families.show', $family)
+                ->route('families.members.index')
                 ->with('error', 'Cannot deactivate the only primary owner. Assign another owner as primary first.');
         }
 
         $familyMember->update(['status' => 'inactive']);
 
         return redirect()
-            ->route('families.show', $family)
+            ->route('families.members.index')
             ->with('success', 'Member deactivated.');
     }
 
     /**
      * Reactivate a previously deactivated member.
      */
-    public function activate(Family $family, int $member)
+    public function activate(int $member, Family|string|int $family)
     {
+        $family = $this->resolveFamily($family);
         $this->authorizeManageMembers($family);
 
         $familyMember = FamilyMember::where('family_id', $family->id)->findOrFail($member);
         $familyMember->update(['status' => 'active']);
 
         return redirect()
-            ->route('families.show', $family)
+            ->route('families.members.index')
             ->with('success', 'Member activated.');
     }
 
     /**
      * Transfer primary ownership to another member.
      */
-    public function transferOwnership(Family $family, int $member)
+    public function transferOwnership(int $member, Family|string|int $family)
     {
+        $family = $this->resolveFamily($family);
         $this->authorizeManageMembers($family);
 
         $target = FamilyMember::where('family_id', $family->id)
@@ -230,36 +275,37 @@ class FamilyMemberController extends Controller
         ]);
 
         return redirect()
-            ->route('families.show', $family)
+            ->route('families.members.index')
             ->with('success', 'Family ownership has been transferred.');
     }
 
     /**
      * Remove a member from the family.
      */
-    public function destroy(Family $family, int $member)
+    public function destroy(int $member, Family|string|int $family)
     {
+        $family = $this->resolveFamily($family);
         $this->authorizeManageMembers($family);
 
         $familyMember = FamilyMember::where('family_id', $family->id)->findOrFail($member);
 
         if ($familyMember->user_id === auth()->id()) {
             return redirect()
-                ->route('families.show', $family)
+                ->route('families.members.index')
                 ->with('error', 'You cannot remove yourself. Leave the family from account settings or transfer ownership first.');
         }
 
         $primaryCount = FamilyMember::where('family_id', $family->id)->where('is_primary', true)->count();
         if ($familyMember->is_primary && $primaryCount <= 1) {
             return redirect()
-                ->route('families.show', $family)
+                ->route('families.members.index')
                 ->with('error', 'Cannot remove the only primary owner. Assign another owner as primary first.');
         }
 
         $familyMember->delete();
 
         return redirect()
-            ->route('families.show', $family)
+            ->route('families.members.index')
             ->with('success', 'Member removed.');
     }
 }

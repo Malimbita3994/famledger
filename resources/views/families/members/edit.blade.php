@@ -5,12 +5,12 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.show', $family) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $family->name }}
     </a>
 
-    <form action="{{ route('families.members.update', [$family, $familyMember]) }}" method="POST">
+    <form action="{{ route('families.members.update', $familyMember) }}" method="POST">
         @csrf
         @method('PUT')
 
@@ -28,45 +28,97 @@
                         </div>
                     </div>
 
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="member_name" class="kt-form-label max-w-56">Member name</label>
-                        <div class="grow">
-                            <input type="text" name="member_name" id="member_name" value="{{ old('member_name', $familyMember->member_name) }}" placeholder="Display name in this family" class="kt-input" />
-                            @error('member_name')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                            <label for="member_name" class="kt-form-label max-w-56">Member name</label>
+                            <div class="grow">
+                                <input type="text" name="member_name" id="member_name" value="{{ old('member_name', $familyMember->member_name) }}" placeholder="Display name in this family" class="kt-input" />
+                                @error('member_name')<p class="kt-form-message mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+
+                        <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
+                            <label for="role_id" class="kt-form-label max-w-56">Role <span class="text-destructive">*</span></label>
+                            <div class="grow">
+                                <select
+                                    name="role_id"
+                                    id="role_id"
+                                    required
+                                    class="kt-select"
+                                    aria-invalid="{{ $errors->has('role_id') ? 'true' : 'false' }}"
+                                >
+                                    @foreach ($roles as $role)
+                                        <option value="{{ $role->id }}" {{ old('role_id', $familyMember->role_id) == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('role_id')
+                                    <p class="kt-form-message mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
                     </div>
 
                     <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label class="kt-form-label max-w-56">Sex</label>
-                        <div class="grow flex flex-wrap gap-4">
-                            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="sex" value="male" {{ old('sex', $familyMember->sex) === 'male' ? 'checked' : '' }} class="kt-radio" /><span class="text-sm">Male</span></label>
-                            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="sex" value="female" {{ old('sex', $familyMember->sex) === 'female' ? 'checked' : '' }} class="kt-radio" /><span class="text-sm">Female</span></label>
+                        <span class="kt-form-label max-w-56" id="label_member_sex">Sex</span>
+                        <div class="grow" aria-invalid="{{ $errors->has('sex') ? 'true' : 'false' }}">
+                            <div class="fl-choice-group" role="radiogroup" aria-labelledby="label_member_sex">
+                                <label class="fl-choice-chip">
+                                    <input
+                                        type="radio"
+                                        name="sex"
+                                        id="sex_male"
+                                        value="male"
+                                        class="fl-choice-input"
+                                        {{ old('sex', $familyMember->sex) === 'male' ? 'checked' : '' }}
+                                    />
+                                    <span class="fl-choice-text">Male</span>
+                                </label>
+                                <label class="fl-choice-chip">
+                                    <input
+                                        type="radio"
+                                        name="sex"
+                                        id="sex_female"
+                                        value="female"
+                                        class="fl-choice-input"
+                                        {{ old('sex', $familyMember->sex) === 'female' ? 'checked' : '' }}
+                                    />
+                                    <span class="fl-choice-text">Female</span>
+                                </label>
+                            </div>
+                            @error('sex')
+                                <p class="kt-form-message mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
                     <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label class="kt-form-label max-w-56">Adult or child</label>
-                        <div class="grow flex flex-wrap gap-4">
-                            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="member_type" value="adult" {{ old('member_type', $familyMember->member_type ?? 'adult') === 'adult' ? 'checked' : '' }} class="kt-radio" /><span class="text-sm">Adult</span></label>
-                            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="member_type" value="child" {{ old('member_type', $familyMember->member_type) === 'child' ? 'checked' : '' }} class="kt-radio" /><span class="text-sm">Child</span></label>
-                        </div>
-                    </div>
-
-                    <div class="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-                        <label for="role_id" class="kt-form-label max-w-56">Role <span class="text-destructive">*</span></label>
-                        <div class="grow">
-                            <select
-                                name="role_id"
-                                id="role_id"
-                                required
-                                class="kt-select"
-                                aria-invalid="{{ $errors->has('role_id') ? 'true' : 'false' }}"
-                            >
-                                @foreach ($roles as $role)
-                                    <option value="{{ $role->id }}" {{ old('role_id', $familyMember->role_id) == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('role_id')
+                        <span class="kt-form-label max-w-56" id="label_member_type">Adult or child</span>
+                        <div class="grow" aria-invalid="{{ $errors->has('member_type') ? 'true' : 'false' }}">
+                            <div class="fl-choice-group" role="radiogroup" aria-labelledby="label_member_type">
+                                <label class="fl-choice-chip">
+                                    <input
+                                        type="radio"
+                                        name="member_type"
+                                        id="member_type_adult"
+                                        value="adult"
+                                        class="fl-choice-input"
+                                        {{ old('member_type', $familyMember->member_type ?? 'adult') === 'adult' ? 'checked' : '' }}
+                                    />
+                                    <span class="fl-choice-text">Adult</span>
+                                </label>
+                                <label class="fl-choice-chip">
+                                    <input
+                                        type="radio"
+                                        name="member_type"
+                                        id="member_type_child"
+                                        value="child"
+                                        class="fl-choice-input"
+                                        {{ old('member_type', $familyMember->member_type) === 'child' ? 'checked' : '' }}
+                                    />
+                                    <span class="fl-choice-text">Child</span>
+                                </label>
+                            </div>
+                            @error('member_type')
                                 <p class="kt-form-message mt-1">{{ $message }}</p>
                             @enderror
                         </div>
@@ -96,7 +148,7 @@
                     @endif
 
                     <div class="flex justify-end pt-2 gap-2">
-                        <a href="{{ route('families.show', $family) }}" class="kt-btn kt-btn-outline">Cancel</a>
+                        <a href="{{ route('families.overview') }}" class="kt-btn kt-btn-outline">Cancel</a>
                         <button type="submit" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
                             <i class="ki-filled ki-check"></i>
                             Save changes

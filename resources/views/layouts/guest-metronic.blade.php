@@ -52,8 +52,16 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
             to { transform: rotate(360deg); }
         }
     </style>
+    <style>
+        /* Ensure KeenIcons (Metronic) follow surrounding text color */
+        i.ki-filled,
+        i.ki-outline,
+        i[class*="ki-"] {
+            color: currentColor !important;
+        }
+    </style>
 </head>
-<body class="antialiased flex h-full text-base text-foreground bg-background">
+<body class="antialiased flex min-h-screen flex-col text-base text-foreground bg-background">
     <!-- Global page loader -->
     <div id="global-page-loader" aria-hidden="true">
         <div class="global-loader-spinner" role="presentation"></div>
@@ -82,6 +90,10 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
 
     <style>
         /* Branding area: soft sky band at top, neutral below to avoid tall empty blue block */
+        /* SweetAlert2 can set body height:auto; that collapses min-height layouts and leaves gray slabs */
+        body.swal2-shown {
+            min-height: 100dvh !important;
+        }
         .auth-branded-bg {
             background-color: #e5f3ff;
             background-image: radial-gradient(circle at top, #ffffff 0%, #e5f3ff 32%, #d6ecff 60%, #c0e0ff 85%, #a5d4ff 100%);
@@ -117,7 +129,48 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
             animation: auth-fade-up 0.6s ease-out forwards;
         }
         .auth-animate-float {
-            animation: auth-float 4s ease-in-out infinite;
+            animation: auth-float 5s ease-in-out infinite;
+        }
+        /* Branded panel: staggered entrance */
+        @keyframes auth-brand-enter {
+            from {
+                opacity: 0;
+                transform: translateY(22px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .auth-brand-reveal {
+            opacity: 0;
+            animation: auth-brand-enter 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .auth-brand-reveal--logo { animation-delay: 0.06s; }
+        .auth-brand-reveal--title { animation-delay: 0.14s; }
+        .auth-brand-reveal--desc { animation-delay: 0.22s; }
+        .auth-brand-reveal--art { animation-delay: 0.3s; }
+        .auth-feature-row.auth-brand-reveal-row > .auth-feature-card:nth-child(1) { animation-delay: 0.4s; }
+        .auth-feature-row.auth-brand-reveal-row > .auth-feature-card:nth-child(2) { animation-delay: 0.5s; }
+        .auth-feature-row.auth-brand-reveal-row > .auth-feature-card:nth-child(3) { animation-delay: 0.6s; }
+        .auth-brand-reveal--footer { animation-delay: 0.72s; }
+        @keyframes auth-svg-clock-drift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(1px, -6px) rotate(4deg); }
+        }
+        .auth-svg-clock {
+            transform-origin: 200px 35px;
+            animation: auth-svg-clock-drift 4.2s ease-in-out infinite;
+        }
+        @keyframes auth-feature-icon-pulse {
+            0%, 100% {
+                box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 6px 22px rgba(15, 23, 42, 0.18);
+                transform: scale(1.04);
+            }
         }
         @keyframes auth-logo-float {
             0%, 100% { transform: translateY(0); }
@@ -126,15 +179,15 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         .auth-logo-animate {
             animation: auth-logo-float 4s ease-in-out infinite;
         }
-        /* Login card entrance + error shake */
+        /* Pulse auth card entrance + error shake */
         @keyframes auth-login-fade-up {
             from { opacity: 0; transform: translateY(24px); }
             to { opacity: 1; transform: translateY(0); }
         }
         @keyframes auth-login-shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-4px, 0); }
+            75% { transform: translate(4px, 0); }
         }
         .auth-login-card {
             opacity: 0;
@@ -145,13 +198,14 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
             /* On error, make sure card is fully visible and shake */
             opacity: 1 !important;
             transform: translateY(0) !important;
-            animation: auth-login-shake 0.3s ease;
+            animation: auth-login-shake 0.3s ease forwards;
         }
         .auth-feature-row {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 1.25rem;
-            max-width: 720px;
+            width: 100%;
+            max-width: min(720px, 100%);
             margin-left: auto;
             margin-right: auto;
             padding-left: 1.25rem;
@@ -160,11 +214,15 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         }
         .auth-feature-card {
             border-radius: 1.75rem;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            transition:
+                transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.4s ease,
+                border-color 0.3s ease;
         }
         .auth-feature-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 22px 50px rgba(15, 23, 42, 0.14);
+            border-color: rgba(14, 165, 233, 0.35);
         }
         .auth-feature-icon {
             display: flex;
@@ -174,15 +232,20 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
             width: 3rem;
             height: 3rem;
             color: #ffffff;
+            flex-shrink: 0;
+            animation: auth-feature-icon-pulse 3.2s ease-in-out infinite;
         }
         .auth-feature-icon--secure {
             background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            animation-delay: 0s;
         }
         .auth-feature-icon--clarity {
             background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            animation-delay: 0.35s;
         }
         .auth-feature-icon--projects {
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            animation-delay: 0.7s;
         }
         /* Footer / version strip */
         .auth-footer {
@@ -237,6 +300,33 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
             color: #0f172a;
             opacity: 0.85;
         }
+        @media (prefers-reduced-motion: reduce) {
+            .auth-brand-reveal,
+            .auth-feature-row.auth-brand-reveal-row > .auth-feature-card {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+            .auth-animate-float,
+            .auth-logo-animate,
+            .auth-svg-clock,
+            .auth-feature-icon {
+                animation: none !important;
+            }
+            .auth-feature-card {
+                transition: none;
+            }
+            .auth-feature-card:hover {
+                transform: none;
+                box-shadow: none;
+            }
+            .auth-login-card,
+            .auth-login-card-error {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+        }
         /* Shared auth text input focus style */
         .auth-text-input {
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
@@ -251,18 +341,202 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         .auth-branded-logo {
             height: 7.5rem;
             width: auto;
-            max-width: 540px;
+            max-width: 100%;
             object-fit: contain;
+        }
+
+        /* Pulse-style auth card (login, register, forgot-password) — FamLedger accent */
+        .auth-pulse-shell {
+            --auth-pulse-accent: #009ef7;
+            --auth-pulse-accent-hover: #0086d1;
+            --auth-pulse-input-bg: #f0f9ff;
+            --auth-pulse-input-bg-hover: #e0f2fe;
+            --auth-pulse-focus-ring: rgba(0, 158, 247, 0.28);
+            width: 100%;
+            max-width: 26rem;
+            min-width: 0;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .auth-pulse-shell.auth-pulse-shell--register {
+            max-width: 28rem;
+        }
+        .auth-pulse-frame {
+            padding: 3px;
+            border-radius: 24px;
+            background: linear-gradient(
+                135deg,
+                rgba(0, 158, 247, 0.45) 0%,
+                rgba(255, 255, 255, 0.96) 45%,
+                rgba(14, 165, 233, 0.32) 100%
+            );
+            box-shadow:
+                0 4px 24px rgba(0, 158, 247, 0.12),
+                0 24px 48px rgba(15, 23, 42, 0.12);
+        }
+        .auth-pulse-card {
+            background: #fff;
+            border-radius: 21px;
+            padding: 1.75rem 1.5rem 1.85rem;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+        }
+        .auth-pulse-card h3 {
+            font-size: clamp(1.25rem, 3vw, 1.45rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--auth-pulse-accent);
+            line-height: 1.2;
+        }
+        .auth-pulse-card .text-secondary-foreground {
+            color: #64748b !important;
+        }
+        .auth-pulse-card .kt-link {
+            color: var(--auth-pulse-accent);
+            font-weight: 600;
+        }
+        .auth-pulse-card .kt-link:hover {
+            color: var(--auth-pulse-accent-hover);
+        }
+        .auth-pulse-card .kt-btn-outline {
+            border-radius: 12px;
+            border-color: rgba(148, 163, 184, 0.45);
+            background: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            font-size: 0.8125rem;
+            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        }
+        .auth-pulse-card .kt-btn-outline:hover {
+            border-color: var(--auth-pulse-accent);
+            background: rgba(0, 158, 247, 0.06);
+            box-shadow: 0 0 0 1px rgba(0, 158, 247, 0.15);
+        }
+        .auth-pulse-card input.kt-input.auth-text-input,
+        .auth-pulse-card input.kt-input[type="text"],
+        .auth-pulse-card input.kt-input[type="email"] {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            font-size: 0.9375rem;
+            border-radius: 12px;
+            background: var(--auth-pulse-input-bg) !important;
+            border: 1px solid transparent !important;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        }
+        .auth-pulse-card input.kt-input.auth-text-input:hover,
+        .auth-pulse-card input.kt-input[type="text"]:hover,
+        .auth-pulse-card input.kt-input[type="email"]:hover {
+            background: var(--auth-pulse-input-bg-hover) !important;
+        }
+        .auth-pulse-card input.kt-input.auth-text-input:focus,
+        .auth-pulse-card input.kt-input[type="text"]:focus,
+        .auth-pulse-card input.kt-input[type="email"]:focus {
+            outline: none;
+            border-color: var(--auth-pulse-accent) !important;
+            box-shadow: 0 0 0 3px var(--auth-pulse-focus-ring) !important;
+            background: #fff !important;
+        }
+        .auth-pulse-card .kt-input.flex.items-center {
+            border-radius: 12px;
+            background: var(--auth-pulse-input-bg) !important;
+            border: 1px solid transparent !important;
+            padding: 0.15rem 0.35rem 0.15rem 0.85rem !important;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        }
+        .auth-pulse-card .kt-input.flex.items-center:focus-within {
+            border-color: var(--auth-pulse-accent) !important;
+            box-shadow: 0 0 0 3px var(--auth-pulse-focus-ring) !important;
+            background: #fff !important;
+        }
+        .auth-pulse-card .kt-input.flex.items-center input {
+            font-size: 0.9375rem;
+        }
+        .auth-pulse-card .kt-btn-ghost.kt-btn-icon {
+            border-radius: 10px;
+            color: #64748b;
+        }
+        .auth-pulse-card .kt-btn-ghost.kt-btn-icon:hover {
+            color: var(--auth-pulse-accent);
+            background: rgba(0, 158, 247, 0.08) !important;
+        }
+        .auth-pulse-card .kt-form-label {
+            color: #64748b;
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+        .auth-pulse-card .kt-checkbox {
+            border-radius: 6px;
+        }
+        .auth-pulse-card .kt-btn-primary {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 2.875rem;
+            margin-top: 0.25rem;
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            line-height: 1.25;
+            border-radius: 999px;
+            border: none;
+            overflow: visible;
+            background: linear-gradient(135deg, var(--auth-pulse-accent) 0%, #0ea5e9 100%);
+            box-shadow: 0 6px 22px rgba(0, 158, 247, 0.38);
+            transition: transform 0.25s cubic-bezier(0.19, 1, 0.22, 1), box-shadow 0.25s ease, filter 0.2s ease;
+        }
+        @keyframes auth-pulse-spinner {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .auth-pulse-card .kt-btn-primary .auth-pulse-btn-spinner {
+            flex-shrink: 0;
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #fff;
+            animation: auth-pulse-spinner 0.7s linear infinite;
+            transform-origin: center;
+        }
+        .auth-pulse-card .kt-btn-primary:disabled {
+            opacity: 0.92;
+            cursor: wait;
+        }
+        .auth-pulse-card .kt-btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(0, 158, 247, 0.45);
+            filter: brightness(1.03);
+        }
+        .auth-pulse-card .kt-btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .auth-pulse-card .text-danger {
+            color: #dc2626;
+            overflow-wrap: anywhere;
+        }
+        @media (max-width: 480px) {
+            .auth-pulse-card {
+                padding: 1.35rem 1.2rem 1.55rem;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .auth-pulse-card .kt-btn-primary:hover:not(:disabled) {
+                transform: none;
+            }
+            .auth-pulse-card .kt-btn-primary .auth-pulse-btn-spinner {
+                animation: none;
+                opacity: 0.85;
+            }
         }
     </style>
 
     @php
         $isLoginRoute = request()->routeIs('login');
-        $loginHasErrors = $isLoginRoute && $errors->any();
         $loginErrorMessage = $isLoginRoute ? ($errors->first('email') ?: $errors->first('password') ?: null) : null;
         $isRegisterRoute = request()->routeIs('register');
-        $registerHasErrors = $isRegisterRoute && $errors->any();
         $registerErrorMessage = $isRegisterRoute ? ($errors->first('email') ?: $errors->first('password') ?: $errors->first('name') ?: null) : null;
+        $isPasswordRequestRoute = request()->routeIs('password.request');
+        $isPulseAuthForm = $isLoginRoute || $isRegisterRoute || $isPasswordRequestRoute;
+        $pulseFormHasErrors = $isPulseAuthForm && $errors->any();
         $guestFlash = [
             'success' => session('success'),
             'error'   => session('error'),
@@ -282,7 +556,8 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                     title: 'Login failed',
                     text: @json($loginErrorMessage),
                     confirmButtonText: 'OK',
-                    confirmButtonColor: '#2563eb'
+                    confirmButtonColor: '#2563eb',
+                    heightAuto: false,
                 });
             });
         </script>
@@ -299,7 +574,8 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                     title: 'Sign up failed',
                     text: @json($registerErrorMessage),
                     confirmButtonText: 'OK',
-                    confirmButtonColor: '#2563eb'
+                    confirmButtonColor: '#2563eb',
+                    heightAuto: false,
                 });
             });
         </script>
@@ -330,6 +606,7 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                     width: 520,
                     padding: '2.5rem 2.75rem',
                     backdrop: true,
+                    heightAuto: false,
                     customClass: {
                         popup: 'rounded-2xl',
                         title: 'text-lg font-semibold',
@@ -339,34 +616,44 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         </script>
     @endif
 
-    <div class="grid lg:grid-cols-2 w-full">
-        <!-- Form column -->
-        <div class="flex justify-center items-center p-8 lg:p-10 order-2 lg:order-1">
-            <div class="kt-card max-w-[390px] w-auto auth-login-card {{ $loginHasErrors ? 'auth-login-card-error' : '' }}">
-                <div class="kt-card-content flex flex-col gap-5 p-10">
-                    {{ $slot }}
+    <div class="grid flex-1 grid-cols-1 grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1 w-full min-w-0 min-h-[100dvh]">
+        <!-- Form column: full-height bg + justify-center keeps the card vertically centered with even top/bottom space; min-h-0 avoids grid/flex overflow bugs -->
+        <div class="flex h-full min-h-0 w-full flex-col items-center justify-center bg-background px-8 py-10 lg:py-12 order-2 lg:order-1 min-w-0">
+            @if ($isPulseAuthForm)
+                <div class="auth-pulse-shell {{ $isRegisterRoute ? 'auth-pulse-shell--register' : '' }}">
+                    <div class="auth-pulse-frame auth-login-card {{ $pulseFormHasErrors ? 'auth-login-card-error' : '' }}">
+                        <div class="auth-pulse-card">
+                            {{ $slot }}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            @else
+                <div class="kt-card max-w-[390px] w-full min-w-0">
+                    <div class="kt-card-content flex flex-col gap-5 p-10">
+                        {{ $slot }}
+                    </div>
+                </div>
+            @endif
         </div>
         <!-- Branded panel -->
-        <div class="lg:rounded-xl lg:border lg:border-border lg:m-5 order-1 lg:order-2 auth-branded-bg overflow-hidden">
-            <div class="flex flex-col justify-between items-center p-8 lg:p-12 max-w-5xl mx-auto h-full">
-                <div class="w-full flex flex-col items-center">
+        <div class="lg:rounded-xl lg:border lg:border-border lg:m-5 order-1 lg:order-2 auth-branded-bg overflow-hidden min-w-0 h-full min-h-0 flex flex-col">
+            <div class="flex flex-col flex-1 min-h-0 items-stretch p-8 lg:p-12 max-w-5xl mx-auto w-full">
+                <div class="w-full flex flex-col items-center shrink-0">
                     {{-- TOP: Logo --}}
-                    <div class="w-full flex flex-col items-center mb-6">
+                    <div class="w-full flex flex-col items-center mb-6 auth-brand-reveal auth-brand-reveal--logo">
                         <a href="{{ url('/') }}" class="inline-flex items-center">
                             <img class="auth-branded-logo auth-logo-animate" src="{{ asset('images/logo.png') }}" alt="FamLedger logo" decoding="async"/>
                         </a>
                     </div>
 
                     {{-- MIDDLE: Headline + description + illustration --}}
-                    <h2 class="text-xl lg:text-2xl font-semibold text-slate-900 text-center mb-2">
+                    <h2 class="text-xl lg:text-2xl font-semibold text-slate-900 text-center mb-2 auth-brand-reveal auth-brand-reveal--title">
                         {{ $brandedHeading ?? __('Family Finances Manager') }}
                     </h2>
-                    <p class="text-sm lg:text-base text-slate-600 text-center max-w-xl mx-auto mb-6">
+                    <p class="text-sm lg:text-base text-slate-600 text-center max-w-xl mx-auto mb-6 auth-brand-reveal auth-brand-reveal--desc">
                         {{ $brandedDescription ?? __('Efficiently manage your family\'s finances, projects, and goals – all in one secure platform.') }}
                     </p>
-                    <div class="flex justify-center my-6">
+                    <div class="flex justify-center my-6 auth-brand-reveal auth-brand-reveal--art">
                         <div class="w-auto max-w-[220px] lg:max-w-[260px] auth-animate-float">
                             <svg viewBox="0 0 240 160" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto" style="color:#059669;">
                                 <path d="M120 20L40 70v50h40V90h80v30h40V70L120 20z" fill="currentColor" opacity="0.9"/>
@@ -377,15 +664,17 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                                 <rect x="95" y="55" width="50" height="8" rx="2" fill="currentColor" opacity="0.6"/>
                                 <rect x="95" y="68" width="35" height="6" rx="1" fill="currentColor" opacity="0.4"/>
                                 <rect x="95" y="78" width="45" height="6" rx="1" fill="currentColor" opacity="0.4"/>
-                                <circle cx="200" cy="35" r="18" stroke="currentColor" stroke-width="2" fill="none" opacity="0.8"/>
-                                <path d="M195 35h10l-5-8v8z" fill="currentColor" opacity="0.8"/>
+                                <g class="auth-svg-clock">
+                                    <circle cx="200" cy="35" r="18" stroke="currentColor" stroke-width="2" fill="none" opacity="0.8"/>
+                                    <path d="M195 35h10l-5-8v8z" fill="currentColor" opacity="0.8"/>
+                                </g>
                             </svg>
                         </div>
                     </div>
 
                     {{-- BELOW: 3 feature highlight cards --}}
-                    <div class="auth-feature-row auth-animate-fade-up" style="animation-delay: 0.3s;">
-                        <div class="auth-feature-card rounded-3xl bg-white/95 border border-sky-100 px-5 py-5 flex items-center gap-4">
+                    <div class="auth-feature-row auth-brand-reveal-row">
+                        <div class="auth-feature-card auth-brand-reveal rounded-3xl bg-white/95 border border-sky-100 px-5 py-5 flex items-center gap-4">
                             <span class="auth-feature-icon auth-feature-icon--secure">
                                 <i class="ki-filled ki-shield-tick text-2xl"></i>
                             </span>
@@ -394,7 +683,7 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                                 <div class="text-sm text-slate-600">{{ __('Role-based access for every member.') }}</div>
                             </div>
                         </div>
-                        <div class="auth-feature-card rounded-3xl bg-white/95 border border-sky-100 px-5 py-5 flex items-center gap-4">
+                        <div class="auth-feature-card auth-brand-reveal rounded-3xl bg-white/95 border border-sky-100 px-5 py-5 flex items-center gap-4">
                             <span class="auth-feature-icon auth-feature-icon--clarity">
                                 <i class="ki-filled ki-graph-up text-2xl"></i>
                             </span>
@@ -403,7 +692,7 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                                 <div class="text-sm text-slate-600">{{ __('Track balances and contributions.') }}</div>
                             </div>
                         </div>
-                        <div class="auth-feature-card rounded-3xl bg-white/95 border border-sky-100 px-5 py-5 flex items-center gap-4">
+                        <div class="auth-feature-card auth-brand-reveal rounded-3xl bg-white/95 border border-sky-100 px-5 py-5 flex items-center gap-4">
                             <span class="auth-feature-icon auth-feature-icon--projects">
                                 <i class="ki-filled ki-home-2 text-2xl"></i>
                             </span>
@@ -415,8 +704,10 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                     </div>
                 </div>
 
+                <div class="flex-1 min-h-0 basis-0 grow min-w-0" aria-hidden="true"></div>
+
                 {{-- BOTTOM: Trust signals + modern version strip --}}
-                <div class="w-full mt-8">
+                <div class="w-full shrink-0 pt-8 auth-brand-reveal auth-brand-reveal--footer">
                     <div class="auth-footer">
                         <div class="auth-footer-pills">
                             <span class="inline-flex items-center gap-1.5">

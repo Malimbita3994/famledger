@@ -5,12 +5,12 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.savings-goals.show', [$family, $savingsGoal]) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <a href="{{ route('families.savings-goals.show', $savingsGoal) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <i class="ki-filled ki-left text-base mr-1"></i>
         Back to {{ $savingsGoal->name }}
     </a>
 
-    <form action="{{ route('families.savings-goals.contribute.store', [$family, $savingsGoal]) }}" method="POST">
+    <form action="{{ route('families.savings-goals.contribute.store', $savingsGoal) }}" method="POST">
         @csrf
 
         <div class="grid gap-5 lg:gap-7.5 xl:max-w-xl">
@@ -47,7 +47,7 @@
                     </div>
 
                     <div class="flex justify-end pt-2 gap-2">
-                        <a href="{{ route('families.savings-goals.show', [$family, $savingsGoal]) }}" class="kt-btn kt-btn-outline">Cancel</a>
+                        <a href="{{ route('families.savings-goals.show', $savingsGoal) }}" class="kt-btn kt-btn-outline">Cancel</a>
                         <button type="submit" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
                             <i class="ki-filled ki-check"></i>
                             Transfer &amp; contribute
