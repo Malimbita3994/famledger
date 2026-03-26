@@ -132,4 +132,53 @@ class ExpenseController extends Controller
             ], 201);
         });
     }
+
+    public function update(Request $request, Family $family, Expense $expense): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($expense->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'category_id' => ['sometimes', Rule::exists('expense_categories', 'id')],
+            'expense_date' => ['sometimes', 'date'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'merchant' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'paid_by' => ['sometimes', 'nullable', Rule::exists('users', 'id')],
+            'payment_method' => ['sometimes', 'nullable', 'string', 'max:50', Rule::in(array_keys(Expense::paymentMethods()))],
+            'reference' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'is_recurring' => ['sometimes', 'boolean'],
+            'project_id' => ['sometimes', 'nullable', Rule::exists('projects', 'id')->where('family_id', $family->id)],
+            'family_liability_id' => ['sometimes', 'nullable', Rule::exists('family_liabilities', 'id')->where('family_id', $family->id)],
+            'budget_id' => ['sometimes', 'nullable', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
+        ]);
+
+        foreach ([
+            'category_id', 'expense_date', 'description', 'merchant', 'paid_by',
+            'payment_method', 'reference', 'project_id', 'family_liability_id', 'budget_id',
+        ] as $field) {
+            if (array_key_exists($field, $validated)) {
+                $expense->{$field} = $validated[$field];
+            }
+        }
+        if (array_key_exists('is_recurring', $validated)) {
+            $expense->is_recurring = (bool) $validated['is_recurring'];
+        }
+        $expense->save();
+
+        return response()->json(['message' => 'Expense updated.']);
+    }
+
+    public function destroy(Family $family, Expense $expense): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($expense->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $expense->delete();
+
+        return response()->json(['message' => 'Expense deleted.']);
+    }
 }

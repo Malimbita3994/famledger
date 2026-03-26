@@ -125,4 +125,48 @@ class IncomeController extends Controller
             ],
         ], 201);
     }
+
+    public function update(Request $request, Family $family, Income $income): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($income->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'category_id' => ['sometimes', Rule::exists('income_categories', 'id')->where(fn ($q) => $q->whereNull('family_id'))],
+            'received_date' => ['sometimes', 'date'],
+            'source' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'notes' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'is_recurring' => ['sometimes', 'boolean'],
+            'recurring_frequency' => ['nullable', Rule::in(array_keys(Income::recurringFrequencies()))],
+        ]);
+
+        foreach (['category_id', 'received_date', 'source', 'notes', 'recurring_frequency'] as $field) {
+            if (array_key_exists($field, $validated)) {
+                $income->{$field} = $validated[$field];
+            }
+        }
+        if (array_key_exists('is_recurring', $validated)) {
+            $income->is_recurring = (bool) $validated['is_recurring'];
+            if (! $income->is_recurring) {
+                $income->recurring_frequency = null;
+            }
+        }
+        $income->save();
+
+        return response()->json(['message' => 'Income updated.']);
+    }
+
+    public function destroy(Family $family, Income $income): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($income->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $income->delete();
+
+        return response()->json(['message' => 'Income deleted.']);
+    }
 }

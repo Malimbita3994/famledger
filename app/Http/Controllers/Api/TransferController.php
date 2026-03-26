@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Http\Controllers\Controller;
 use App\Models\Family;
+use App\Models\Transfer;
 use App\Services\WalletBalanceGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -113,5 +114,40 @@ class TransferController extends Controller
                 ],
             ], 201);
         });
+    }
+
+    public function update(Request $request, Family $family, Transfer $transfer): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($transfer->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'transfer_date' => ['sometimes', 'date'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'reference' => ['sometimes', 'nullable', 'string', 'max:100'],
+        ]);
+
+        foreach (['transfer_date', 'description', 'reference'] as $field) {
+            if (array_key_exists($field, $validated)) {
+                $transfer->{$field} = $validated[$field];
+            }
+        }
+        $transfer->save();
+
+        return response()->json(['message' => 'Transfer updated.']);
+    }
+
+    public function destroy(Family $family, Transfer $transfer): JsonResponse
+    {
+        $this->authorizeFamilyMember($family);
+        if ($transfer->family_id !== $family->id) {
+            abort(404);
+        }
+
+        $transfer->delete();
+
+        return response()->json(['message' => 'Transfer deleted.']);
     }
 }
