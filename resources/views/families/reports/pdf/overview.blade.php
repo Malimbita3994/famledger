@@ -23,6 +23,7 @@ tr:nth-child(even) { background: #f9fafb; }
 </style>
 </head>
 <body>
+@include('partials.pdf-brand-header')
 <h1>Reports Overview</h1>
 <div class="subtitle">{{ $family->name }}</div>
 <div class="meta">

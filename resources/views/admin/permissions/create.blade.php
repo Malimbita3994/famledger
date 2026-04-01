@@ -25,13 +25,11 @@
         line-height: 1.2;
         color: var(--ap-accent);
     }
-    .admin-pulse-breadcrumb a,
-    .admin-pulse-back {
+    .admin-pulse-breadcrumb a {
         color: #64748b;
         transition: color 0.2s ease;
     }
-    .admin-pulse-breadcrumb a:hover,
-    .admin-pulse-back:hover {
+    .admin-pulse-breadcrumb a:hover {
         color: var(--ap-accent);
     }
     .admin-pulse-frame {
@@ -192,10 +190,7 @@
                     <span class="text-muted-foreground font-medium">{{ __('Create') }}</span>
                 </div>
             </div>
-            <a href="{{ route('admin.permissions.index') }}" class="admin-pulse-back inline-flex items-center text-sm shrink-0">
-                <i class="ki-filled ki-left text-base me-1"></i>
-                {{ __('Back to permissions') }}
-            </a>
+            <x-fin-back-link href="{{ route('admin.permissions.index') }}" class="!mb-0 shrink-0">{{ __('Back to permissions') }}</x-fin-back-link>
         </div>
     </div>
 

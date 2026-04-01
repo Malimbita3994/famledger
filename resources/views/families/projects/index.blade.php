@@ -5,10 +5,9 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.overview') }}">
         Back to {{ $family->name }}
-    </a>
+    </x-fin-back-link>
 
     <div class="flex flex-col gap-5 lg:gap-7.5">
         {{-- Pulse header --}}
@@ -20,14 +19,14 @@
                     <p class="text-sm text-muted-foreground mt-0.5">Goal-driven initiatives with budget, funding, and timeline.</p>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    <x-famledger.pulse-button variant="outline" :href="route('families.projects.funding.create')" size="sm">
+                    <a href="{{ route('families.projects.funding.create') }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1.5">
                         <i class="ki-filled ki-wallet"></i>
                         Add funding
-                    </x-famledger.pulse-button>
-                    <x-famledger.pulse-button variant="primary" :href="route('families.projects.create')" size="sm">
+                    </a>
+                    <a href="{{ route('families.projects.create') }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1.5">
                         <i class="ki-filled ki-plus"></i>
                         New project
-                    </x-famledger.pulse-button>
+                    </a>
                 </div>
             </div>
         </div>

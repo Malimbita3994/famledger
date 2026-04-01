@@ -5,10 +5,9 @@
 
 @section('content')
 <div class="settings-pulse kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('settings.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-        <i class="ki-filled ki-left mr-1"></i>
+        <x-fin-back-link href="{{ route('settings.index') }}">
         Back to settings
-    </a>
+    </x-fin-back-link>
 
     @if (session('success'))
         <div class="mb-6 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 text-green-800 dark:text-green-200">
@@ -42,7 +41,7 @@
                         </div>
                     @else
                         <p class="text-sm text-muted-foreground mt-3">
-                            {{ __('You are not owner or co-owner on this family, so you cannot open the property workspace. Switch to a family where you have that role, or use an account that does.') }}
+                            {{ __('You are not a member of this family workspace, so quick links to family assets are hidden. Join the family or switch account.') }}
                             <span class="block mt-1 font-medium text-foreground">{{ $currentFamily->name }}</span>
                         </p>
                     @endif

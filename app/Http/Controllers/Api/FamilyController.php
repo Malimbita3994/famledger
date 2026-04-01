@@ -9,6 +9,7 @@ use App\Models\FamilyMember;
 use App\Models\FamilyRole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class FamilyController extends Controller
@@ -55,27 +56,33 @@ class FamilyController extends Controller
             'status' => ['nullable', Rule::in(['active', 'archived'])],
         ]);
 
-        $family = Family::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'currency_code' => strtoupper($validated['currency_code']),
-            'timezone' => $validated['timezone'] ?? 'Africa/Nairobi',
-            'country' => $validated['country'] ?? null,
-            'status' => $validated['status'] ?? 'active',
-            'created_by' => $request->user()->id,
-        ]);
-
-        $ownerRole = FamilyRole::query()->whereIn('name', ['Owner', 'owner'])->first();
-        if ($ownerRole) {
-            FamilyMember::create([
-                'family_id' => $family->id,
-                'user_id' => $request->user()->id,
-                'role_id' => $ownerRole->id,
-                'joined_at' => now(),
-                'status' => 'active',
-                'is_primary' => true,
+        $family = DB::transaction(function () use ($validated, $request) {
+            $family = Family::create([
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
+                'currency_code' => strtoupper($validated['currency_code']),
+                'timezone' => $validated['timezone'] ?? 'Africa/Nairobi',
+                'country' => $validated['country'] ?? null,
+                'status' => $validated['status'] ?? 'active',
+                'created_by' => $request->user()->id,
             ]);
-        }
+
+            $ownerRole = FamilyRole::query()->whereIn('name', ['Owner', 'owner'])->first();
+            if ($ownerRole) {
+                FamilyMember::create([
+                    'family_id' => $family->id,
+                    'user_id' => $request->user()->id,
+                    'role_id' => $ownerRole->id,
+                    'joined_at' => now(),
+                    'status' => 'active',
+                    'is_primary' => true,
+                ]);
+            }
+
+            $family->ensureDefaultMainWallet($request->user()->id);
+
+            return $family;
+        });
 
         return response()->json([
             'message' => 'Family created.',

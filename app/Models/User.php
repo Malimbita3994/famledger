@@ -3,9 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -13,7 +15,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     public const STATUS_ACTIVE = 'active';
@@ -39,6 +41,7 @@ class User extends Authenticatable
         'last_login_at',
         'created_by',
         'notification_preferences',
+        'must_change_password',
     ];
 
     /**
@@ -63,6 +66,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'last_login_at' => 'datetime',
             'notification_preferences' => 'array',
+            'must_change_password' => 'boolean',
         ];
     }
 
@@ -133,8 +137,44 @@ class User extends Authenticatable
     /**
      * Family membership records (pivot with role, status, etc.).
      */
-    public function familyMemberships(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function familyMemberships(): HasMany
     {
         return $this->hasMany(FamilyMember::class, 'user_id');
+    }
+
+    /**
+     * Incomes added by or received by this user. Usually linked by created_by for contribution.
+     */
+    public function incomes(): HasMany
+    {
+        return $this->hasMany(Income::class, 'created_by');
+    }
+
+    /**
+     * Expenses recorded by this user.
+     */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class, 'created_by');
+    }
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class);
+    }
+
+    public function announcements(): HasMany
+    {
+        return $this->hasMany(Announcement::class);
+    }
+
+    public function engagementActivities(): HasMany
+    {
+        return $this->hasMany(EngagementActivity::class);
+    }
+
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(Reaction::class);
     }
 }

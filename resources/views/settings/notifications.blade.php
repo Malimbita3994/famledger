@@ -182,10 +182,7 @@
                 </div>
             </div>
             <div class="shrink-0 ms-auto">
-                <a href="{{ route('settings.index') }}" class="admin-pulse-btn-outline inline-flex">
-                    <i class="ki-filled ki-left text-base"></i>
-                    {{ __('Back to settings') }}
-                </a>
+                <x-fin-back-link href="{{ route('settings.index') }}" class="!mb-0">{{ __('Back to settings') }}</x-fin-back-link>
             </div>
         </div>
     </div>

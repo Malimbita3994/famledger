@@ -1,0 +1,73 @@
+/**
+ * FamLedger — pill “back” navigation (mint/teal, white label + chevron)
+ * Uses --fin-crud-teal-* from famledger-kt-btn-crud.css (load crud CSS before this file).
+ * Use: <x-fin-back-link href="...">Back to …</x-fin-back-link>
+ * Toolbar / inline row (no extra bottom gap): add class="!mb-0" on the component.
+ */
+
+.fin-back-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 1.2rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.25;
+    color: #fff !important;
+    text-decoration: none !important;
+    background: linear-gradient(
+        180deg,
+        var(--fin-crud-teal-from, #2dd4bf) 0%,
+        var(--fin-crud-teal-to, #14b8a6) 100%
+    );
+    border: none;
+    box-shadow: none;
+    transition:
+        background 0.2s ease,
+        transform 0.15s ease,
+        filter 0.15s ease;
+}
+
+.fin-back-pill:hover {
+    color: #fff !important;
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+.fin-back-pill:active {
+    transform: translateY(0);
+    filter: brightness(0.97);
+}
+
+.fin-back-pill:focus-visible {
+    outline: 2px solid rgba(20, 184, 166, 0.85);
+    outline-offset: 3px;
+}
+
+.fin-back-pill .fin-back-pill__icon {
+    font-size: 1rem;
+    line-height: 1;
+    opacity: 0.98;
+}
+
+.dark .fin-back-pill {
+    background: linear-gradient(
+        180deg,
+        var(--fin-crud-teal-from-dark, #5eead4) 0%,
+        var(--fin-crud-teal-to-dark, #0d9488) 100%
+    );
+}
+
+.dark .fin-back-pill:hover {
+    filter: brightness(1.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fin-back-pill:hover,
+    .fin-back-pill:active {
+        transform: none;
+    }
+}

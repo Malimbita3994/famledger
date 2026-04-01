@@ -5,10 +5,9 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12 w-full max-w-full min-w-0">
-    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+    <x-fin-back-link href="{{ route('families.overview') }}">
         Back to {{ $family->name }}
-    </a>
+    </x-fin-back-link>
 
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
@@ -20,7 +19,7 @@
                 <i class="ki-filled ki-arrow-up"></i>
                 {{ __('Add income') }}
             </a>
-            <a href="{{ route('families.expenses.create') }}" class="kt-btn kt-btn-outline inline-flex items-center gap-2">
+            <a href="{{ route('families.expenses.create') }}" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
                 <i class="ki-filled ki-arrow-down"></i>
                 {{ __('Add expense') }}
             </a>
@@ -138,7 +137,7 @@
                             <i class="ki-filled ki-arrow-up text-sm"></i>
                             {{ __('Add income') }}
                         </a>
-                        <a href="{{ route('families.expenses.create') }}" class="kt-btn kt-btn-outline kt-btn-sm inline-flex items-center gap-1.5">
+                        <a href="{{ route('families.expenses.create') }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1.5">
                             <i class="ki-filled ki-arrow-down text-sm"></i>
                             {{ __('Add expense') }}
                         </a>

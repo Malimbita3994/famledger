@@ -5,10 +5,9 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.overview') }}">
         Back to {{ $family->name }}
-    </a>
+    </x-fin-back-link>
 
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
@@ -20,6 +19,13 @@
             Record income
         </a>
     </div>
+    @if (session('success'))
+        <div class="mb-6 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 flex items-center gap-3 text-green-800 dark:text-green-200">
+            <i class="ki-filled ki-check-circle text-xl shrink-0"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
     @if (session('error'))
         <div class="mb-6 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 flex items-center gap-3 text-red-800 dark:text-red-200">
             <i class="ki-filled ki-information-2 text-xl shrink-0"></i>
@@ -66,7 +72,7 @@
                 <div class="py-12 text-center text-muted-foreground">
                     <i class="ki-filled ki-arrow-up text-4xl mb-2"></i>
                     <p class="text-sm">No income recorded yet.</p>
-                    <a href="{{ route('families.incomes.create') }}" class="kt-btn kt-btn-outline mt-4">Record income</a>
+                    <a href="{{ route('families.incomes.create') }}" class="kt-btn kt-btn-primary mt-4">Record income</a>
                 </div>
             @else
                 {{-- Desktop / tablet table --}}
@@ -80,6 +86,7 @@
                                 <th class="min-w-[120px]">Amount</th>
                                 <th class="min-w-[140px]">Source</th>
                                 <th class="min-w-[100px]">Recorded by</th>
+                                <th class="w-[72px] text-center">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -100,6 +107,29 @@
                                 <td class="font-medium tabular-nums text-success">+ {{ number_format($income->amount, 2) }} {{ $income->currency_code }}</td>
                                 <td class="text-foreground">{{ $income->source ?? '—' }}</td>
                                 <td class="text-muted-foreground text-sm">{{ $income->createdBy?->name ?? '—' }}</td>
+                                <td class="text-center">
+                                    <div class="kt-menu flex-inline justify-center" data-kt-menu="true">
+                                        <div class="kt-menu-item" data-kt-menu-item-offset="0, 10px" data-kt-menu-item-placement="bottom-end" data-kt-menu-item-toggle="dropdown" data-kt-menu-item-trigger="click">
+                                            <button class="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" type="button" aria-label="{{ __('Actions') }}">
+                                                <i class="ki-filled ki-dots-vertical text-lg"></i>
+                                            </button>
+                                            <div class="kt-menu-dropdown kt-menu-default w-full max-w-[175px]" data-kt-menu-dismiss="true">
+                                                <div class="kt-menu-item">
+                                                    <a class="kt-menu-link" href="{{ route('families.incomes.show', $income) }}">
+                                                        <span class="kt-menu-icon"><i class="ki-filled ki-eye"></i></span>
+                                                        <span class="kt-menu-title">{{ __('View') }}</span>
+                                                    </a>
+                                                </div>
+                                                <div class="kt-menu-item">
+                                                    <a class="kt-menu-link" href="{{ route('families.incomes.edit', $income) }}">
+                                                        <span class="kt-menu-icon"><i class="ki-filled ki-pencil"></i></span>
+                                                        <span class="kt-menu-title">{{ __('Edit') }}</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -136,14 +166,16 @@
                                 @endif
                             </div>
 
-                            <div class="flex items-center justify-between text-[11px] text-muted-foreground">
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
                                 <span>
                                     {{ __('Recorded by:') }}
                                     <span class="font-medium text-foreground">{{ $income->createdBy?->name ?? '—' }}</span>
                                 </span>
-                                <a href="{{ route('families.wallets.show', $income->wallet) }}" class="kt-btn kt-btn-xs kt-btn-outline">
-                                    Wallet
-                                </a>
+                                <div class="flex flex-wrap items-center gap-1.5 justify-end">
+                                    <a href="{{ route('families.incomes.show', $income) }}" class="kt-btn kt-btn-xs kt-btn-outline">{{ __('View') }}</a>
+                                    <a href="{{ route('families.incomes.edit', $income) }}" class="kt-btn kt-btn-xs kt-btn-primary">{{ __('Edit') }}</a>
+                                    <a href="{{ route('families.wallets.show', $income->wallet) }}" class="kt-btn kt-btn-xs kt-btn-outline">{{ __('Wallet') }}</a>
+                                </div>
                             </div>
                         </div>
                     @endforeach

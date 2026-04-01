@@ -17,22 +17,33 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reports.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+    <x-fin-back-link href="{{ route('families.reports.index') }}">
         Back to Reports
-    </a>
+    </x-fin-back-link>
 
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="font-medium text-lg text-mono">Finance Reports</h1>
-        </div>
+    <div class="mb-6">
+        <h1 class="font-medium text-lg text-mono">Finance Reports</h1>
     </div>
 
     {{-- Filter report card with tabs --}}
     <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card mb-6">
-        <div class="kt-card-header flex-wrap gap-2 border-b border-border">
-            <h3 class="kt-card-title text-sm">Filter report</h3>
-            <nav class="flex flex-wrap gap-1 mt-2 md:mt-0" role="tablist">
+        <div class="kt-card-header flex-col items-stretch gap-0 border-b border-border !p-0 overflow-visible">
+            <div class="flex flex-wrap items-center justify-between gap-4 px-4 sm:px-6 pt-5 sm:pt-6 pb-5">
+                <h3 class="text-sm font-semibold tracking-tight text-primary mb-0">{{ __('Filter report') }}</h3>
+                @php
+                    $pdfQuery = ['report' => $report, 'from' => $dateFrom ?? '', 'to' => $dateTo ?? ''];
+                    if ($report !== 'budget' && $report !== 'savings') {
+                        $pdfQuery['wallet_id'] = $walletId ?? '';
+                    }
+                    if ($report === 'budget') {
+                        $pdfQuery['type'] = $filterType ?? '';
+                        $pdfQuery['status'] = $filterStatus ?? '';
+                    }
+                    $pdfQuery = array_filter($pdfQuery, fn ($v) => $v !== null && $v !== '');
+                @endphp
+                <x-famledger.export-pdf-button :href="route('families.reports.finance.export-pdf') . '?' . http_build_query($pdfQuery)" />
+            </div>
+            <nav class="flex flex-wrap justify-end gap-1.5 px-4 sm:px-6 pt-5 pb-4 border-t border-border/80 bg-muted/30 dark:bg-muted/10" role="tablist">
                 @foreach($tabs as $key => $tab)
                     @php
                         $params = ['report' => $key, 'from' => $dateFrom ?? '', 'to' => $dateTo ?? ''];
@@ -52,7 +63,7 @@
                 @endforeach
             </nav>
         </div>
-        <div class="kt-card-content pt-4">
+        <div class="kt-card-content px-4 sm:px-6 pt-4 pb-5">
             <form method="get" action="{{ route('families.reports.cash-flow') }}" class="flex flex-wrap items-end gap-4">
                 <input type="hidden" name="report" value="{{ $report }}">
                 <div>
@@ -119,7 +130,7 @@
         </x-famledger.pulse-stat-card>
 
         <x-famledger.pulse-stat-card
-            class="cash-flow-kpi-card"
+            class="cash-flow-kpi-card cash-flow-kpi-card--expenses"
             label="Total expenses"
             :value="'− ' . number_format($totalExpenses ?? 0, 0) . ' ' . $currency"
         >
@@ -158,8 +169,8 @@
                             <td class="text-right tabular-nums font-medium text-green-600">+ {{ number_format($totalIncome ?? 0, 0) }}</td>
                         </tr>
                         <tr>
-                            <td class="text-foreground">− Total expenses</td>
-                            <td class="text-right tabular-nums font-medium text-red-600">− {{ number_format($totalExpenses ?? 0, 0) }}</td>
+                            <td class="text-red-600 dark:text-red-400 font-medium">− Total expenses</td>
+                            <td class="text-right tabular-nums font-medium text-red-600 dark:text-red-400">− {{ number_format($totalExpenses ?? 0, 0) }}</td>
                         </tr>
                         <tr>
                             <td class="font-medium text-foreground">= Net cash flow</td>

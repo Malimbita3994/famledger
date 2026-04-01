@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
+use App\Services\FamilyFinancialService;
 use App\Services\WalletBalanceGuard;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -126,6 +127,15 @@ class TransferController extends Controller
 
         if (strtoupper($fromWallet->currency_code) !== strtoupper($toWallet->currency_code)) {
             return back()->withInput()->withErrors(['to_wallet_id' => 'Both wallets must use the same currency. Multi-currency transfers are not supported yet.']);
+        }
+
+        $financials = app(FamilyFinancialService::class);
+        if ($financials->transferToSavingsBlockedByBudget($family, $toWallet)) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'amount' => 'Cannot transfer to a savings wallet while any monthly budget is over its limit. Adjust spending or budgets first.',
+                ]);
         }
 
         return DB::transaction(function () use ($family, $validated, $fromWallet, $toWallet) {

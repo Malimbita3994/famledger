@@ -26,10 +26,9 @@
  }
 </style>
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.transfers.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.transfers.index') }}">
         Back to transfers
-    </a>
+    </x-fin-back-link>
 
     <form action="{{ route('families.transfers.store') }}" method="POST" id="transfer-form" class="space-y-6">
         @csrf

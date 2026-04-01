@@ -24,10 +24,9 @@
             }
         }
     </style>
-    <a href="{{ route('families.projects.show', $project) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.projects.show', $project) }}">
         Back to project
-    </a>
+    </x-fin-back-link>
 
     <form action="{{ route('families.projects.update', $project) }}" method="POST">
         @csrf

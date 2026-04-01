@@ -5,21 +5,16 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reports.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.reports.index') }}">
         Back to Reports
-    </a>
+    </x-fin-back-link>
 
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="font-medium text-lg text-mono">Budget</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Planned budget and actual spending. Each sub-budget sits under the family master budget and draws from the main family wallet.</p>
         </div>
-        <a href="{{ route('families.reports.budget-vs-actual.export-pdf') . '?' . http_build_query(request()->only(['from','to','type','status'])) }}"
-           class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
-            <i class="ki-filled ki-file-down text-base"></i>
-            Export PDF
-        </a>
+        <x-famledger.export-pdf-button :href="route('families.reports.budget-vs-actual.export-pdf') . '?' . http_build_query(request()->only(['from','to','type','status']))" />
     </div>
 
     @if($motherBudget || $primaryWallet)

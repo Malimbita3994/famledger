@@ -46,7 +46,7 @@
                 Income is recorded to the main wallet only. Use <a href="{{ route('families.transfers.create') }}" class="text-primary hover:underline">Transfer</a> to move money here.
             </span>
             @endif
-            <a href="{{ route('families.expenses.create') }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-outline">
+            <a href="{{ route('families.expenses.create') }}?wallet_id={{ $wallet->id }}" class="kt-btn kt-btn-primary">
                 <i class="ki-filled ki-arrow-up"></i>
                 Record expense
             </a>
@@ -54,7 +54,7 @@
                 <i class="ki-filled ki-eye"></i>
                 {{ __('Details') }}
             </button>
-            <a href="{{ route('families.wallets.edit', $wallet) }}" class="kt-btn kt-btn-outline">
+            <a href="{{ route('families.wallets.edit', $wallet) }}" class="kt-btn kt-btn-primary">
                 <i class="ki-filled ki-pencil"></i>
                 Edit
             </a>

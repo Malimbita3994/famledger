@@ -32,7 +32,7 @@ class DashboardController extends Controller
         $endOfMonth = $now->copy()->endOfMonth();
         $thirtyDaysAgo = $now->copy()->subDays(30);
         $ninetyDaysAgo = $now->copy()->subDays(90);
-        [$fyStart, $fyEnd] = FinancialYear::range();
+        [$fyStart, $fyEnd] = FinancialYear::currentPeriod();
 
         $totalFamilies = Family::count();
         $activeFamilies = Family::where('status', 'active')->count();
@@ -53,8 +53,19 @@ class DashboardController extends Controller
         $incomeThisMonth = (float) Income::whereBetween('received_date', [$startOfMonth, $endOfMonth])->sum('amount');
         $expensesThisMonth = (float) Expense::whereBetween('expense_date', [$startOfMonth, $endOfMonth])->sum('amount');
 
-        $wallets = Wallet::all();
-        $totalWalletBalance = $wallets->sum(fn ($w) => $w->balance);
+        $totalWalletBalance = (float) Wallet::query()
+            ->withSum('incomes', 'amount')
+            ->withSum('expenses', 'amount')
+            ->withSum('incomingTransfers', 'amount')
+            ->withSum('outgoingTransfers', 'amount')
+            ->get()
+            ->sum(function (Wallet $w) {
+                return (float) $w->initial_balance
+                    + (float) ($w->incomes_sum_amount ?? 0)
+                    - (float) ($w->expenses_sum_amount ?? 0)
+                    + (float) ($w->incoming_transfers_sum_amount ?? 0)
+                    - (float) ($w->outgoing_transfers_sum_amount ?? 0);
+            });
         $totalWallets = Wallet::count();
         $activeWallets = (int) Wallet::where('status', 'active')->count();
 
@@ -76,7 +87,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'currency' => $currency,
-            'financial_year' => FinancialYear::label(),
+            'financial_year' => FinancialYear::currentLabel(),
             'families' => [
                 'total' => $totalFamilies,
                 'active' => $activeFamilies,

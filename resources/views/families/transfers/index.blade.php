@@ -5,10 +5,9 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12 w-full max-w-full min-w-0">
-    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.overview') }}">
         Back to {{ $family->name }}
-    </a>
+    </x-fin-back-link>
 
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
@@ -74,7 +73,7 @@
                 <div class="py-12 text-center text-muted-foreground">
                     <i class="ki-filled ki-arrow-right-left text-4xl mb-2"></i>
                     <p class="text-sm">No transfers yet.</p>
-                    <a href="{{ route('families.transfers.create') }}" class="kt-btn kt-btn-outline mt-4">New transfer</a>
+                    <a href="{{ route('families.transfers.create') }}" class="kt-btn kt-btn-primary mt-4">New transfer</a>
                 </div>
             @else
                 <div class="kt-scrollable-x-auto">

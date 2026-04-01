@@ -19,7 +19,7 @@
                 <h3 class="kt-card-title text-sm">{{ __('Filter activity') }}</h3>
             </div>
             @if(auth()->user()->hasRole('Super Admin') || auth()->user()->hasRole('Auditor'))
-            <a href="{{ route('settings.audit-log') }}" class="kt-btn kt-btn-xs kt-btn-outline shrink-0">
+            <a href="{{ route('settings.audit-log') }}" class="kt-btn kt-btn-xs kt-btn-primary shrink-0 inline-flex items-center gap-1.5">
                 <i class="ki-filled ki-chart-line text-sm"></i>
                 {{ __('Whole system audit') }}
             </a>
@@ -35,9 +35,9 @@
                     <label class="block text-sm text-muted-foreground mb-1">{{ __('To') }}</label>
                     <input type="date" name="to" value="{{ request('to') }}" class="kt-input rounded-lg border border-border px-3 py-2 text-sm min-w-[140px]">
                 </div>
-                <div>
+                <div class="w-[140px] max-w-full shrink-0">
                     <label class="block text-sm text-muted-foreground mb-1">{{ __('Member') }}</label>
-                    <select name="user_id" class="kt-input rounded-lg border border-border px-3 py-2 text-sm min-w-[120px] max-w-[180px]">
+                    <select name="user_id" class="kt-input w-full rounded-lg border border-border px-3 py-2 text-sm">
                         <option value="">{{ __('All members') }}</option>
                         @foreach($users as $u)
                             <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->email }})</option>
@@ -75,10 +75,7 @@
             <h3 class="kt-card-title text-sm">{{ __('Recent activity') }}</h3>
             <div class="flex items-center gap-2">
                 <span class="text-xs text-muted-foreground">{{ $logs->total() }} {{ __('entries') }}</span>
-                <a href="{{ route('families.audit-trail.export', ['family' => $family] + request()->query()) }}" class="kt-btn kt-btn-xs kt-btn-outline" target="_blank" rel="noopener">
-                    <i class="ki-filled ki-file-down text-sm"></i>
-                    {{ __('Export PDF') }}
-                </a>
+                <x-famledger.export-pdf-button :href="route('families.audit-trail.export', ['family' => $family] + request()->query())" target="_blank" rel="noopener" />
             </div>
         </div>
         <div class="kt-card-content px-0 pb-3">
@@ -154,21 +151,9 @@
                     </tbody>
                 </table>
             </div>
-            @if($logs->hasPages())
-            <div class="kt-card-footer justify-between items-center flex-wrap gap-3 px-4 pt-3">
-                <span class="text-xs text-muted-foreground">{{ __('Showing') }} {{ $logs->firstItem() ?? 0 }}–{{ $logs->lastItem() ?? 0 }} {{ __('of') }} {{ $logs->total() }}</span>
-                <div class="flex items-center gap-2">
-                    @if($logs->onFirstPage())
-                        <span class="kt-btn kt-btn-xs kt-btn-ghost opacity-50">{{ __('Previous') }}</span>
-                    @else
-                        <a href="{{ $logs->previousPageUrl() }}" class="kt-btn kt-btn-xs kt-btn-outline">{{ __('Previous') }}</a>
-                    @endif
-                    @if($logs->hasMorePages())
-                        <a href="{{ $logs->nextPageUrl() }}" class="kt-btn kt-btn-xs kt-btn-outline">{{ __('Next') }}</a>
-                    @else
-                        <span class="kt-btn kt-btn-xs kt-btn-ghost opacity-50">{{ __('Next') }}</span>
-                    @endif
-                </div>
+            @if($logs->isNotEmpty())
+            <div class="px-4 py-3 border-t border-border">
+                {{ $logs->withQueryString()->onEachSide(1)->links('vendor.pagination.audit-trail') }}
             </div>
             @endif
         </div>

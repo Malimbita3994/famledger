@@ -16,9 +16,9 @@
 }
 </style>
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('admin.users.show', $user) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-        <i class="ki-filled ki-left mr-1"></i> Back to user
-    </a>
+    <x-fin-back-link href="{{ route('admin.users.show', $user) }}">
+        Back to user
+    </x-fin-back-link>
 
     <form id="edit-user-form" action="{{ route('admin.users.update', $user) }}" method="POST" class="space-y-6">
         @csrf

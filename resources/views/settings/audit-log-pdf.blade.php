@@ -18,6 +18,7 @@
     </style>
 </head>
 <body>
+    @include('partials.pdf-brand-header')
     <h1>{{ __('FamLedger audit log') }}</h1>
     <p class="meta">{{ $filtersSummary }}<br>
         {{ __('Generated at') }} {{ $generatedAt }} · {{ $logs->count() }} {{ __('entries') }} ({{ __('max 500') }})</p>

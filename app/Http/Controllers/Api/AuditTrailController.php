@@ -12,12 +12,12 @@ use Illuminate\Http\Request;
 class AuditTrailController extends Controller
 {
     /**
-     * Only Super Admin, Auditor, or family Owner/Co-owner can view audit trail.
+     * Auditor or family Owner/Co-owner can view audit trail (Super Admin has no cross-family bypass).
      */
     protected function authorizeAuditView(Family $family): void
     {
         $user = auth()->user();
-        if ($user->hasRole('Super Admin') || $user->hasRole('Auditor')) {
+        if ($user->hasRole('Auditor')) {
             return;
         }
 

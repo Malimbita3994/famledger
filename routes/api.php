@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\FamilyController;
 use App\Http\Controllers\Api\FamilyMemberController;
+use App\Http\Controllers\Api\FamilyTreeController;
 use App\Http\Controllers\Api\IncomeController;
 use App\Http\Controllers\Api\LiabilityController;
 use App\Http\Controllers\Api\LookupController;
@@ -32,7 +33,7 @@ Route::middleware('throttle:auth-api')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
 });
 
-Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api', 'must.change.password'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/user/profile', [UserSettingsController::class, 'updateProfile']);
@@ -150,9 +151,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/families/{family}/reports/budget-vs-actual', [ReportController::class, 'budgetVsActual']);
     Route::get('/families/{family}/reports/savings', [ReportController::class, 'savings']);
     Route::get('/families/{family}/reports/project-summary', [ReportController::class, 'projectSummary']);
-    Route::get('/families/{family}/reports/property', [ReportController::class, 'property']);
-
     Route::get('/families/{family}/audit-trail', [AuditTrailController::class, 'index']);
+
+    // Family Tree routes
+    Route::get('/families/{family}/tree', [FamilyTreeController::class, 'index'])->name('api.families.tree.index');
+    Route::post('/families/{family}/relationships', [FamilyTreeController::class, 'store'])->name('api.families.relationships.store');
+    Route::delete('/families/{family}/relationships/{relationship}', [FamilyTreeController::class, 'destroy'])->name('api.families.relationships.destroy');
 
     Route::prefix('/admin')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);

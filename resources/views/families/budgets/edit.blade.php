@@ -41,10 +41,9 @@
             }
         }
     </style>
-    <a href="{{ route('families.budgets.show', $budget) }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.budgets.show', $budget) }}">
         Back to budget
-    </a>
+    </x-fin-back-link>
 
     <form action="{{ route('families.budgets.update', $budget) }}" method="POST" id="budget-form">
         @csrf

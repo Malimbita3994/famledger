@@ -48,6 +48,19 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
+     * GET /logout: show a page that POSTs to destroy() so bookmarks / address bar do not hit MethodNotAllowed.
+     * Logout still happens only via POST with CSRF.
+     */
+    public function logoutViaGet(Request $request): View|RedirectResponse
+    {
+        if (! $request->user()) {
+            return redirect()->route('login');
+        }
+
+        return view('auth.logout-auto');
+    }
+
+    /**
      * Destroy an authenticated session.
      */
     public function destroy(Request $request): RedirectResponse

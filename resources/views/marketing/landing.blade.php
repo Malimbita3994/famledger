@@ -1268,7 +1268,7 @@
        border-radius: 14px;
        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
      }
-     @supports (backdrop-filter: blur(12px)) {
+     @@supports (backdrop-filter: blur(12px)) {
        .famledger-landing #testimonial .owl-carousel {
          backdrop-filter: blur(12px);
          -webkit-backdrop-filter: blur(12px);

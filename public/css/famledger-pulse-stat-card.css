@@ -53,3 +53,19 @@
     color: rgba(226, 232, 240, 0.85);
 }
 
+/* Cash-flow (and finance tab): expense KPI — always red label + value */
+.famledger-pulse-stat-card.cash-flow-kpi-card--expenses .famledger-pulse-stat-card__label,
+.famledger-pulse-stat-card.cash-flow-kpi-card--expenses .famledger-pulse-stat-card__value {
+    color: #dc2626;
+}
+.famledger-pulse-stat-card.cash-flow-kpi-card--expenses .famledger-pulse-stat-card__extra {
+    color: #b91c1c;
+}
+.dark .famledger-pulse-stat-card.cash-flow-kpi-card--expenses .famledger-pulse-stat-card__label,
+.dark .famledger-pulse-stat-card.cash-flow-kpi-card--expenses .famledger-pulse-stat-card__value {
+    color: #f87171;
+}
+.dark .famledger-pulse-stat-card.cash-flow-kpi-card--expenses .famledger-pulse-stat-card__extra {
+    color: rgba(248, 113, 113, 0.92);
+}
+

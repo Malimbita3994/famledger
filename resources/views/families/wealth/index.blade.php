@@ -18,11 +18,24 @@
         gap: 0.75rem !important;
         width: 100% !important;
     }
+    /* ApexCharts in CSS grid: prevent SVG from overflowing card (needs min-w-0 chain) */
+    .famledger-wealth-chart-card {
+        min-width: 0;
+        max-width: 100%;
+    }
+    .famledger-wealth-chart-wrap {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+    }
+    .famledger-wealth-chart-wrap .apexcharts-canvas,
+    .famledger-wealth-chart-wrap svg {
+        max-width: 100% !important;
+    }
     </style>
-    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-        <i class="ki-filled ki-left mr-1"></i>
+        <x-fin-back-link href="{{ route('families.overview') }}">
         Back to {{ $family->name }}
-    </a>
+    </x-fin-back-link>
 
     <div class="kt-card fin-pulse-kt-card overflow-hidden mb-6">
         <div class="kt-card-content flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -33,14 +46,7 @@
                     Live net worth from real wallet balances, property values and funded projects for {{ $family->name }}.
                 </p>
             </div>
-            <x-famledger.pulse-button
-                variant="outline"
-                size="sm"
-                :href="route('families.wealth.export-pdf')"
-            >
-                <i class="ki-filled ki-file-down text-base"></i>
-                Export PDF
-            </x-famledger.pulse-button>
+            <x-famledger.export-pdf-button :href="route('families.wealth.export-pdf')" />
         </div>
     </div>
 
@@ -128,28 +134,24 @@
 
     @if (!empty($wealthCharts['hasData']))
     <div class="grid gap-5 lg:gap-7.5 lg:grid-cols-2 mb-6">
-        <div class="kt-card fin-pulse-kt-card rounded-2xl border border-border shadow-sm bg-card">
-            <div class="kt-card-header border-b border-border flex flex-col gap-1 items-start">
-                <h3 class="kt-card-title text-sm">Net wealth trend</h3>
-                <p class="text-xs text-muted-foreground font-normal">
-                    Daily snapshots from this page. When there are at least two points, the dashed line extends a simple linear trend
-                    {{ !empty($wealthCharts['projection']['enabled']) ? '(' . (int) $wealthCharts['projection']['daysAhead'] . ' days ahead)' : '' }}
-                    — illustrative only, not a forecast of future results.
-                </p>
-            </div>
-            <div class="kt-card-content p-4 lg:p-5">
-                <div id="famledger_wealth_net_chart" class="min-h-[300px] w-full"></div>
+        <div class="famledger-wealth-chart-card min-w-0">
+            <div class="kt-card fin-pulse-kt-card rounded-2xl border border-border shadow-sm bg-card overflow-hidden max-w-full">
+                <div class="kt-card-header border-b border-border">
+                    <h3 class="kt-card-title text-sm">Net wealth trend</h3>
+                </div>
+                <div class="kt-card-content p-4 lg:p-5 min-w-0 overflow-hidden">
+                    <div id="famledger_wealth_net_chart" class="famledger-wealth-chart-wrap min-h-[300px] w-full max-w-full"></div>
+                </div>
             </div>
         </div>
-        <div class="kt-card fin-pulse-kt-card rounded-2xl border border-border shadow-sm bg-card">
-            <div class="kt-card-header border-b border-border flex flex-col gap-1 items-start">
-                <h3 class="kt-card-title text-sm">Composition over time</h3>
-                <p class="text-xs text-muted-foreground font-normal">
-                    Stacked wallets, properties and project funds. Net wealth in the left chart already reflects liabilities.
-                </p>
-            </div>
-            <div class="kt-card-content p-4 lg:p-5">
-                <div id="famledger_wealth_composition_chart" class="min-h-[320px] w-full"></div>
+        <div class="famledger-wealth-chart-card min-w-0">
+            <div class="kt-card fin-pulse-kt-card rounded-2xl border border-border shadow-sm bg-card overflow-hidden max-w-full">
+                <div class="kt-card-header border-b border-border">
+                    <h3 class="kt-card-title text-sm">Composition over time</h3>
+                </div>
+                <div class="kt-card-content p-4 lg:p-5 min-w-0 overflow-hidden">
+                    <div id="famledger_wealth_composition_chart" class="famledger-wealth-chart-wrap min-h-[320px] w-full max-w-full"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -201,6 +203,17 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var wc = @json($wealthCharts ?? ['hasData' => false]);
+            var famledgerWealthNetChart = null;
+            var famledgerWealthCompositionChart = null;
+
+            function famledgerWealthChartsResize() {
+                try {
+                    if (famledgerWealthNetChart) famledgerWealthNetChart.resize();
+                } catch (e) {}
+                try {
+                    if (famledgerWealthCompositionChart) famledgerWealthCompositionChart.resize();
+                } catch (e) {}
+            }
 
             if (typeof ApexCharts !== 'undefined' && wc.hasData) {
                 var currency = wc.currency || '';
@@ -227,7 +240,7 @@
                         ]
                         : [{ name: 'Net wealth', data: wc.netWealth }];
 
-                    new ApexCharts(netEl, {
+                    famledgerWealthNetChart = new ApexCharts(netEl, {
                         series: netSeries,
                         chart: {
                             type: 'line',
@@ -288,12 +301,14 @@
                             strokeWidth: 2,
                             hover: { sizeOffset: 2 },
                         },
-                    }).render();
+                    });
+                    famledgerWealthNetChart.render();
+                    setTimeout(famledgerWealthChartsResize, 50);
                 }
 
                 var compEl = document.getElementById('famledger_wealth_composition_chart');
                 if (compEl) {
-                    new ApexCharts(compEl, {
+                    famledgerWealthCompositionChart = new ApexCharts(compEl, {
                         series: [
                             { name: 'Wallets', data: wc.wallet },
                             { name: 'Properties', data: wc.property },
@@ -359,8 +374,16 @@
                             intersect: false,
                             y: { formatter: famledgerWealthTooltip },
                         },
-                    }).render();
+                    });
+                    famledgerWealthCompositionChart.render();
+                    setTimeout(famledgerWealthChartsResize, 50);
                 }
+
+                var famledgerWealthResizeTimer;
+                window.addEventListener('resize', function () {
+                    clearTimeout(famledgerWealthResizeTimer);
+                    famledgerWealthResizeTimer = setTimeout(famledgerWealthChartsResize, 120);
+                });
             }
 
             setInterval(function () {

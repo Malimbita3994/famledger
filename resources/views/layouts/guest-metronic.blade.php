@@ -5,6 +5,16 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
 <!DOCTYPE html>
 <html class="h-full" data-kt-theme="true" data-kt-theme-mode="light" dir="ltr" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    {{-- Apply before paint so the marketing column does not flash when user chose to hide it --}}
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('famledger_auth_hide_branding') === '1') {
+                    document.documentElement.classList.add('auth-hide-branded');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
@@ -22,6 +32,7 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="{{ asset('metronic/assets/vendors/keenicons/styles.bundle.css') }}" rel="stylesheet"/>
     <link href="{{ asset('metronic/assets/css/styles.css') }}" rel="stylesheet"/>
+    <link href="{{ asset('css/famledger-kt-btn-crud.css') }}" rel="stylesheet"/>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <style>
@@ -202,15 +213,31 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         }
         .auth-feature-row {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0.9rem;
             width: 100%;
             max-width: min(720px, 100%);
             margin-left: auto;
             margin-right: auto;
-            padding-left: 1.25rem;
-            padding-right: 1.25rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
             box-sizing: border-box;
+        }
+        @media (min-width: 640px) {
+            .auth-feature-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 1rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+        @media (min-width: 1024px) {
+            .auth-feature-row {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 1.25rem;
+                padding-left: 1.25rem;
+                padding-right: 1.25rem;
+            }
         }
         .auth-feature-card {
             border-radius: 1.75rem;
@@ -218,6 +245,17 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                 transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.4s ease,
                 border-color 0.3s ease;
+        }
+        @media (max-width: 639px) {
+            .auth-feature-card {
+                border-radius: 1rem;
+                padding: 0.8rem 0.85rem !important;
+                gap: 0.7rem !important;
+            }
+            .auth-feature-card .text-sm {
+                font-size: 0.8rem;
+                line-height: 1.25rem;
+            }
         }
         .auth-feature-card:hover {
             transform: translateY(-5px) scale(1.02);
@@ -300,6 +338,17 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
             color: #0f172a;
             opacity: 0.85;
         }
+        /* Optional: hide marketing / branded column (user preference; login page toggle) */
+        html.auth-hide-branded .auth-layout-grid {
+            grid-template-columns: 1fr;
+        }
+        html.auth-hide-branded .auth-branded-panel {
+            display: none !important;
+        }
+        html.auth-hide-branded .auth-form-column {
+            grid-column: 1 / -1;
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .auth-brand-reveal,
             .auth-feature-row.auth-brand-reveal-row > .auth-feature-card {
@@ -343,6 +392,11 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
             width: auto;
             max-width: 100%;
             object-fit: contain;
+        }
+        @media (max-width: 639px) {
+            .auth-branded-logo {
+                height: 4.5rem;
+            }
         }
 
         /* Pulse-style auth card (login, register, forgot-password) — FamLedger accent */
@@ -616,9 +670,9 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         </script>
     @endif
 
-    <div class="grid flex-1 grid-cols-1 grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1 w-full min-w-0 min-h-[100dvh]">
+    <div class="auth-layout-grid grid flex-1 grid-cols-1 grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1 w-full min-w-0 min-h-[100dvh]">
         <!-- Form column: full-height bg + justify-center keeps the card vertically centered with even top/bottom space; min-h-0 avoids grid/flex overflow bugs -->
-        <div class="flex h-full min-h-0 w-full flex-col items-center justify-center bg-background px-8 py-10 lg:py-12 order-2 lg:order-1 min-w-0">
+        <div class="auth-form-column flex h-full min-h-0 w-full flex-col items-center justify-center bg-background px-8 py-10 lg:py-12 order-2 lg:order-1 min-w-0">
             @if ($isPulseAuthForm)
                 <div class="auth-pulse-shell {{ $isRegisterRoute ? 'auth-pulse-shell--register' : '' }}">
                     <div class="auth-pulse-frame auth-login-card {{ $pulseFormHasErrors ? 'auth-login-card-error' : '' }}">
@@ -635,9 +689,9 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                 </div>
             @endif
         </div>
-        <!-- Branded panel -->
-        <div class="lg:rounded-xl lg:border lg:border-border lg:m-5 order-1 lg:order-2 auth-branded-bg overflow-hidden min-w-0 h-full min-h-0 flex flex-col">
-            <div class="flex flex-col flex-1 min-h-0 items-stretch p-8 lg:p-12 max-w-5xl mx-auto w-full">
+        <!-- Branded panel (can be hidden via login page toggle + localStorage) -->
+        <div class="auth-branded-panel lg:rounded-xl lg:border lg:border-border lg:m-5 order-1 lg:order-2 auth-branded-bg overflow-hidden min-w-0 h-full min-h-0 flex flex-col">
+            <div class="flex flex-col flex-1 min-h-0 items-stretch p-5 sm:p-7 lg:p-12 max-w-5xl mx-auto w-full">
                 <div class="w-full flex flex-col items-center shrink-0">
                     {{-- TOP: Logo --}}
                     <div class="w-full flex flex-col items-center mb-6 auth-brand-reveal auth-brand-reveal--logo">

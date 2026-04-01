@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use App\Models\Family;
-use App\Models\FamilyMember;
 use Illuminate\Http\Request;
 
 /**
@@ -35,22 +34,18 @@ final class CurrentFamilyResolver
             ->first();
     }
 
+    /**
+     * Whether the user may open this family’s property workspace (assets list, add/edit asset, etc.).
+     * Any active family member — aligned with {@see FamilyPolicy::view()}.
+     */
     public static function canManageProperties(Request $request, ?Family $family): bool
     {
         if (! $family || ! $request->user()) {
             return false;
         }
 
-        $member = FamilyMember::query()
-            ->where('family_id', $family->id)
-            ->where('user_id', $request->user()->id)
-            ->with('role')
-            ->first();
+        $user = $request->user();
 
-        $roleName = $member && $member->role
-            ? mb_strtolower($member->role->name)
-            : null;
-
-        return in_array($roleName, ['owner', 'co-owner'], true);
+        return $family->members()->where('user_id', $user->id)->exists();
     }
 }

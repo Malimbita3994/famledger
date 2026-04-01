@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Http\Controllers\Controller;
 use App\Models\Family;
 use App\Models\Transfer;
+use App\Services\FamilyFinancialService;
 use App\Services\WalletBalanceGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -75,6 +76,13 @@ class TransferController extends Controller
 
         if (strtoupper($fromWallet->currency_code) !== strtoupper($toWallet->currency_code)) {
             return response()->json(['message' => 'Both wallets must use the same currency.'], 422);
+        }
+
+        $financials = app(FamilyFinancialService::class);
+        if ($financials->transferToSavingsBlockedByBudget($family, $toWallet)) {
+            return response()->json([
+                'message' => 'Cannot transfer to a savings wallet while any monthly budget is over its limit. Adjust spending or budgets first.',
+            ], 422);
         }
 
         return DB::transaction(function () use ($family, $validated, $fromWallet, $toWallet) {

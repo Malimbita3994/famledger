@@ -85,8 +85,8 @@
             <span class="kt-checkbox-label">{{ __('Remember me') }}</span>
         </label>
 
+        {{-- Do not disable the submit button on submit: disabling during the submit event can cancel the POST in some browsers. --}}
         <button type="submit" class="kt-btn kt-btn-primary"
-                x-bind:disabled="loading"
                 x-bind:aria-busy="loading">
             <span x-show="!loading" class="inline-flex items-center">{{ __('Sign In') }}</span>
             <span x-show="loading" class="inline-flex items-center justify-center" aria-hidden="true">
@@ -97,4 +97,81 @@
             </span>
         </button>
     </form>
+
+    <style>
+        .auth-hide-branding-toggle-wrap {
+            margin-top: 1.75rem;
+        }
+        .auth-hide-branding-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.48rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            background: rgba(255, 255, 255, 0.85);
+            color: #475569;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .auth-hide-branding-toggle:hover {
+            color: #0369a1;
+            border-color: rgba(3, 105, 161, 0.35);
+            background: rgba(14, 165, 233, 0.08);
+            transform: translateY(-1px);
+        }
+        .auth-hide-branding-toggle:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.22);
+        }
+        .auth-hide-branding-toggle__icon {
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+    </style>
+
+    <p class="auth-hide-branding-toggle-wrap text-center mb-0">
+        <button
+            type="button"
+            class="auth-hide-branding-toggle"
+            data-label-hide="{{ __('Hide marketing panel') }}"
+            data-label-show="{{ __('Show marketing panel') }}"
+            aria-pressed="false"
+        >
+            <i class="ki-filled ki-eye-slash auth-hide-branding-toggle__icon" aria-hidden="true"></i>
+            <span class="auth-hide-branding-toggle__label"></span>
+        </button>
+    </p>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var btn = document.querySelector('.auth-hide-branding-toggle');
+            if (!btn) {
+                return;
+            }
+            function sync() {
+                var hidden = document.documentElement.classList.contains('auth-hide-branded');
+                var label = btn.querySelector('.auth-hide-branding-toggle__label');
+                if (label) {
+                    label.textContent = hidden ? btn.getAttribute('data-label-show') : btn.getAttribute('data-label-hide');
+                }
+                btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+            }
+            btn.addEventListener('click', function () {
+                document.documentElement.classList.toggle('auth-hide-branded');
+                try {
+                    localStorage.setItem(
+                        'famledger_auth_hide_branding',
+                        document.documentElement.classList.contains('auth-hide-branded') ? '1' : '0'
+                    );
+                } catch (e) {}
+                sync();
+            });
+            sync();
+        });
+    </script>
 </x-guest-metronic-layout>

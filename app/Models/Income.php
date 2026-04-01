@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BroadcastsFamilyProfile;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Income extends Model
 {
+    use BroadcastsFamilyProfile;
+
     public const SOURCE_ENTITY_EMPLOYER = 'employer';
 
     public const SOURCE_ENTITY_TENANT = 'tenant';

@@ -5,10 +5,9 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-        <i class="ki-filled ki-left mr-1"></i>
+        <x-fin-back-link href="{{ route('families.overview') }}">
         Back to {{ $family->name }}
-    </a>
+    </x-fin-back-link>
 
     <style>
     .properties-kpi-grid {
@@ -90,7 +89,7 @@
                 <div class="py-12 text-center text-muted-foreground">
                     <i class="ki-filled ki-home-3 text-4xl mb-2"></i>
                     <p class="text-sm">No properties recorded yet.</p>
-                    <a href="{{ route('families.properties.create') }}" class="kt-btn kt-btn-outline mt-4">Add property</a>
+                    <a href="{{ route('families.properties.create') }}" class="kt-btn kt-btn-primary mt-4">Add property</a>
                 </div>
             @else
                 <div class="px-5 pt-4">
@@ -218,12 +217,12 @@
                                 </span>
                             </div>
                             <div class="flex flex-wrap justify-end gap-2 pt-1 border-t border-border">
-                                <x-famledger.pulse-button variant="outline" size="sm" type="button" data-property-modal="{{ $property->id }}">
+                                <button type="button" class="kt-btn kt-btn-primary kt-btn-sm" data-property-modal="{{ $property->id }}">
                                     {{ __('View') }}
-                                </x-famledger.pulse-button>
-                                <x-famledger.pulse-button variant="outline" size="sm" :href="route('families.properties.edit', $property)">
+                                </button>
+                                <a href="{{ route('families.properties.edit', $property) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1">
                                     Edit
-                                </x-famledger.pulse-button>
+                                </a>
                             </div>
                         </div>
                     @endforeach

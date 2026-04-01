@@ -293,7 +293,7 @@
                     <div class="px-5 py-4 border-b border-border flex items-center justify-between flex-wrap gap-2">
                         <div>
                             <h3 class="dashboard-pulse-section-title text-base mb-0.5">{{ __('Recent Activity') }}</h3>
-                            <p class="text-sm text-muted-foreground mt-0.5">{{ __('Latest transactions') }}</p>
+                            <p class="text-sm text-muted-foreground mt-0.5">{{ __('Latest income and expenses, with links to financial records, projects, and properties when linked.') }}</p>
                         </div>
                         @if (isset($currentFamily) && $currentFamily)
                             <a href="{{ route('families.transactions.index') }}" class="dashboard-pulse-btn-outline-sm shrink-0">{{ __('Transactions') }}</a>
@@ -305,6 +305,7 @@
                                 <tr class="border-b border-border bg-muted/30">
                                     <th class="text-start font-medium text-muted-foreground px-5 py-3">{{ __('Description') }}</th>
                                     <th class="text-start font-medium text-muted-foreground px-5 py-3">{{ __('Category') }}</th>
+                                    <th class="text-start font-medium text-muted-foreground px-5 py-3">{{ __('Related') }}</th>
                                     <th class="text-end font-medium text-muted-foreground px-5 py-3">{{ __('Amount') }}</th>
                                     <th class="text-end font-medium text-muted-foreground px-5 py-3">{{ __('Date') }}</th>
                                 </tr>
@@ -312,8 +313,25 @@
                             <tbody class="divide-y divide-border">
                                 @forelse ($recentActivity as $item)
                                 <tr class="hover:bg-muted/30">
-                                    <td class="px-5 py-3 text-foreground">{{ $item->description }}</td>
+                                    <td class="px-5 py-3 text-foreground">
+                                        @if (!empty($item->url))
+                                            <a href="{{ $item->url }}" class="text-primary font-medium hover:underline">{{ $item->description }}</a>
+                                        @else
+                                            {{ $item->description }}
+                                        @endif
+                                    </td>
                                     <td class="px-5 py-3 text-muted-foreground">{{ $item->category }}</td>
+                                    <td class="px-5 py-3 text-muted-foreground">
+                                        @if (!empty($item->related_links) && is_array($item->related_links))
+                                            <div class="flex flex-col gap-1.5 items-start">
+                                                @foreach ($item->related_links as $rel)
+                                                    <a href="{{ $rel['url'] }}" class="inline-flex text-xs text-primary hover:underline">{{ $rel['label'] }}</a>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-muted-foreground/70">—</span>
+                                        @endif
+                                    </td>
                                     <td class="px-5 py-3 text-end font-medium {{ $item->type === 'income' ? 'text-green-600' : 'text-destructive' }}">
                                         {{ $item->type === 'income' ? '+' : '-' }}{{ $formatAmount($item->amount, $item->currency_code) }}
                                     </td>
@@ -321,7 +339,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="px-5 py-8 text-center text-muted-foreground">{{ __('No transactions yet.') }}</td>
+                                    <td colspan="5" class="px-5 py-8 text-center text-muted-foreground">{{ __('No transactions yet.') }}</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -344,6 +362,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Clickable KPI cards -> SweetAlert2 modals with more detail
     try {
+        var walletsUrl = @json(isset($currentFamily) && $currentFamily ? route('families.wallets.index') : '');
+        var budgetsUrl = @json(isset($currentFamily) && $currentFamily ? route('families.budgets.index') : '');
+        var projectsUrl = @json(isset($currentFamily) && $currentFamily ? route('families.projects.index') : '');
+        var propertiesUrl = @json(isset($currentFamily) && $currentFamily ? route('families.properties.assets') : '');
+        var incomesUrl = @json(isset($currentFamily) && $currentFamily ? route('families.incomes.index') : '');
+        var expensesUrl = @json(isset($currentFamily) && $currentFamily ? route('families.expenses.index') : '');
+
         var dashboardCards = document.querySelectorAll('.js-dashboard-card');
         dashboardCards.forEach(function(card) {
             card.addEventListener('click', function () {
@@ -367,34 +392,52 @@ document.addEventListener('DOMContentLoaded', function() {
                         title = 'Total Income (This month)';
                         html = '<p class="text-sm mb-2">Sum of all income recorded this month across your families.</p>' +
                                '<p class="text-lg font-semibold">' + (totalIncome || 0).toLocaleString() + ' ' + currency + '</p>';
+                        if (incomesUrl) {
+                            html += '<p class="mt-3"><a class="text-primary font-semibold hover:underline" href="' + incomesUrl + '">View income</a></p>';
+                        }
                         break;
                     case 'expenses':
                         title = 'Total Expenses (This month)';
                         html = '<p class="text-sm mb-2">Sum of all expenses recorded this month across your families.</p>' +
                                '<p class="text-lg font-semibold">' + (totalExpenses || 0).toLocaleString() + ' ' + currency + '</p>';
+                        if (expensesUrl) {
+                            html += '<p class="mt-3"><a class="text-primary font-semibold hover:underline" href="' + expensesUrl + '">View expenses</a></p>';
+                        }
                         break;
                     case 'budget':
                         title = 'Budget Used (This month)';
                         html = '<p class="text-sm mb-2">Usage across all active budgets in the current family and month.</p>' +
                                '<p class="text-lg font-semibold">' + (budgetUsedPercent || 0) + '%</p>' +
                                '<p class="text-sm text-muted-foreground mt-1">' + (budgetUsedLabel || '') + '</p>';
+                        if (budgetsUrl) {
+                            html += '<p class="mt-3"><a class="text-primary font-semibold hover:underline" href="' + budgetsUrl + '">Open budgets</a></p>';
+                        }
                         break;
                     case 'wallets':
                         title = 'Total Wallet Balance';
                         html = '<p class="text-sm mb-2">All family wallets: initial balance + income − expenses ± transfers.</p>' +
                                '<p class="text-lg font-semibold">' + (totalSavings || 0).toLocaleString() + ' ' + currency + '</p>';
+                        if (walletsUrl) {
+                            html += '<p class="mt-3"><a class="text-primary font-semibold hover:underline" href="' + walletsUrl + '">View wallets</a></p>';
+                        }
                         break;
                     case 'projects':
                         title = 'Projects Overview';
                         html = '<p class="text-sm mb-2">Projects for the current family.</p>' +
                                '<p class="text-lg font-semibold mb-1">' + (projectCount || 0) + ' projects</p>' +
                                '<p class="text-sm text-muted-foreground">' + (activeProjectCount || 0) + ' active right now.</p>';
+                        if (projectsUrl) {
+                            html += '<p class="mt-3"><a class="text-primary font-semibold hover:underline" href="' + projectsUrl + '">Open projects</a></p>';
+                        }
                         break;
                     case 'properties':
                         title = 'Properties Overview';
                         html = '<p class="text-sm mb-2">Properties for the current family.</p>' +
                                '<p class="text-lg font-semibold mb-1">' + (propertyCount || 0) + ' properties</p>' +
                                '<p class="text-sm text-muted-foreground">Total value ' + (propertyTotalValue || 0).toLocaleString() + ' ' + currency + ' (purchase/estimated).</p>';
+                        if (propertiesUrl) {
+                            html += '<p class="mt-3"><a class="text-primary font-semibold hover:underline" href="' + propertiesUrl + '">Open properties</a></p>';
+                        }
                         break;
                     default:
                         return;
@@ -549,4 +592,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<div
+    id="famledger-dashboard-broadcast"
+    style="display:none"
+    data-enabled="{{ config('broadcasting.default') === 'reverb' ? '1' : '0' }}"
+    data-family-id="{{ $currentFamily->id ?? '' }}"
+></div>
 @endsection
+
+@push('scripts')
+    @vite(['resources/js/dashboard-realtime.js'])
+@endpush

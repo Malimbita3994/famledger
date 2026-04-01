@@ -203,7 +203,8 @@
                     <div class="row landing-contact-field-row">
                         <div class="col-xs-12">
                             <div class="form-group" style="margin-bottom: 10px;">
-                                <label for="{{ $quillId }}" id="{{ $lblQuillId }}">{{ __('Message') }}</label>
+                                {{-- Quill uses a div container; the real form field is the hidden textarea. --}}
+                                <label for="{{ $hiddenMessageId }}" id="{{ $lblQuillId }}">{{ __('Message') }}</label>
                                 <div id="{{ $quillId }}" class="landing-contact-quill-wrap" aria-labelledby="{{ $lblQuillId }}"></div>
                                 <textarea id="{{ $hiddenMessageId }}" name="message" class="sr-only" tabindex="-1" aria-hidden="true">{{ old('_contact_form_source') === $formSource ? old('message') : '' }}</textarea>
                             </div>

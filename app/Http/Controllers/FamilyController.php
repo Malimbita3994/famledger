@@ -5,7 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
 use App\Models\FamilyMember;
+use App\Models\FamilyRelationship;
 use App\Models\FamilyRole;
+use App\Models\Goal;
+use App\Models\Milestone;
+use App\Services\FamilyFinancialService;
+use App\Services\FamilyTreeBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +45,9 @@ class FamilyController extends Controller
                 ->get();
         }
 
-        return view('families.index', compact('families'));
+        $memberFamilyIds = $user->families()->pluck('families.id')->all();
+
+        return view('families.index', compact('families', 'memberFamilyIds'));
     }
 
     /**
@@ -65,11 +72,11 @@ class FamilyController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'          => ['required', 'string', 'max:255'],
-            'description'   => ['nullable', 'string', 'max:1000'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
             'currency_code' => ['required', 'string', 'size:3'],
-            'timezone'      => ['required', 'string', 'max:50'],
-            'country'       => ['nullable', 'string', 'max:100'],
+            'timezone' => ['required', 'string', 'max:50'],
+            'country' => ['nullable', 'string', 'max:100'],
         ]);
 
         $user = $request->user();
@@ -78,37 +85,27 @@ class FamilyController extends Controller
         $family = DB::transaction(function () use ($validated, $user, $ownerRole) {
             // 1. Create family
             $family = Family::create([
-                'name'          => $validated['name'],
-                'description'   => $validated['description'] ?? null,
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
                 'currency_code' => strtoupper($validated['currency_code']),
-                'timezone'      => $validated['timezone'],
-                'country'       => $validated['country'] ?? null,
-                'created_by'    => $user->id,
-                'status'        => 'active',
+                'timezone' => $validated['timezone'],
+                'country' => $validated['country'] ?? null,
+                'created_by' => $user->id,
+                'status' => 'active',
             ]);
 
             // 2. Add creator as first member (Owner) — guarantees every family has an owner
             FamilyMember::create([
-                'family_id'  => $family->id,
-                'user_id'    => $user->id,
-                'role_id'    => $ownerRole->id,
+                'family_id' => $family->id,
+                'user_id' => $user->id,
+                'role_id' => $ownerRole->id,
                 'is_primary' => true,
-                'status'     => 'active',
-                'joined_at'  => now(),
+                'status' => 'active',
+                'joined_at' => now(),
             ]);
 
-            // 3. Create a default main wallet for this family
-            $family->wallets()->create([
-                'name'            => 'Main account',
-                'type'            => 'cash',
-                'currency_code'   => $family->currency_code,
-                'description'     => 'Primary family wallet (central account).',
-                'initial_balance' => 0,
-                'is_primary'      => true,
-                'is_shared'       => true,
-                'status'          => 'active',
-                'created_by'      => $user->id,
-            ]);
+            // 3. Default main wallet (same as API path via Family::ensureDefaultMainWallet)
+            $family->ensureDefaultMainWallet($user->id);
 
             return $family;
         });
@@ -133,14 +130,29 @@ class FamilyController extends Controller
             ->first();
         $canManageMembers = $currentMembership && in_array($currentMembership->role->name ?? '', ['Owner', 'Co-owner'], true);
 
-        // Financial summary for the overview page
-        $totalIncome   = DB::table('incomes')->where('family_id', $family->id)->sum('amount');
-        $totalExpenses = DB::table('expenses')->where('family_id', $family->id)->sum('amount');
-        $balance       = $totalIncome - $totalExpenses;
+        // Financial summary for the overview page (same aggregates as leaderboard / wallet logic)
+        $financeService = app(FamilyFinancialService::class);
+        $ledger = $financeService->getProfileLedgerSummary($family->id);
+        $totalIncome = $ledger['total_income'];
+        $totalExpenses = $ledger['total_expenses'];
+        $balance = $ledger['wallet_balance_total'];
+
+        // Health Index and Leaderboard
+        $healthIndex = $financeService->getFamilyHealthIndex($family->id);
+        $leaderboard = $financeService->getContributionLeaderboard($family->id);
 
         $currencies = Arr::except(config('currencies', []), ['default']);
 
-        return view('families.show', compact('family', 'canManageMembers', 'totalIncome', 'totalExpenses', 'balance', 'currencies'));
+        // Profile submodules for the View
+        $recentMilestones = Milestone::where('family_id', $family->id)->with('reactions')->orderBy('date', 'desc')->take(3)->get();
+        $activeGoals = Goal::where('family_id', $family->id)->orderBy('created_at', 'desc')->take(3)->get();
+
+        // Family tree preview
+        $members = $family->familyMembers()->with('user')->get();
+        $relationships = FamilyRelationship::where('family_id', $family->id)->get();
+        $treePreview = app(FamilyTreeBuilder::class)->buildRoots($members, $relationships);
+
+        return view('families.show', compact('family', 'canManageMembers', 'totalIncome', 'totalExpenses', 'balance', 'healthIndex', 'leaderboard', 'currencies', 'recentMilestones', 'activeGoals', 'treePreview'));
     }
 
     /**
@@ -174,21 +186,21 @@ class FamilyController extends Controller
         $this->authorizeFamilyMember($family);
 
         $validated = $request->validate([
-            'name'          => ['required', 'string', 'max:255'],
-            'description'   => ['nullable', 'string', 'max:1000'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
             'currency_code' => ['required', 'string', 'size:3'],
-            'timezone'      => ['required', 'string', 'max:50'],
-            'country'       => ['nullable', 'string', 'max:100'],
-            'status'       => ['required', Rule::in(['active', 'archived'])],
+            'timezone' => ['required', 'string', 'max:50'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'status' => ['required', Rule::in(['active', 'archived'])],
         ]);
 
         $family->update([
-            'name'          => $validated['name'],
-            'description'   => $validated['description'] ?? null,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
             'currency_code' => strtoupper($validated['currency_code']),
-            'timezone'      => $validated['timezone'],
-            'country'       => $validated['country'] ?? null,
-            'status'       => $validated['status'],
+            'timezone' => $validated['timezone'],
+            'country' => $validated['country'] ?? null,
+            'status' => $validated['status'],
         ]);
 
         return redirect()->route('families.index')->with('success', 'Family updated successfully.');
@@ -202,25 +214,25 @@ class FamilyController extends Controller
         $this->authorizeFamilyMember($family);
 
         // Only owner/co-owner may change the family currency
-        $membership = \App\Models\FamilyMember::where('family_id', $family->id)
+        $membership = FamilyMember::where('family_id', $family->id)
             ->where('user_id', auth()->id())
             ->with('role')
             ->first();
 
         $roleName = mb_strtolower($membership?->role?->name ?? '');
-        if (! in_array($roleName, ['owner', 'co-owner'], true) && ! auth()->user()->hasRole('Super Admin')) {
+        if (! in_array($roleName, ['owner', 'co-owner'], true)) {
             abort(403, 'Only family owners can change the currency.');
         }
 
-        $validCurrencies = array_keys(\Illuminate\Support\Arr::except(config('currencies', []), ['default']));
+        $validCurrencies = array_keys(Arr::except(config('currencies', []), ['default']));
 
         $validated = $request->validate([
-            'currency_code' => ['required', 'string', 'size:3', \Illuminate\Validation\Rule::in($validCurrencies)],
+            'currency_code' => ['required', 'string', 'size:3', Rule::in($validCurrencies)],
         ]);
 
         $family->update(['currency_code' => strtoupper($validated['currency_code'])]);
 
-        return back()->with('success', 'Family currency updated to ' . strtoupper($validated['currency_code']) . '.');
+        return back()->with('success', 'Family currency updated to '.strtoupper($validated['currency_code']).'.');
     }
 
     /**
@@ -234,5 +246,4 @@ class FamilyController extends Controller
 
         return redirect()->route('families.index')->with('success', 'Family deleted.');
     }
-
 }

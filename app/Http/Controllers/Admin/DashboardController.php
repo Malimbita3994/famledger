@@ -27,15 +27,18 @@ class DashboardController extends Controller
         $thirtyDaysAgo = $now->copy()->subDays(30);
         $ninetyDaysAgo = $now->copy()->subDays(90);
 
-        [$fyStart, $fyEnd] = FinancialYear::range();
-        $financialYearLabel = FinancialYear::label();
+        [$fyStart, $fyEnd] = FinancialYear::currentPeriod();
+        $financialYearLabel = FinancialYear::currentLabel();
 
         // ---- 1) Families overview (real counts) ----
         $totalFamilies = Family::count();
         $activeFamilies = Family::where('status', 'active')->count();
         $newFamiliesThisMonth = Family::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
-        $inactiveFamilies = Family::whereDoesntHave('incomes', fn ($q) => $q->where('received_date', '>=', $thirtyDaysAgo))
+        // No income, expense, or transfer dated in the last 30 days (not the same as family `status`)
+        $inactiveFamilies = Family::query()
+            ->whereDoesntHave('incomes', fn ($q) => $q->where('received_date', '>=', $thirtyDaysAgo))
             ->whereDoesntHave('expenses', fn ($q) => $q->where('expense_date', '>=', $thirtyDaysAgo))
+            ->whereDoesntHave('transfers', fn ($q) => $q->where('transfer_date', '>=', $thirtyDaysAgo))
             ->count();
 
         // ---- 2) Users overview (real counts) ----
@@ -60,9 +63,20 @@ class DashboardController extends Controller
         $incomeThisMonth = (float) Income::whereBetween('received_date', [$startOfMonth, $endOfMonth])->sum('amount');
         $expensesThisMonth = (float) Expense::whereBetween('expense_date', [$startOfMonth, $endOfMonth])->sum('amount');
 
-        // Total wallet balance = sum of each wallet's computed balance (initial_balance + transactions)
-        $wallets = Wallet::all();
-        $totalWalletBalance = $wallets->sum(fn ($w) => $w->balance);
+        // Sum of per-wallet balances (same formula as Wallet::balance; mixed currencies are added as raw numbers)
+        $totalWalletBalance = (float) Wallet::query()
+            ->withSum('incomes', 'amount')
+            ->withSum('expenses', 'amount')
+            ->withSum('incomingTransfers', 'amount')
+            ->withSum('outgoingTransfers', 'amount')
+            ->get()
+            ->sum(function (Wallet $w) {
+                return (float) $w->initial_balance
+                    + (float) ($w->incomes_sum_amount ?? 0)
+                    - (float) ($w->expenses_sum_amount ?? 0)
+                    + (float) ($w->incoming_transfers_sum_amount ?? 0)
+                    - (float) ($w->outgoing_transfers_sum_amount ?? 0);
+            });
 
         // ---- 4) Wallet statistics (real: active = status active, dormant = no txn in 90d) ----
         $totalWallets = Wallet::count();
@@ -85,10 +99,17 @@ class DashboardController extends Controller
             + Expense::whereBetween('expense_date', [$startOfMonth, $endOfMonth])->count()
             + Transfer::whereBetween('transfer_date', [$startOfMonth, $endOfMonth])->count();
 
-        // ---- 6) Budget statistics ----
-        $activeBudgets = Budget::where('start_date', '<=', $endOfMonth)->where('end_date', '>=', $startOfMonth)->count();
-        $overBudgetCount = Budget::where('start_date', '<=', $endOfMonth)->where('end_date', '>=', $startOfMonth)->with(['family', 'wallets', 'categories'])->get()->filter(fn ($b) => $b->is_exceeded)->count();
-        $avgBudgetAmount = (float) Budget::avg('amount');
+        // ---- 6) Budget statistics (overlap current calendar month only) ----
+        $budgetsOverlappingMonth = Budget::query()
+            ->where('start_date', '<=', $endOfMonth)
+            ->where('end_date', '>=', $startOfMonth);
+        $activeBudgets = (clone $budgetsOverlappingMonth)->count();
+        $overBudgetCount = (clone $budgetsOverlappingMonth)
+            ->with(['family', 'wallets', 'categories'])
+            ->get()
+            ->filter(fn ($b) => $b->is_exceeded)
+            ->count();
+        $avgBudgetAmount = (float) ((clone $budgetsOverlappingMonth)->avg('amount') ?? 0);
 
         // ---- 7) Savings goals ----
         $totalSavingsGoals = SavingsGoal::count();

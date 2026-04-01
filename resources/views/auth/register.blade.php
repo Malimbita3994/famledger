@@ -77,7 +77,6 @@
         </div>
 
         <button type="submit" class="kt-btn kt-btn-primary"
-                x-bind:disabled="loading"
                 x-bind:aria-busy="loading">
             <span x-show="!loading" class="inline-flex items-center">{{ __('Register') }}</span>
             <span x-show="loading" class="inline-flex items-center justify-center" aria-hidden="true">

@@ -35,9 +35,9 @@
 </style>
 
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('admin.users.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-        <i class="ki-filled ki-left mr-1"></i> Back to users
-    </a>
+    <x-fin-back-link href="{{ route('admin.users.index') }}">
+        Back to users
+    </x-fin-back-link>
 
     <div class="kt-card p-5 lg:p-7.5">
         <div class="flex flex-wrap items-center justify-between gap-4 famledger-page-toolbar">

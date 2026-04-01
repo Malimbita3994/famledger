@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\FamilyFinancialDataChanged;
 use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Budget;
+use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\Family;
 use App\Services\WalletBalanceGuard;
@@ -74,7 +76,7 @@ class ExpenseController extends Controller
                 Rule::exists('users', 'id'),
                 Rule::in($family->members()->pluck('users.id')->toArray()),
             ],
-            'payment_method' => ['nullable', 'string', 'max:50', Rule::in(array_keys(\App\Models\Expense::paymentMethods()))],
+            'payment_method' => ['nullable', 'string', 'max:50', Rule::in(array_keys(Expense::paymentMethods()))],
             'reference' => ['nullable', 'string', 'max:100'],
             'is_recurring' => ['nullable', 'boolean'],
             'project_id' => ['nullable', Rule::exists('projects', 'id')->where('family_id', $family->id)],
@@ -170,6 +172,8 @@ class ExpenseController extends Controller
                 'is_recurring' => (bool) ($validated['is_recurring'] ?? false),
                 'created_by' => auth()->id(),
             ]);
+
+            broadcast(new FamilyFinancialDataChanged($family->id, 'expense_created'));
 
             return redirect()
                 ->route('families.expenses.index')

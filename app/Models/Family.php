@@ -67,6 +67,41 @@ class Family extends Model
         return $this->wallets()->where('is_primary', true)->first();
     }
 
+    /**
+     * Guarantee a primary cash wallet exists (web registration and API were inconsistent; this also repairs legacy rows).
+     *
+     * @return Wallet The primary wallet (existing promoted or newly created).
+     */
+    public function ensureDefaultMainWallet(?int $createdByUserId = null): Wallet
+    {
+        $primary = $this->wallets()->where('is_primary', true)->first();
+        if ($primary) {
+            return $primary;
+        }
+
+        $first = $this->wallets()->orderBy('id')->first();
+        if ($first) {
+            $first->update(['is_primary' => true]);
+
+            return $first->fresh();
+        }
+
+        $currency = strtoupper((string) ($this->currency_code ?: config('currencies.default', 'TZS')));
+        $uid = $createdByUserId ?? $this->created_by;
+
+        return $this->wallets()->create([
+            'name' => 'Main account',
+            'type' => 'cash',
+            'currency_code' => $currency,
+            'description' => 'Primary family wallet (central account).',
+            'initial_balance' => 0,
+            'is_primary' => true,
+            'is_shared' => true,
+            'status' => 'active',
+            'created_by' => $uid,
+        ]);
+    }
+
     public function incomes(): HasMany
     {
         return $this->hasMany(Income::class);
@@ -110,5 +145,25 @@ class Family extends Model
     public function liabilities(): HasMany
     {
         return $this->hasMany(FamilyLiability::class);
+    }
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class);
+    }
+
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
+    }
+
+    public function engagementActivities(): HasMany
+    {
+        return $this->hasMany(EngagementActivity::class);
+    }
+
+    public function announcements(): HasMany
+    {
+        return $this->hasMany(Announcement::class);
     }
 }

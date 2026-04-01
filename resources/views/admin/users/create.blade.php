@@ -16,7 +16,7 @@
 }
 </style>
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('admin.users.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">Back to users</a>
+    <x-fin-back-link href="{{ route('admin.users.index') }}">Back to users</x-fin-back-link>
 
     <form action="{{ route('admin.users.store') }}" method="POST" class="space-y-6">
         @csrf

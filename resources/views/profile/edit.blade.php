@@ -25,13 +25,6 @@
         line-height: 1.2;
         color: var(--ap-accent);
     }
-    .admin-pulse-back {
-        color: #64748b;
-        transition: color 0.2s ease;
-    }
-    .admin-pulse-back:hover {
-        color: var(--ap-accent);
-    }
     .admin-pulse-frame {
         padding: 3px;
         border-radius: 24px;
@@ -231,6 +224,15 @@
 
 @section('content')
 <div class="admin-pulse-page profile-pulse-page">
+    @if ($user->must_change_password)
+        <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 mb-6">
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
+                <p class="font-semibold mb-1">{{ __('Temporary password') }}</p>
+                <p class="opacity-95">{{ __('You must choose a new password below before you can use the rest of FamLedger.') }}</p>
+            </div>
+        </div>
+    @endif
+
     <div class="famledger-page-header">
         <div class="kt-container-fixed flex flex-row flex-wrap items-start gap-4 w-full min-w-0">
             <div class="min-w-0 flex-1">
@@ -241,10 +243,7 @@
                 </p>
             </div>
             <div class="shrink-0 ms-auto">
-                <a href="{{ route('settings.index') }}" class="admin-pulse-btn-outline inline-flex">
-                    <i class="ki-filled ki-left text-base"></i>
-                    {{ __('Back to settings') }}
-                </a>
+                <x-fin-back-link href="{{ route('settings.index') }}" class="!mb-0">{{ __('Back to settings') }}</x-fin-back-link>
             </div>
         </div>
     </div>
@@ -353,7 +352,7 @@
                 </div>
 
                 {{-- Password --}}
-                <div class="admin-pulse-frame">
+                <div id="password-section" class="admin-pulse-frame scroll-mt-24">
                     <div class="admin-pulse-card-inner">
                         <h2 class="admin-pulse-section-title mb-1">{{ __('Password & security') }}</h2>
                         <p class="admin-pulse-hint mb-6">{{ __('Keep your account secured with a strong password.') }}</p>

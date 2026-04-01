@@ -13,7 +13,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::query()->with('roles', 'familyMemberships.role', 'creator:id,name');
+        $query = User::query()->with('roles', 'familyMemberships.role', 'familyMemberships.family:id,name', 'creator:id,name');
         if ($request->filled('search')) {
             $q = $request->search;
             $query->where(function ($qry) use ($q) {

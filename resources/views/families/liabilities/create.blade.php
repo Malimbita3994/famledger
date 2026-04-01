@@ -5,10 +5,9 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.liabilities.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-        <i class="ki-filled ki-left mr-1"></i>
+        <x-fin-back-link href="{{ route('families.liabilities.index') }}">
         Back to liabilities
-    </a>
+    </x-fin-back-link>
 
     <form action="{{ route('families.liabilities.store') }}" method="POST" class="space-y-6">
         @csrf

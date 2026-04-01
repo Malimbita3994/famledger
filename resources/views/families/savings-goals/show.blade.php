@@ -5,10 +5,9 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.savings-goals.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.savings-goals.index') }}">
         Back to savings goals
-    </a>
+    </x-fin-back-link>
 
     @if (session('success'))
         <div class="mb-6 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 flex items-center gap-3 text-green-800 dark:text-green-200">
@@ -35,7 +34,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <a href="{{ route('families.savings-goals.contribute', $savingsGoal) }}" class="kt-btn kt-btn-primary kt-btn-sm">Contribute</a>
-                    <a href="{{ route('families.savings-goals.allocate', $savingsGoal) }}" class="kt-btn kt-btn-outline kt-btn-sm">Allocate to budget</a>
+                    <a href="{{ route('families.savings-goals.allocate', $savingsGoal) }}" class="kt-btn kt-btn-primary kt-btn-sm">Allocate to budget</a>
                     <a href="{{ route('families.savings-goals.edit', $savingsGoal) }}" class="kt-btn kt-btn-ghost kt-btn-sm">Edit</a>
                 </div>
             </div>

@@ -70,10 +70,16 @@ class FamilyMemberController extends Controller
 
         $user = User::query()->where('email', $validated['email'])->first();
         if (! $user) {
+            $plainPassword = (string) config('famledger.default_new_member_password');
+            $usedConfiguredDefault = $plainPassword !== '';
+            if (! $usedConfiguredDefault) {
+                $plainPassword = Str::password(16);
+            }
             $user = User::create([
                 'name' => $validated['member_name'] ?: Str::before($validated['email'], '@'),
                 'email' => $validated['email'],
-                'password' => Str::password(16),
+                'password' => $plainPassword,
+                'must_change_password' => $usedConfiguredDefault,
                 'status' => User::STATUS_ACTIVE,
                 'created_by' => auth()->id(),
             ]);
@@ -247,4 +253,3 @@ class FamilyMemberController extends Controller
         }
     }
 }
-

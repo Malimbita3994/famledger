@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Budget;
 use App\Models\Expense;
 use App\Models\Family;
+use App\Models\FamilyLiability;
 use App\Models\Income;
 use App\Models\Project;
 use App\Models\Property;
@@ -14,11 +15,12 @@ use App\Models\PropertyValuation;
 use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\Wallet;
-use App\Models\FamilyLiability;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class ReportController extends Controller
 {
@@ -75,18 +77,18 @@ class ReportController extends Controller
         $budgetRows = [];
         foreach ($budgets as $b) {
             $planned = (float) $b->amount;
-            $used    = (float) $b->used_amount;
+            $used = (float) $b->used_amount;
 
             $budgetRows[] = [
-                'budget'  => $b,
+                'budget' => $b,
                 'planned' => $planned,
-                'used'    => $used,
-                'over'    => $used > $planned,
+                'used' => $used,
+                'over' => $used > $planned,
             ];
         }
 
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
-        $formatAmount = fn ($n) => number_format((float) $n, 0) . ' ' . $currency;
+        $formatAmount = fn ($n) => number_format((float) $n, 0).' '.$currency;
 
         // Liabilities snapshot for the family (single query)
         $totalLiabilities = (float) FamilyLiability::where('family_id', $family->id)->sum('outstanding_balance');
@@ -145,12 +147,12 @@ class ReportController extends Controller
                 ->whereBetween('transfer_date', [$from, $to])
                 ->with('fromWallet:id,name')
                 ->get()
-                ->each(fn ($t) => $events[] = ['date' => $t->transfer_date, 'income' => (float) $t->amount, 'expense' => null, 'desc' => 'Transfer from ' . ($t->fromWallet->name ?? 'Wallet'), 'type' => 'transfer_in']);
+                ->each(fn ($t) => $events[] = ['date' => $t->transfer_date, 'income' => (float) $t->amount, 'expense' => null, 'desc' => 'Transfer from '.($t->fromWallet->name ?? 'Wallet'), 'type' => 'transfer_in']);
             Transfer::where('from_wallet_id', $wallet->id)
                 ->whereBetween('transfer_date', [$from, $to])
                 ->with('toWallet:id,name')
                 ->get()
-                ->each(fn ($t) => $events[] = ['date' => $t->transfer_date, 'income' => null, 'expense' => (float) $t->amount, 'desc' => 'Transfer to ' . ($t->toWallet->name ?? 'Wallet'), 'type' => 'transfer_out']);
+                ->each(fn ($t) => $events[] = ['date' => $t->transfer_date, 'income' => null, 'expense' => (float) $t->amount, 'desc' => 'Transfer to '.($t->toWallet->name ?? 'Wallet'), 'type' => 'transfer_out']);
 
             usort($events, fn ($a, $b) => $a['date'] <=> $b['date']);
             foreach ($events as $e) {
@@ -265,6 +267,7 @@ class ReportController extends Controller
             ->get()
             ->map(function ($row) use ($totalExpenses) {
                 $pct = $totalExpenses > 0 ? round(($row->total / $totalExpenses) * 100, 1) : 0;
+
                 return [
                     'name' => $row->category->name ?? 'Uncategorized',
                     'total' => (float) $row->total,
@@ -355,6 +358,7 @@ class ReportController extends Controller
         $bySource = collect($groupTotals)
             ->map(function ($total, $name) use ($totalIncome) {
                 $pct = $totalIncome > 0 ? round(($total / $totalIncome) * 100, 1) : 0;
+
                 return [
                     'name' => $name,
                     'total' => (float) $total,
@@ -502,6 +506,7 @@ class ReportController extends Controller
             $bySource = collect($groupTotals)
                 ->map(function ($total, $name) use ($totalIncome) {
                     $pct = $totalIncome > 0 ? round(($total / $totalIncome) * 100, 1) : 0;
+
                     return ['name' => $name, 'total' => (float) $total, 'percent' => $pct];
                 })
                 ->sortByDesc('total')
@@ -534,6 +539,7 @@ class ReportController extends Controller
                 ->get()
                 ->map(function ($row) use ($totalExpenses) {
                     $pct = $totalExpenses > 0 ? round(($row->total / $totalExpenses) * 100, 1) : 0;
+
                     return ['name' => $row->category->name ?? 'Uncategorized', 'total' => (float) $row->total, 'percent' => $pct];
                 })
                 ->sortByDesc('total')
@@ -782,7 +788,7 @@ class ReportController extends Controller
         }
 
         if ($search && trim($search) !== '') {
-            $query->where('name', 'like', '%' . trim($search) . '%');
+            $query->where('name', 'like', '%'.trim($search).'%');
         }
 
         $projects = $query->get();
@@ -818,6 +824,7 @@ class ReportController extends Controller
         $expense = Expense::where('wallet_id', $wallet->id)->where('expense_date', '<=', $asOf)->sum('amount');
         $in = Transfer::where('to_wallet_id', $wallet->id)->where('transfer_date', '<=', $asOf)->sum('amount');
         $out = Transfer::where('from_wallet_id', $wallet->id)->where('transfer_date', '<=', $asOf)->sum('amount');
+
         return $initial + $income - $expense + $in - $out;
     }
 
@@ -828,25 +835,25 @@ class ReportController extends Controller
     /**
      * Export the reports overview as PDF.
      */
-    public function exportOverviewPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    public function exportOverviewPdf(Request $request, Family $family): Response
     {
         $this->authorizeFamilyMember($family);
 
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
         $dateFrom = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
-        $dateTo   = $request->input('to',   now()->endOfMonth()->format('Y-m-d'));
-        $from     = Carbon::parse($dateFrom)->startOfDay();
-        $to       = Carbon::parse($dateTo)->endOfDay();
+        $dateTo = $request->input('to', now()->endOfMonth()->format('Y-m-d'));
+        $from = Carbon::parse($dateFrom)->startOfDay();
+        $to = Carbon::parse($dateTo)->endOfDay();
 
-        $totalIncome   = (float) Income::where('family_id', $family->id)->whereBetween('received_date', [$from, $to])->sum('amount');
+        $totalIncome = (float) Income::where('family_id', $family->id)->whereBetween('received_date', [$from, $to])->sum('amount');
         $totalExpenses = (float) Expense::where('family_id', $family->id)->whereBetween('expense_date', [$from, $to])->sum('amount');
-        $savings       = $totalIncome - $totalExpenses;
+        $savings = $totalIncome - $totalExpenses;
         $activeProjects = $family->projects()->where('status', 'active')->count();
 
-        $budgets         = Budget::where('family_id', $family->id)->where('status', 'active')->get();
-        $totalBudget     = (float) $budgets->sum('amount');
+        $budgets = Budget::where('family_id', $family->id)->where('status', 'active')->get();
+        $totalBudget = (float) $budgets->sum('amount');
         $totalBudgetUsed = 0.0;
-        $budgetRows      = [];
+        $budgetRows = [];
         foreach ($budgets as $budget) {
             $used = (float) Expense::where('budget_id', $budget->id)->whereBetween('expense_date', [$from, $to])->sum('amount');
             $totalBudgetUsed += $used;
@@ -856,88 +863,166 @@ class ReportController extends Controller
 
         $pdf = app('dompdf.wrapper');
         $pdf->loadView('families.reports.pdf.overview', [
-            'family'            => $family,
-            'currency'          => $currency,
-            'dateFrom'          => $dateFrom,
-            'dateTo'            => $dateTo,
-            'totalIncome'       => $totalIncome,
-            'totalExpenses'     => $totalExpenses,
-            'savings'           => $savings,
-            'activeProjects'    => $activeProjects,
-            'totalBudget'       => $totalBudget,
-            'totalBudgetUsed'   => $totalBudgetUsed,
+            'family' => $family,
+            'currency' => $currency,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'totalIncome' => $totalIncome,
+            'totalExpenses' => $totalExpenses,
+            'savings' => $savings,
+            'activeProjects' => $activeProjects,
+            'totalBudget' => $totalBudget,
+            'totalBudgetUsed' => $totalBudgetUsed,
             'budgetUsedPercent' => $budgetUsedPercent,
-            'budgetRows'        => $budgetRows,
-            'generatedAt'       => now()->format('Y-m-d H:i'),
+            'budgetRows' => $budgetRows,
+            'generatedAt' => now()->format('Y-m-d H:i'),
         ]);
         $pdf->setPaper('a4', 'portrait');
-        return $pdf->download('reports-overview-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+
+        return $pdf->download('reports-overview-'.$family->id.'-'.now()->format('Y-m-d').'.pdf');
     }
 
     /**
-     * Export cash flow report as PDF.
+     * Dispatch PDF export for Finance Reports tabs (cash-flow, income, expense, transfer, budget, savings).
      */
-    public function exportCashFlowPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    public function exportFinanceReportPdf(Request $request, Family $family): Response
+    {
+        $this->authorizeFamilyMember($family);
+
+        $report = $request->input('report', 'cash-flow');
+        $valid = ['cash-flow', 'income', 'expense', 'transfer', 'budget', 'savings'];
+        if (! in_array($report, $valid, true)) {
+            $report = 'cash-flow';
+        }
+
+        return match ($report) {
+            'cash-flow' => $this->exportCashFlowPdf($request, $family),
+            'budget' => $this->exportBudgetVsActualPdf($request, $family),
+            default => $this->exportFinanceTabPdf($request, $family, $report),
+        };
+    }
+
+    /**
+     * Export cash flow report as PDF (same period/wallet logic as the on-screen cash flow tab).
+     */
+    public function exportCashFlowPdf(Request $request, Family $family): Response
     {
         $this->authorizeFamilyMember($family);
 
         $currency = $family->currency_code ?? config('currencies.default', 'TZS');
-        $dateFrom = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
-        $dateTo   = $request->input('to',   now()->endOfMonth()->format('Y-m-d'));
-        $from     = Carbon::parse($dateFrom)->startOfDay();
-        $to       = Carbon::parse($dateTo)->endOfDay();
+        $dateFrom = $request->input('from', now()->subMonth()->format('Y-m-d'));
+        $dateTo = $request->input('to', now()->format('Y-m-d'));
+        $from = Carbon::parse($dateFrom)->startOfDay();
+        $to = Carbon::parse($dateTo)->endOfDay();
 
         $walletId = $request->input('wallet_id');
-        $walletQuery = fn ($q) => $walletId ? $q->where('wallet_id', $walletId) : $q->where('family_id', $family->id);
+        $wallets = $family->wallets()->orderBy('name')->get();
+        $wallet = $walletId ? $wallets->firstWhere('id', (int) $walletId) : null;
+        $walletIds = $wallet ? [$wallet->id] : $wallets->pluck('id')->toArray();
 
-        $totalIncome   = (float) $walletQuery(new Income())->whereBetween('received_date', [$from, $to])->sum('amount');
-        $totalExpenses = (float) $walletQuery(new Expense())->whereBetween('expense_date', [$from, $to])->sum('amount');
-        $netFlow       = $totalIncome - $totalExpenses;
+        $openingBalance = 0.0;
+        foreach ($wallets->whereIn('id', $walletIds) as $w) {
+            $openingBalance += $this->walletBalanceAsOf($w, $from->copy()->subDay());
+        }
 
-        $wallets = $family->wallets()->withSum('incomes', 'amount')->withSum('expenses', 'amount')
-            ->withSum('incomingTransfers', 'amount')->withSum('outgoingTransfers', 'amount')->get();
-        $wallets->each(function ($w) {
-            $w->balance = (float) ($w->initial_balance ?? 0) + (float) ($w->incomes_sum_amount ?? 0)
-                - (float) ($w->expenses_sum_amount ?? 0) + (float) ($w->incoming_transfers_sum_amount ?? 0)
-                - (float) ($w->outgoing_transfers_sum_amount ?? 0);
-        });
-        $openingBalance = 0.0; $closingBalance = (float) $wallets->sum('balance');
+        $totalIncome = (float) Income::where('family_id', $family->id)
+            ->whereIn('wallet_id', $walletIds)
+            ->whereBetween('received_date', [$from, $to])
+            ->sum('amount');
+        $totalExpenses = (float) Expense::where('family_id', $family->id)
+            ->whereIn('wallet_id', $walletIds)
+            ->whereBetween('expense_date', [$from, $to])
+            ->sum('amount');
+        $netFlow = $totalIncome - $totalExpenses;
+        $closingBalance = $openingBalance + $netFlow;
 
-        $transfers = Transfer::where('family_id', $family->id)->whereBetween('transfer_date', [$from, $to])
-            ->with(['fromWallet:id,name', 'toWallet:id,name'])->orderByDesc('transfer_date')->limit(100)->get();
-        $totalTransferred = (float) $transfers->sum('amount');
+        // Income by source (category group — matches Income tab)
+        $incomeQuery = Income::where('family_id', $family->id)
+            ->whereIn('wallet_id', $walletIds)
+            ->whereBetween('received_date', [$from, $to])
+            ->with('category:id,name');
+        $perCategory = (clone $incomeQuery)->select('category_id', DB::raw('SUM(amount) as total'))
+            ->groupBy('category_id')
+            ->get();
+        $groupTotals = [];
+        foreach ($perCategory as $row) {
+            $categoryName = $row->category->name ?? 'Uncategorized';
+            $parts = explode(' - ', $categoryName, 2);
+            $group = trim($parts[0]) !== '' ? trim($parts[0]) : 'Uncategorized';
+            if (! isset($groupTotals[$group])) {
+                $groupTotals[$group] = 0.0;
+            }
+            $groupTotals[$group] += (float) $row->total;
+        }
+        $bySource = collect($groupTotals)
+            ->map(function ($total, $name) use ($totalIncome) {
+                $pct = $totalIncome > 0 ? round(($total / $totalIncome) * 100, 1) : 0;
 
-        // Income by source
-        $incomeBySource = Income::where('family_id', $family->id)->whereBetween('received_date', [$from, $to])
-            ->select('source', DB::raw('SUM(amount) as total'))->groupBy('source')->get();
-        $bySource = $incomeBySource->map(fn ($r) => [
-            'name' => $r->source ?? 'Unknown', 'total' => (float) $r->total,
-            'percent' => $totalIncome > 0 ? round(($r->total / $totalIncome) * 100, 1) : 0,
-        ])->sortByDesc('total')->values();
+                return ['name' => $name, 'total' => (float) $total, 'percent' => $pct];
+            })
+            ->sortByDesc('total')
+            ->values();
 
         // Expenses by category
-        $expenseByCategory = Expense::where('family_id', $family->id)->whereBetween('expense_date', [$from, $to])
+        $expenseSum = (float) Expense::where('family_id', $family->id)
+            ->whereIn('wallet_id', $walletIds)
+            ->whereBetween('expense_date', [$from, $to])
+            ->sum('amount');
+        $byCategory = Expense::query()
             ->join('expense_categories', 'expenses.category_id', '=', 'expense_categories.id', 'left')
-            ->select('expense_categories.name as cat_name', DB::raw('SUM(expenses.amount) as total'))
-            ->groupBy('expense_categories.name')->get();
-        $byCategory = $expenseByCategory->map(fn ($r) => [
-            'name' => $r->cat_name ?? 'Uncategorised', 'total' => (float) $r->total,
-            'percent' => $totalExpenses > 0 ? round(($r->total / $totalExpenses) * 100, 1) : 0,
-        ])->sortByDesc('total')->values();
+            ->where('expenses.family_id', $family->id)
+            ->whereIn('expenses.wallet_id', $walletIds)
+            ->whereBetween('expenses.expense_date', [$from, $to])
+            ->select('expense_categories.id', 'expense_categories.name as cat_name', DB::raw('SUM(expenses.amount) as total'))
+            ->groupBy('expense_categories.id', 'expense_categories.name')
+            ->get()
+            ->map(function ($row) use ($expenseSum) {
+                $amt = (float) $row->total;
+                $pct = $expenseSum > 0 ? round(($amt / $expenseSum) * 100, 1) : 0;
 
-        // Budgets
+                return [
+                    'name' => $row->cat_name ?? 'Uncategorized',
+                    'total' => $amt,
+                    'percent' => $pct,
+                ];
+            })
+            ->sortByDesc('total')
+            ->values();
+
+        $transferQuery = Transfer::where('family_id', $family->id)
+            ->whereBetween('transfer_date', [$from, $to])
+            ->with(['fromWallet:id,name', 'toWallet:id,name']);
+        if ($walletId) {
+            $transferQuery->where(function ($q) use ($walletId) {
+                $q->where('from_wallet_id', $walletId)->orWhere('to_wallet_id', $walletId);
+            });
+        }
+        $transfers = $transferQuery->orderByDesc('transfer_date')->limit(100)->get();
+        $totalTransferred = (float) $transfers->sum('amount');
+
         $budgetRows = [];
         foreach (Budget::where('family_id', $family->id)->where('status', 'active')->get() as $budget) {
             $used = (float) Expense::where('budget_id', $budget->id)->whereBetween('expense_date', [$from, $to])->sum('amount');
-            $budgetRows[] = ['budget' => $budget, 'planned' => (float) $budget->amount, 'used' => $used, 'over' => $used > (float) $budget->amount, 'percent' => (float) $budget->amount > 0 ? round(($used / (float) $budget->amount) * 100, 1) : 0];
+            $planned = (float) $budget->amount;
+            $budgetRows[] = [
+                'budget' => $budget,
+                'planned' => $planned,
+                'used' => $used,
+                'over' => $used > $planned,
+                'percent' => $planned > 0 ? round(($used / $planned) * 100, 1) : 0,
+            ];
         }
 
-        // Savings
         $savingsRows = [];
         foreach (SavingsGoal::where('family_id', $family->id)->get() as $goal) {
             $saved = (float) $goal->contributions()->sum('amount');
             $target = (float) $goal->target_amount;
-            $savingsRows[] = ['goal' => $goal, 'target' => $target, 'saved' => $saved, 'percent' => $target > 0 ? round(($saved / $target) * 100, 1) : 0];
+            $savingsRows[] = [
+                'goal' => $goal,
+                'target' => $target,
+                'saved' => $saved,
+                'percent' => $target > 0 ? round(($saved / $target) * 100, 1) : 0,
+            ];
         }
 
         $pdf = app('dompdf.wrapper');
@@ -947,36 +1032,172 @@ class ReportController extends Controller
             'budgetRows', 'savingsRows'
         ) + ['generatedAt' => now()->format('Y-m-d H:i')]);
         $pdf->setPaper('a4', 'portrait');
-        return $pdf->download('cash-flow-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+
+        return $pdf->download('cash-flow-'.$family->id.'-'.now()->format('Y-m-d').'.pdf');
+    }
+
+    /**
+     * PDF for Finance Reports tabs: income, expenses, transfer, savings (aligned with on-screen finance view).
+     */
+    protected function exportFinanceTabPdf(Request $request, Family $family, string $tab): Response
+    {
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+        $dateFrom = $request->input('from', now()->subMonth()->format('Y-m-d'));
+        $dateTo = $request->input('to', now()->format('Y-m-d'));
+        $from = Carbon::parse($dateFrom)->startOfDay();
+        $to = Carbon::parse($dateTo)->endOfDay();
+
+        $walletId = $request->input('wallet_id');
+        $wallets = $family->wallets()->orderBy('name')->get();
+        $wallet = $walletId ? $wallets->firstWhere('id', (int) $walletId) : null;
+        $walletIds = $wallet ? [$wallet->id] : $wallets->pluck('id')->toArray();
+
+        $labels = [
+            'income' => __('Income report'),
+            'expense' => __('Expenses report'),
+            'transfer' => __('Transfer report'),
+            'savings' => __('Savings report'),
+        ];
+        $tabLabel = $labels[$tab] ?? $tab;
+
+        $totalIncome = null;
+        $bySource = collect();
+        $totalExpenses = null;
+        $byCategory = collect();
+        $transfers = collect();
+        $totalTransferred = 0.0;
+        $savingsRows = [];
+
+        if ($tab === 'income') {
+            $query = Income::where('family_id', $family->id)
+                ->whereIn('wallet_id', $walletIds)
+                ->whereBetween('received_date', [$from, $to])
+                ->with('category:id,name');
+            $totalIncome = (float) (clone $query)->sum('amount');
+            $perCategory = (clone $query)->select('category_id', DB::raw('SUM(amount) as total'))
+                ->groupBy('category_id')
+                ->get();
+            $groupTotals = [];
+            foreach ($perCategory as $row) {
+                $categoryName = $row->category->name ?? 'Uncategorized';
+                $parts = explode(' - ', $categoryName, 2);
+                $group = trim($parts[0]) !== '' ? trim($parts[0]) : 'Uncategorized';
+                if (! isset($groupTotals[$group])) {
+                    $groupTotals[$group] = 0.0;
+                }
+                $groupTotals[$group] += (float) $row->total;
+            }
+            $bySource = collect($groupTotals)
+                ->map(function ($total, $name) use ($totalIncome) {
+                    $pct = $totalIncome > 0 ? round(($total / $totalIncome) * 100, 1) : 0;
+
+                    return ['name' => $name, 'total' => (float) $total, 'percent' => $pct];
+                })
+                ->sortByDesc('total')
+                ->values();
+        }
+
+        if ($tab === 'expense') {
+            $query = Expense::where('family_id', $family->id)
+                ->whereIn('wallet_id', $walletIds)
+                ->whereBetween('expense_date', [$from, $to])
+                ->with('category:id,name');
+            $totalExpenses = (float) (clone $query)->sum('amount');
+            $byCategory = (clone $query)->select('category_id', DB::raw('SUM(amount) as total'))
+                ->groupBy('category_id')
+                ->get()
+                ->map(function ($row) use ($totalExpenses) {
+                    $pct = $totalExpenses > 0 ? round(($row->total / $totalExpenses) * 100, 1) : 0;
+
+                    return ['name' => $row->category->name ?? 'Uncategorized', 'total' => (float) $row->total, 'percent' => $pct];
+                })
+                ->sortByDesc('total')
+                ->values();
+        }
+
+        if ($tab === 'transfer') {
+            $transferQuery = Transfer::where('family_id', $family->id)
+                ->whereBetween('transfer_date', [$from, $to])
+                ->with(['fromWallet:id,name', 'toWallet:id,name']);
+            if ($walletId) {
+                $transferQuery->where(function ($q) use ($walletId) {
+                    $q->where('from_wallet_id', $walletId)->orWhere('to_wallet_id', $walletId);
+                });
+            }
+            $transfers = $transferQuery->orderByDesc('transfer_date')->limit(200)->get();
+            $totalTransferred = (float) $transfers->sum('amount');
+        }
+
+        if ($tab === 'savings') {
+            $goals = $family->savingsGoals()->with('wallet:id,name')->orderBy('name')->get();
+            foreach ($goals as $g) {
+                $target = (float) $g->target_amount;
+                $saved = (float) $g->saved_amount;
+                $pct = $target > 0 ? min(100, round(($saved / $target) * 100, 1)) : 0;
+                $savingsRows[] = [
+                    'goal' => $g,
+                    'target' => $target,
+                    'saved' => $saved,
+                    'percent' => $pct,
+                    'remaining' => $target - $saved,
+                ];
+            }
+        }
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('families.reports.pdf.finance-tab', [
+            'family' => $family,
+            'currency' => $currency,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'tab' => $tab,
+            'tabLabel' => $tabLabel,
+            'totalIncome' => $totalIncome,
+            'bySource' => $bySource,
+            'totalExpenses' => $totalExpenses,
+            'byCategory' => $byCategory,
+            'transfers' => $transfers,
+            'totalTransferred' => $totalTransferred,
+            'savingsRows' => $savingsRows,
+            'generatedAt' => now()->format('Y-m-d H:i'),
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download(Str::slug($tabLabel).'-'.$family->id.'-'.now()->format('Y-m-d').'.pdf');
     }
 
     /**
      * Export budget vs actual as PDF.
      */
-    public function exportBudgetVsActualPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    public function exportBudgetVsActualPdf(Request $request, Family $family): Response
     {
         $this->authorizeFamilyMember($family);
 
-        $currency    = $family->currency_code ?? config('currencies.default', 'TZS');
-        $dateFrom    = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
-        $dateTo      = $request->input('to',   now()->endOfMonth()->format('Y-m-d'));
-        $from        = Carbon::parse($dateFrom)->startOfDay();
-        $to          = Carbon::parse($dateTo)->endOfDay();
-        $filterType   = $request->input('type');
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+        $dateFrom = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->input('to', now()->endOfMonth()->format('Y-m-d'));
+        $from = Carbon::parse($dateFrom)->startOfDay();
+        $to = Carbon::parse($dateTo)->endOfDay();
+        $filterType = $request->input('type');
         $filterStatus = $request->input('status', 'active');
 
         $query = Budget::where('family_id', $family->id);
-        if ($filterType)   $query->where('type', $filterType);
-        if ($filterStatus) $query->where('status', $filterStatus);
+        if ($filterType) {
+            $query->where('type', $filterType);
+        }
+        if ($filterStatus) {
+            $query->where('status', $filterStatus);
+        }
         $budgets = $query->orderBy('name')->get();
 
-        $motherBudget     = $budgets->where('type', 'family')->first();
+        $motherBudget = $budgets->where('type', 'family')->first();
         $budgetRecurrences = ['monthly' => 'Monthly', 'weekly' => 'Weekly', 'quarterly' => 'Quarterly', 'annually' => 'Annually', 'one_time' => 'Single period'];
 
         $rows = $budgets->map(function ($budget) use ($from, $to) {
-            $used      = (float) Expense::where('budget_id', $budget->id)->whereBetween('expense_date', [$from, $to])->sum('amount');
-            $planned   = (float) $budget->amount;
+            $used = (float) Expense::where('budget_id', $budget->id)->whereBetween('expense_date', [$from, $to])->sum('amount');
+            $planned = (float) $budget->amount;
             $remaining = $planned - $used;
+
             return ['budget' => $budget, 'planned' => $planned, 'used' => $used, 'remaining' => $remaining, 'over' => $used > $planned];
         })->values()->all();
 
@@ -985,21 +1206,22 @@ class ReportController extends Controller
             'family', 'currency', 'dateFrom', 'dateTo', 'rows', 'motherBudget', 'budgetRecurrences'
         ) + ['generatedAt' => now()->format('Y-m-d H:i')]);
         $pdf->setPaper('a4', 'portrait');
-        return $pdf->download('budget-vs-actual-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+
+        return $pdf->download('budget-vs-actual-'.$family->id.'-'.now()->format('Y-m-d').'.pdf');
     }
 
     /**
      * Export project summary as PDF.
      */
-    public function exportProjectSummaryPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    public function exportProjectSummaryPdf(Request $request, Family $family): Response
     {
         $this->authorizeFamilyMember($family);
 
-        $currency       = $family->currency_code ?? config('currencies.default', 'TZS');
-        $projects       = $family->projects()->withSum('fundings', 'amount')->withSum('expenses', 'amount')->with('budget')->orderBy('name')->get();
-        $totalProjects  = $projects->count();
-        $counts         = $projects->countBy('status');
-        $activeCount    = (int) ($counts['active'] ?? 0);
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+        $projects = $family->projects()->withSum('fundings', 'amount')->withSum('expenses', 'amount')->with('budget')->orderBy('name')->get();
+        $totalProjects = $projects->count();
+        $counts = $projects->countBy('status');
+        $activeCount = (int) ($counts['active'] ?? 0);
         $completedCount = (int) ($counts['completed'] ?? 0);
 
         $pdf = app('dompdf.wrapper');
@@ -1007,22 +1229,27 @@ class ReportController extends Controller
             'family', 'currency', 'projects', 'totalProjects', 'activeCount', 'completedCount'
         ) + ['generatedAt' => now()->format('Y-m-d H:i')]);
         $pdf->setPaper('a4', 'portrait');
-        return $pdf->download('project-summary-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+
+        return $pdf->download('project-summary-'.$family->id.'-'.now()->format('Y-m-d').'.pdf');
     }
 
     /**
      * Export property report as PDF.
      */
-    public function exportPropertyPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    public function exportPropertyPdf(Request $request, Family $family): Response
     {
         $this->authorizeFamilyMember($family);
 
-        $currency    = $family->currency_code ?? config('currencies.default', 'TZS');
-        $filters     = $request->only(['category_id', 'status']);
-        $query       = Property::where('family_id', $family->id)->with('category');
-        if (! empty($filters['category_id'])) $query->where('category_id', $filters['category_id']);
-        if (! empty($filters['status']))      $query->where('status', $filters['status']);
-        $properties  = $query->orderBy('name')->get();
+        $currency = $family->currency_code ?? config('currencies.default', 'TZS');
+        $filters = $request->only(['category_id', 'status']);
+        $query = Property::where('family_id', $family->id)->with('category');
+        if (! empty($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+        $properties = $query->orderBy('name')->get();
         $propertyIds = $properties->pluck('id')->all();
 
         $latestValuations = PropertyValuation::whereIn('property_id', $propertyIds)
@@ -1038,6 +1265,7 @@ class ReportController extends Controller
             'family', 'currency', 'properties', 'latestValuations', 'latestDepreciations'
         ) + ['generatedAt' => now()->format('Y-m-d H:i')]);
         $pdf->setPaper('a4', 'landscape');
-        return $pdf->download('property-report-' . $family->id . '-' . now()->format('Y-m-d') . '.pdf');
+
+        return $pdf->download('property-report-'.$family->id.'-'.now()->format('Y-m-d').'.pdf');
     }
 }

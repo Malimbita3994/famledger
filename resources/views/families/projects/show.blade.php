@@ -34,10 +34,9 @@
 }
 </style>
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.projects.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.projects.index') }}">
         Back to projects
-    </a>
+    </x-fin-back-link>
 
     @if (session('success'))
         <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 flex items-center gap-3 text-green-800">
@@ -55,8 +54,8 @@
             </p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('families.projects.funding.create') }}?project_id={{ $project->id }}" class="kt-btn kt-btn-outline">Add funding</a>
-            <a href="{{ route('families.projects.edit', $project) }}" class="kt-btn kt-btn-outline">Edit</a>
+            <a href="{{ route('families.projects.funding.create') }}?project_id={{ $project->id }}" class="kt-btn kt-btn-primary">Add funding</a>
+            <a href="{{ route('families.projects.edit', $project) }}" class="kt-btn kt-btn-primary">Edit</a>
         </div>
     </div>
 

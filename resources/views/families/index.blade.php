@@ -123,7 +123,7 @@
         {{-- Families List --}}
             <div class="kt-card fin-pulse-kt-card kt-card-grid min-w-full">
                 <div class="kt-card-header flex-wrap gap-2">
-                    <h3 class="kt-card-title text-sm">Your Families</h3>
+                    <h3 class="kt-card-title text-sm">{{ auth()->user()->hasRole(['Super Admin', 'super-admin']) ? __('All families') : __('Your families') }}</h3>
                     <div class="flex flex-wrap gap-2 lg:gap-5">
                         <div class="flex items-center gap-2 families-view-toggle-wrapper hidden md:flex">
                             <span class="text-sm text-secondary-foreground">View:</span>
@@ -168,8 +168,10 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($families as $family)
+                                    @php $isMemberOfFamily = in_array($family->id, $memberFamilyIds ?? [], true); @endphp
                                     <tr class="hover:bg-muted/50 transition-colors">
                                         <td>
+                                            @if ($isMemberOfFamily)
                                             <a href="{{ route('families.show', $family) }}" class="flex items-center gap-3 hover:opacity-90 transition-opacity">
                                                 <span class="flex items-center justify-center rounded-full size-10 shrink-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">{{ strtoupper(substr($family->name, 0, 1)) }}</span>
                                                 <div class="flex flex-col min-w-0">
@@ -179,6 +181,14 @@
                                                     @endif
                                                 </div>
                                             </a>
+                                            @else
+                                            <div class="flex items-center gap-3">
+                                                <span class="flex items-center justify-center rounded-full size-10 shrink-0 bg-gradient-to-br from-slate-400 to-slate-600 text-white font-semibold text-sm">{{ strtoupper(substr($family->name, 0, 1)) }}</span>
+                                                <div class="flex flex-col min-w-0">
+                                                    <span class="text-sm font-semibold text-foreground truncate">{{ $family->name }}</span>
+                                                </div>
+                                            </div>
+                                            @endif
                                         </td>
                                         <td class="text-foreground font-medium">{{ $family->family_members_count }} {{ Str::plural('member', $family->family_members_count) }}</td>
                                         <td class="text-foreground font-medium">{{ $family->currency_code }}</td>
@@ -189,6 +199,7 @@
                                             </span>
                                         </td>
                                         <td class="text-center">
+                                            @if ($isMemberOfFamily)
                                             <div class="kt-menu flex-inline" data-kt-menu="true">
                                                 <div class="kt-menu-item" data-kt-menu-item-offset="0, 10px" data-kt-menu-item-placement="bottom-end" data-kt-menu-item-placement-rtl="bottom-start" data-kt-menu-item-toggle="dropdown" data-kt-menu-item-trigger="click">
                                                     <button class="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" type="button">
@@ -221,6 +232,9 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            @else
+                                            <span class="text-xs text-muted-foreground">—</span>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach
@@ -233,7 +247,9 @@
                     <div id="families_cards_view" class="families-view-panel md:hidden">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 families-grid">
                             @foreach ($families as $family)
+                            @php $isMemberOfFamily = in_array($family->id, $memberFamilyIds ?? [], true); @endphp
                             <div class="group families-grid-card rounded-2xl border border-border bg-background shadow-sm overflow-hidden relative min-h-[180px] flex flex-col">
+                                @if ($isMemberOfFamily)
                                 <div class="absolute top-4 right-4 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <a href="{{ route('families.edit', $family) }}" onclick="event.stopPropagation()" class="fin-pulse-btn-outline fin-pulse-btn-sm" title="Edit">
                                         Edit
@@ -246,9 +262,14 @@
                                         </button>
                                     </form>
                                 </div>
+                                @endif
+                                @if ($isMemberOfFamily)
                                 <a href="{{ route('families.show', $family) }}" class="block p-6 pr-14 flex flex-col flex-1 min-h-0">
+                                @else
+                                <div class="block p-6 flex flex-col flex-1 min-h-0">
+                                @endif
                                     <div class="flex items-center gap-3 mb-3">
-                                        <span class="flex items-center justify-center rounded-full size-12 shrink-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">{{ strtoupper(substr($family->name, 0, 1)) }}</span>
+                                        <span class="flex items-center justify-center rounded-full size-12 shrink-0 bg-gradient-to-br {{ $isMemberOfFamily ? 'from-blue-500 to-blue-600' : 'from-slate-400 to-slate-600' }} text-white font-semibold text-sm">{{ strtoupper(substr($family->name, 0, 1)) }}</span>
                                         <div class="flex-1 min-w-0">
                                             <h3 class="font-semibold text-foreground truncate">{{ $family->name }}</h3>
                                             <span class="kt-badge kt-badge-sm {{ $family->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline mt-1 w-fit">
@@ -256,7 +277,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    @if ($family->description)
+                                    @if ($isMemberOfFamily && $family->description)
                                         <p class="text-sm text-secondary-foreground line-clamp-2 mb-4">{{ $family->description }}</p>
                                     @endif
                                     <div class="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
@@ -269,7 +290,11 @@
                                             <span>{{ $family->currency_code }}</span>
                                         </div>
                                     </div>
+                                @if ($isMemberOfFamily)
                                 </a>
+                                @else
+                                </div>
+                                @endif
                             </div>
                             @endforeach
                         </div>

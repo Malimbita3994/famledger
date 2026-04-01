@@ -15,10 +15,7 @@
     </p>
    </div>
    <div class="flex items-center gap-2">
-    <a href="{{ route('settings.index') }}" class="kt-btn kt-btn-outline">
-     <i class="ki-filled ki-left text-base"></i>
-     <span>{{ __('Back to settings') }}</span>
-    </a>
+    <x-fin-back-link href="{{ route('settings.index') }}" class="!mb-0">{{ __('Back to settings') }}</x-fin-back-link>
    </div>
   </div>
  </div>
@@ -207,9 +204,7 @@
         </div>
 
         <div class="flex justify-end pt-2 gap-2">
-         <a href="{{ route('families.index') }}" class="kt-btn kt-btn-outline">
-          {{ __('Back to families') }}
-         </a>
+         <x-fin-back-link href="{{ route('families.index') }}" class="!mb-0">{{ __('Back to families') }}</x-fin-back-link>
          <button type="submit" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
           <i class="ki-filled ki-check"></i>
           <span>{{ __('Save changes') }}</span>
@@ -225,19 +220,9 @@
      <div class="kt-card">
       <div class="kt-card-content py-7.5 px-5 flex flex-col gap-3">
        <div class="flex items-center gap-3">
-        <div class="relative size-[42px] shrink-0">
-         <svg class="w-full h-full text-primary" viewBox="0 0 44 48" xmlns="http://www.w3.org/2000/svg">
-          <path
-           d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506 18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937 39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z"
-           fill="none"
-           stroke="currentColor"
-           stroke-opacity="0.15"
-          />
-         </svg>
-         <div class="absolute inset-0 flex items-center justify-center">
-          <i class="ki-filled ki-family text-xl text-primary"></i>
-         </div>
-        </div>
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary" aria-hidden="true">
+         <i class="ki-filled ki-family text-xl leading-none"></i>
+        </span>
         <div class="flex flex-col gap-0.5">
          <span class="text-sm font-semibold text-mono">
           {{ __('Family overview') }}

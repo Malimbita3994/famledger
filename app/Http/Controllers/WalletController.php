@@ -16,6 +16,8 @@ class WalletController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
+        $family->ensureDefaultMainWallet(auth()->id());
+
         $wallets = $family->wallets()->with('creator:id,name')
             ->with('dedicatedProject:id,name,wallet_id')
             ->withSum('incomes', 'amount')

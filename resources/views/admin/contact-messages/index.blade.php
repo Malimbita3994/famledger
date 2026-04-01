@@ -303,10 +303,7 @@
                 </div>
             </div>
             <div class="shrink-0 ms-auto">
-                <a href="{{ route('admin.dashboard') }}" class="admin-pulse-btn-outline inline-flex">
-                    <i class="ki-filled ki-left text-base"></i>
-                    {{ __('Back to admin') }}
-                </a>
+                <x-fin-back-link href="{{ route('admin.dashboard') }}" class="!mb-0">{{ __('Back to admin') }}</x-fin-back-link>
             </div>
         </div>
     </div>

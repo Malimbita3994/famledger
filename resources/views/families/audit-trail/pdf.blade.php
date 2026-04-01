@@ -17,6 +17,7 @@
     </style>
 </head>
 <body>
+    @include('partials.pdf-brand-header')
     <h1>Audit Trail – {{ $family->name }}</h1>
     <p class="meta">Generated at {{ $generatedAt }} · {{ $logs->count() }} entries</p>
 

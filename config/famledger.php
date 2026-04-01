@@ -45,4 +45,18 @@ return [
 
     'allow_negative_wallet_balance' => (bool) env('FAMLEDGER_ALLOW_NEGATIVE_WALLET_BALANCE', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Default password for newly invited family members
+    |--------------------------------------------------------------------------
+    |
+    | When adding a member by email and that email has no user account yet,
+    | a user is created with this plain-text password (then hashed). The same
+    | value is emailed in MemberCredentialsMail (web). Override in .env for
+    | each environment; use a strong secret in production.
+    |
+    */
+
+    'default_new_member_password' => env('FAMLEDGER_DEFAULT_NEW_MEMBER_PASSWORD', 'FamLedgerMember123!'),
+
 ];

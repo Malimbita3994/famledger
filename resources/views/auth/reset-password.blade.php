@@ -52,7 +52,7 @@
         </div>
 
         <button type="submit" class="kt-btn kt-btn-primary flex justify-center items-center gap-2 grow"
-                x-bind:disabled="loading">
+                x-bind:aria-busy="loading">
             <span x-show="!loading">{{ __('Reset Password') }}</span>
             <div x-show="loading" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
         </button>

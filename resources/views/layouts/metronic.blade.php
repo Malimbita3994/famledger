@@ -39,8 +39,12 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <link href="{{ asset('css/famledger-choice-chips.css') }}" rel="stylesheet"/>
   <link href="{{ asset('css/famledger-page-toolbar.css') }}" rel="stylesheet"/>
   <link href="{{ asset('css/famledger-pulse-buttons.css') }}" rel="stylesheet"/>
+  <link href="{{ asset('css/famledger-kt-btn-crud.css') }}" rel="stylesheet"/>
+  <link href="{{ asset('css/famledger-back-button.css') }}" rel="stylesheet"/>
   <link href="{{ asset('css/famledger-form-grids.css') }}" rel="stylesheet"/>
   <link href="{{ asset('css/famledger-pulse-stat-card.css') }}" rel="stylesheet"/>
+  <link href="{{ asset('css/famledger-sidebar-hover.css') }}" rel="stylesheet"/>
+  <link href="{{ asset('css/famledger-accent-themes.css') }}" rel="stylesheet"/>
   @include('partials.famledger-pulse-financial-styles')
   @stack('styles')
   <style>
@@ -55,6 +59,17 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      height: 2.5rem;
      max-height: 2.5rem;
     }
+   }
+
+   /* Sidebar header: logo + wordmark + divider (not “floating” logo) */
+   #sidebar_header .fl-sidebar-brand {
+    border-radius: 0.5rem;
+   }
+   #sidebar_header .fl-sidebar-brand:hover {
+    background-color: color-mix(in oklab, var(--foreground) 4%, transparent);
+   }
+   .dark #sidebar_header .fl-sidebar-brand:hover {
+    background-color: color-mix(in oklab, var(--foreground) 6%, transparent);
    }
   </style>
   <style>
@@ -103,8 +118,9 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     color: inherit !important;
    }
   </style>
+  <link href="{{ asset('css/famledger-sidebar-icons.css') }}" rel="stylesheet"/>
  </head>
- <body class="antialiased flex flex-col min-h-screen w-full max-w-full min-w-0 text-base text-foreground bg-background [--header-height:60px] [--sidebar-width:270px] overflow-x-hidden bg-zinc-950 dark:bg-background!" id="app-body" data-sidebar-collapsed="false">
+ <body class="antialiased flex flex-col min-h-screen w-full max-w-full min-w-0 text-base text-foreground bg-background [--header-height:60px] overflow-x-hidden bg-zinc-950 dark:bg-background!" id="app-body" data-sidebar-collapsed="true">
   <!-- Global page loader (hidden on window load) -->
   <div id="global-page-loader" aria-hidden="true">
    <div class="global-loader-spinner" role="presentation"></div>
@@ -290,13 +306,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     height: 100% !important;
    }
 
-   body[data-sidebar-collapsed="true"] { --sidebar-width: 72px; }
-   body[data-sidebar-collapsed="true"] #sidebar .kt-menu-title,
-   body[data-sidebar-collapsed="true"] #sidebar .kt-menu-arrow,
-   body[data-sidebar-collapsed="true"] #sidebar h3,
-   body[data-sidebar-collapsed="true"] #sidebar .kt-menu-label .text-lg { display: none !important; }
-   body[data-sidebar-collapsed="true"] #sidebar .kt-menu-link { justify-content: center; padding-inline: 0.5rem; }
-   body[data-sidebar-collapsed="true"] #sidebar #sidebar_footer .cursor-pointer span:not(.size-9) { display: none; }
+   /* Sidebar rail + hover-expand: css/famledger-sidebar-hover.css */
 
    /*
     Horizontal overflow: flex items default to min-width:auto, so wide tables/charts can force the whole page wider than the viewport.
@@ -492,6 +502,15 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
 
 				document.documentElement.classList.add(themeMode);
 			}
+   /* Accent (dynamic primary): apply before paint to avoid flash */
+   (function () {
+    try {
+     var a = localStorage.getItem('famledger-accent') || 'blue';
+     if (/^(blue|teal|emerald|violet|amber)$/.test(a)) {
+      document.documentElement.setAttribute('data-fl-accent', a);
+     }
+    } catch (e) {}
+   })();
   </script>
   <!-- End of Theme Mode -->
   <!-- Page -->
@@ -553,24 +572,40 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    <!-- Wrapper -->
    <div class="flex flex-col lg:flex-row grow min-h-0 min-w-0 w-full max-w-full pt-(--header-height) lg:pt-0">
     <!-- Sidebar -->
-    <div class="flex-col fixed top-0 bottom-0 z-20 hidden lg:flex items-stretch shrink-0 w-(--sidebar-width) dark [--kt-drawer-enable:true] lg:[--kt-drawer-enable:false]" data-kt-drawer="true" data-kt-drawer-class="kt-drawer kt-drawer-start flex top-0 bottom-0" id="sidebar">
-     <!-- Sidebar Header -->
-     <div class="flex flex-col gap-2.5" id="sidebar_header">
-      <div class="flex flex-col items-start px-3.5 pt-4 pb-3">
-       <a href="{{ auth()->user() && auth()->user()->can('access_admin_panel') ? route('admin.dashboard') : route('dashboard') }}">
-        <img class="app-logo" src="{{ asset('images/logo.png') }}" alt="FamLedger logo"/>
-       </a>
+    {{-- Width: famledger-sidebar-hover.css only (avoids w-(--sidebar-width) fighting hover 270px) --}}
+    <div class="flex-col fixed top-0 bottom-0 z-20 hidden lg:flex items-stretch shrink-0 dark [--kt-drawer-enable:true] lg:[--kt-drawer-enable:false] famledger-sidebar-hover-rail" data-kt-drawer="true" data-kt-drawer-class="kt-drawer kt-drawer-start flex top-0 bottom-0" id="sidebar">
+     <!-- Sidebar Header: brand strip + divider + nav label -->
+     <div class="flex flex-col shrink-0 border-b border-border/80 bg-background" id="sidebar_header">
+      <a
+       href="{{ auth()->user() && auth()->user()->can('access_admin_panel') ? route('admin.dashboard') : route('dashboard') }}"
+       class="fl-sidebar-brand flex items-center gap-2.5 px-3.5 pt-4 pb-3 min-w-0 mx-1.5 mt-1.5"
+      >
+       <img
+        class="app-logo shrink-0 select-none"
+        src="{{ asset('images/logo.png') }}"
+        alt=""
+        width="40"
+        height="40"
+       />
+       <span class="fl-sidebar-brand-text text-[1.05rem] font-semibold text-foreground tracking-tight leading-tight truncate">
+        {{ __('FamLedger') }}
+       </span>
+      </a>
+      <div class="fl-sidebar-header-divider-wrap px-3.5 pt-1.5 pb-3.5" aria-hidden="true">
+       <div class="h-px w-full bg-border"></div>
+      </div>
+      <div class="px-3.5 pb-2.5 pt-0">
+       <h3 class="text-2xs font-semibold uppercase tracking-widest text-muted-foreground">
+        {{ __('Navigation') }}
+       </h3>
       </div>
      </div>
      <!-- End of Sidebar Header -->
      <!-- Sidebar menu -->
      <div class="flex items-stretch grow shrink-0 justify-center my-5" id="sidebar_menu">
       <div class="kt-scrollable-y-auto grow" data-kt-scrollable="true" data-kt-scrollable-dependencies="#sidebar_header, #sidebar_footer" data-kt-scrollable-height="auto" data-kt-scrollable-offset="0px" data-kt-scrollable-wrappers="#sidebar_menu">
-      <!-- Primary Menu -->
+      <!-- Primary Menu (legacy / hidden Metronic demo tree) -->
       <div class="mb-5">
-       <h3 class="text-sm text-muted-foreground uppercase ps-5 inline-block mb-3">
-        Navigation
-       </h3>
        <div class="kt-menu flex flex-col w-full gap-1.5 px-3.5 hidden" data-kt-menu="true" data-kt-menu-accordion-expand-all="false" id="sidebar_primary_menu">
          <div class="kt-menu-item">
           <a class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 !menu-item-here:bg-transparent" href="{{ route('dashboard') }}">
@@ -609,14 +644,6 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
               <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Members</span>
              </a>
             </div>
-            @if(!empty($canManageInvites))
-            <div class="kt-menu-item {{ request()->routeIs('families.invites.*') ? 'kt-menu-item-active' : '' }}">
-             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.invites.index') }}">
-              <span class="kt-menu-icon text-base"><i class="ki-filled ki-sms"></i></span>
-              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Invitations</span>
-             </a>
-            </div>
-            @endif
             <div class="px-2.5 pt-3 pb-1">
              <span class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Finances</span>
             </div>
@@ -1507,12 +1534,51 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         </div>
        </div>
        <!-- Simple FamLedger Menu (collapsible groups) -->
-       <div class="mt-4">
+       <div class="mt-2">
+        @php
+         $flFamilyAccordionOpen = isset($currentFamily) && $currentFamily && (
+          request()->routeIs('families.index') ||
+          request()->routeIs('families.profile') ||
+          request()->routeIs('families.overview') ||
+          request()->routeIs('families.show') ||
+          request()->routeIs('families.timeline.*') ||
+          request()->routeIs('families.tree.*') ||
+          request()->routeIs('families.goals.*') ||
+          request()->routeIs('families.members.*')
+         );
+         $flAccountsAccordionOpen = isset($currentFamily) && $currentFamily && (
+          request()->routeIs('families.wallets.*') ||
+          request()->routeIs('families.transactions.*') ||
+          request()->routeIs('families.transfers.*') ||
+          request()->routeIs('families.budgets.*') ||
+          request()->routeIs('families.liabilities.*') ||
+          request()->routeIs('families.accounts.savings') ||
+          request()->routeIs('families.accounts.reconciliation')
+         );
+         $flProjectsAccordionOpen = isset($currentFamily) && $currentFamily && (
+          request()->routeIs('families.projects.*') ||
+          request()->routeIs('families.accounts.projects-funding') ||
+          request()->routeIs('families.projects.funding*')
+         );
+         $flAdminAccordionOpen = auth()->user()?->can('access_admin_panel') && (
+          request()->routeIs('admin.users.*') ||
+          request()->routeIs('admin.roles.*') ||
+          request()->routeIs('admin.permissions.*') ||
+          request()->routeIs('admin.contact-messages.*')
+         );
+         $flReportsAccordionOpen = isset($currentFamily) && $currentFamily && (
+          request()->routeIs('families.wealth.*') ||
+          request()->routeIs('families.reports.*') ||
+          (request()->routeIs('admin.reports.*') && auth()->user()?->can('access_admin_panel'))
+         );
+         $flPropertyAccordionOpen = isset($currentFamily) && $currentFamily && !empty($canManageProperty ?? null)
+          && request()->routeIs('families.properties.*');
+        @endphp
         <div class="kt-menu flex flex-col w-full gap-1.5 px-3.5" data-kt-menu="true" data-kt-menu-accordion-expand-all="false" id="sidebar_famledger_menu">
          <!-- Dashboard (super admin goes to admin dashboard) -->
-         <div class="kt-menu-item {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'kt-menu-item-active' : '' }}">
+         <div class="kt-menu-item {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'kt-menu-item-active' : '' }}" data-fl-nav="dashboard">
           @can('access_admin_panel')
-          <a href="{{ route('admin.dashboard') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 {{ request()->routeIs('admin.dashboard') ? 'bg-accent/60' : '' }}">
+          <a href="{{ route('admin.dashboard') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 {{ request()->routeIs('admin.dashboard') ? 'bg-accent/60 fl-sidebar-route-active' : '' }}">
            <span class="kt-menu-icon items-start text-lg text-secondary-foreground kt-menu-item-active:text-foreground">
             <i class="ki-filled ki-home-3"></i>
            </span>
@@ -1521,7 +1587,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            </span>
           </a>
           @else
-          <a href="{{ route('dashboard') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 {{ request()->routeIs('dashboard') ? 'bg-accent/60' : '' }}">
+          <a href="{{ route('dashboard') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 {{ request()->routeIs('dashboard') ? 'bg-accent/60 fl-sidebar-route-active' : '' }}">
            <span class="kt-menu-icon items-start text-lg text-secondary-foreground kt-menu-item-active:text-foreground">
             <i class="ki-filled ki-home-3"></i>
            </span>
@@ -1531,9 +1597,9 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           </a>
           @endcan
          </div>
-        <!-- Family: parent + children (Family overview, Members, Invitations) -->
+        <!-- Family: parent + children (profile, timeline, tree, vision, members) -->
         @if(isset($currentFamily) && $currentFamily)
-        <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        <div class="kt-menu-item {{ $flFamilyAccordionOpen ? 'show here' : '' }}" data-fl-nav="family" @if($flFamilyAccordionOpen) data-fl-persist-open="1" @endif data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
          <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
           <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
            <i class="ki-filled ki-profile-circle"></i>
@@ -1545,10 +1611,36 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           </span>
          </div>
          <div class="kt-menu-accordion gap-px ps-2.5">
+          @if(auth()->user() && auth()->user()->hasRole(['Super Admin', 'super-admin']))
           <div class="kt-menu-item">
            <a href="{{ route('families.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.index') ? 'bg-secondary' : '' }}">
-            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-home-3"></i></span>
-            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Overview</span>
+            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-element-11"></i></span>
+            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">{{ __('All families') }}</span>
+           </a>
+          </div>
+          @endif
+          <div class="kt-menu-item">
+           <a href="{{ route('families.profile') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.profile') || request()->routeIs('families.overview') || request()->routeIs('families.show') ? 'bg-secondary' : '' }}">
+            <span class="kt-menu-icon items-start text-lg text-primary shrink-0"><i class="ki-filled ki-home-3"></i></span>
+            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Family Profile</span>
+           </a>
+          </div>
+          <div class="kt-menu-item">
+           <a href="{{ route('families.timeline.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.timeline.*') ? 'bg-secondary' : '' }}">
+            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-watch"></i></span>
+            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Timeline</span>
+           </a>
+          </div>
+          <div class="kt-menu-item">
+           <a href="{{ route('families.tree.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.tree.*') ? 'bg-secondary' : '' }}">
+            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-route"></i></span>
+            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Family Tree</span>
+           </a>
+          </div>
+          <div class="kt-menu-item">
+           <a href="{{ route('families.goals.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.goals.*') ? 'bg-secondary' : '' }}">
+            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-compass"></i></span>
+            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Vision Board</span>
            </a>
           </div>
           <div class="kt-menu-item">
@@ -1557,19 +1649,11 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Members</span>
            </a>
           </div>
-          @if($canManageInvites)
-          <div class="kt-menu-item">
-           <a href="{{ route('families.invites.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.invites.*') ? 'bg-secondary' : '' }}">
-            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-message-text"></i></span>
-            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Invitations</span>
-           </a>
-          </div>
-          @endif
          </div>
         </div>
         @else
-        <div class="kt-menu-item {{ request()->routeIs('families.*') && !request()->routeIs('families.accounts.*') ? 'kt-menu-item-active' : '' }}">
-         <a href="{{ route('families.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 {{ request()->routeIs('families.index') ? 'bg-accent/60' : '' }}">
+        <div class="kt-menu-item {{ request()->routeIs('families.*') && !request()->routeIs('families.accounts.*') ? 'kt-menu-item-active' : '' }}" data-fl-nav="families">
+         <a href="{{ route('families.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 {{ request()->routeIs('families.index') ? 'bg-accent/60 fl-sidebar-route-active' : '' }}">
           <span class="kt-menu-icon items-start text-lg text-secondary-foreground">
            <i class="ki-filled ki-profile-circle"></i>
           </span>
@@ -1579,7 +1663,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         @endif
         <!-- Accounts (Family financial accounts) -->
         @if(isset($currentFamily) && $currentFamily)
-         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+         <div class="kt-menu-item {{ $flAccountsAccordionOpen ? 'show here' : '' }}" data-fl-nav="accounts" @if($flAccountsAccordionOpen) data-fl-persist-open="1" @endif data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-wallet"></i>
@@ -1592,43 +1676,43 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           </div>
           <div class="kt-menu-accordion gap-px ps-2.5">
            <div class="kt-menu-item">
-            <a href="{{ route('families.wallets.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
+            <a href="{{ route('families.wallets.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.wallets.*') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-wallet"></i></span>
              <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Wallets</span>
             </a>
            </div>
            <div class="kt-menu-item">
-           <a href="{{ route('families.transactions.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
+           <a href="{{ route('families.transactions.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.transactions.*') ? 'bg-secondary' : '' }}">
             <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-arrows-loop"></i></span>
             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Transactions</span>
            </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.transfers.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
+            <a href="{{ route('families.transfers.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.transfers.*') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-arrow-right-left"></i></span>
              <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Transfers</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.budgets.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
+            <a href="{{ route('families.budgets.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.budgets.*') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-chart-line"></i></span>
              <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Budgets</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.accounts.savings') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
+            <a href="{{ route('families.accounts.savings') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.accounts.savings') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-dollar"></i></span>
              <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Savings</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.liabilities.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
+            <a href="{{ route('families.liabilities.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.liabilities.*') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-bank"></i></span>
              <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Liabilities</span>
             </a>
            </div>
            <div class="kt-menu-item">
-            <a href="{{ route('families.accounts.reconciliation') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary">
+            <a href="{{ route('families.accounts.reconciliation') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.accounts.reconciliation') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-check-circle"></i></span>
              <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Reconciliation</span>
             </a>
@@ -1638,7 +1722,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          @endif
          @if(isset($currentFamily) && $currentFamily)
          <!-- Projects -->
-         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+         <div class="kt-menu-item {{ $flProjectsAccordionOpen ? 'show here' : '' }}" data-fl-nav="projects" @if($flProjectsAccordionOpen) data-fl-persist-open="1" @endif data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-briefcase"></i>
@@ -1685,7 +1769,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         @endif
         @can('access_admin_panel')
         <!-- Administration (platform-level; visible only to super administrators) -->
-        <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        <div class="kt-menu-item {{ $flAdminAccordionOpen ? 'show here' : '' }}" data-fl-nav="admin" @if($flAdminAccordionOpen) data-fl-persist-open="1" @endif data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-setting-2"></i>
@@ -1728,7 +1812,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         @endcan
          <!-- Reports -->
          @if(isset($currentFamily) && $currentFamily)
-         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+         <div class="kt-menu-item {{ $flReportsAccordionOpen ? 'show here' : '' }}" data-fl-nav="reports" @if($flReportsAccordionOpen) data-fl-persist-open="1" @endif data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-chart-line"></i></span>
            <span class="kt-menu-title text-sm text-foreground font-medium">Reports</span>
@@ -1820,7 +1904,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          @if(isset($currentFamily) && $currentFamily)
          <!-- Property -->
          @if(!empty($canManageProperty))
-         <div class="kt-menu-item" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+         <div class="kt-menu-item {{ $flPropertyAccordionOpen ? 'show here' : '' }}" data-fl-nav="property" @if($flPropertyAccordionOpen) data-fl-persist-open="1" @endif data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-home-3"></i>
@@ -1879,8 +1963,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          @endif
          @endif
          <!-- Settings (single entry that opens settings overview) -->
-         <div class="kt-menu-item">
-          <a href="{{ route('settings.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent kt-menu-link-hover:bg-secondary {{ request()->routeIs('settings.index') ? 'bg-secondary' : '' }}">
+         <div class="kt-menu-item {{ request()->routeIs('settings.*') ? 'kt-menu-item-active' : '' }}" data-fl-nav="settings">
+          <a href="{{ route('settings.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent kt-menu-link-hover:bg-secondary {{ request()->routeIs('settings.*') ? 'bg-secondary' : '' }}">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-setting-2"></i>
            </span>
@@ -1891,7 +1975,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          </div>
          @if(isset($currentFamily) && $currentFamily && !empty($canViewFamilyAuditTrail))
          <!-- Audit trail (bottom of sidebar; Owner & Co-owner only) -->
-         <div class="kt-menu-item">
+         <div class="kt-menu-item" data-fl-nav="audit">
           <a href="{{ route('families.audit-trail.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.audit-trail.*') ? 'bg-secondary' : '' }}">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-notification-status"></i>
@@ -1946,8 +2030,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        <!-- Secondary Menu -->
       </div>
      </div>
-     <!-- End of Sidebar kt-menu-->
-     <!-- Footer -->
+    <!-- End of Sidebar kt-menu-->
+    <!-- Footer -->
      <div class="flex flex-center justify-between shrink-0 ps-4 pe-3.5 mb-3.5" id="sidebar_footer">
       <!-- User -->
       @php
@@ -2022,6 +2106,10 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
       </div>
       <!-- End of User -->
       <div class="flex items-center gap-1.5">
+       <button class="kt-btn kt-btn-ghost kt-btn-icon size-8 hover:bg-background hover:[&_i]:text-primary" type="button" id="theme_panel_toggle" title="{{ __('Theme') }}" aria-label="{{ __('Theme') }}">
+        <i class="ki-filled ki-color-swatch text-lg">
+        </i>
+       </button>
        <!-- Notifications -->
        <button class="kt-btn kt-btn-ghost kt-btn-icon size-8 hover:bg-background hover:[&_i]:text-primary" data-kt-drawer-toggle="#notifications_drawer">
         <i class="ki-filled ki-notification-status text-lg">
@@ -2084,15 +2172,6 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
               <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Members</span>
              </a>
             </div>
-            {{-- Invitations --}}
-            @if(!empty($canManageInvites))
-            <div class="kt-menu-item {{ request()->routeIs('families.invites.*') ? 'kt-menu-item-active' : '' }}">
-             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.invites.index') }}">
-              <span class="kt-menu-icon text-base"><i class="ki-filled ki-sms"></i></span>
-              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Invitations</span>
-             </a>
-            </div>
-            @endif
             {{-- Finances divider --}}
             <div class="px-2.5 pt-3 pb-1">
              <span class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Finances</span>
@@ -3396,6 +3475,38 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      <!-- End of Footer -->
     </div>
     <!-- End of Sidebar -->
+    <div id="theme_panel_backdrop" class="fl-theme-panel-backdrop hidden" aria-hidden="true"></div>
+    <aside id="theme_panel" class="fl-theme-panel" aria-hidden="true">
+     <div class="fl-theme-panel-header">
+      <div>
+       <p class="text-xs text-muted-foreground uppercase tracking-wide">{{ __('Adaptive UI') }}</p>
+       <h3 class="text-sm font-semibold text-foreground">{{ __('Theme selection') }}</h3>
+      </div>
+      <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" id="theme_panel_close" aria-label="{{ __('Close') }}">
+       <i class="ki-filled ki-cross"></i>
+      </button>
+     </div>
+     <div class="fl-theme-panel-body">
+      <section class="space-y-2">
+       <p class="text-xs text-muted-foreground uppercase tracking-wide">{{ __('Mode') }}</p>
+       <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label="{{ __('Theme mode') }}">
+        <button type="button" class="fl-theme-mode-btn kt-btn kt-btn-sm kt-btn-outline justify-center" data-fl-theme-mode="light">{{ __('Light') }}</button>
+        <button type="button" class="fl-theme-mode-btn kt-btn kt-btn-sm kt-btn-outline justify-center" data-fl-theme-mode="dark">{{ __('Dark') }}</button>
+        <button type="button" class="fl-theme-mode-btn kt-btn kt-btn-sm kt-btn-outline justify-center" data-fl-theme-mode="system">{{ __('System') }}</button>
+       </div>
+      </section>
+      <section class="space-y-2 mt-5">
+       <p class="text-xs text-muted-foreground uppercase tracking-wide">{{ __('Accent') }}</p>
+       <div class="fl-accent-swatches flex flex-wrap gap-2" role="radiogroup" aria-label="{{ __('Interface accent color') }}">
+        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="blue" style="background-color:var(--color-blue-500)" title="{{ __('Blue') }}" aria-label="{{ __('Blue') }}" aria-pressed="false"></button>
+        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="teal" style="background-color:var(--color-teal-600)" title="{{ __('Teal') }}" aria-label="{{ __('Teal') }}" aria-pressed="false"></button>
+        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="emerald" style="background-color:var(--color-green-500)" title="{{ __('Emerald') }}" aria-label="{{ __('Emerald') }}" aria-pressed="false"></button>
+        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="violet" style="background-color:var(--color-violet-600)" title="{{ __('Violet') }}" aria-label="{{ __('Violet') }}" aria-pressed="false"></button>
+        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="amber" style="background-color:#d97706" title="{{ __('Amber') }}" aria-label="{{ __('Amber') }}" aria-pressed="false"></button>
+       </div>
+      </section>
+     </div>
+    </aside>
     <!-- Main -->
     <div id="famledger_main_column" class="flex flex-col grow min-h-0 min-w-0 basis-0 w-full max-w-full overflow-hidden lg:rounded-l-xl bg-background border border-input lg:ms-(--sidebar-width)">
      <!-- Top nav bar: active page label (left), shrink sidebar, user profile (right) -->
@@ -4876,36 +4987,231 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
       }
     })();
   </script>
-  <!-- Sidebar shrink toggle -->
+  <!-- Sidebar: rail + hover expand (delay on mouseleave) + toggle pin -->
   <script>
    (function () {
     var KEY = 'famledger-sidebar-collapsed';
+    var HOVER_LEAVE_MS = 200;
     var body = document.getElementById('app-body');
+    var sidebar = document.getElementById('sidebar');
     var btn = document.getElementById('sidebar_toggle');
     if (!body || !btn) return;
+
+    var leaveTimer = null;
+
+    function clearHoverExpand() {
+     if (leaveTimer) {
+      clearTimeout(leaveTimer);
+      leaveTimer = null;
+     }
+     body.removeAttribute('data-sidebar-hover-rail-open');
+    }
+
     function applyState(collapsed) {
      body.setAttribute('data-sidebar-collapsed', collapsed ? 'true' : 'false');
+     clearHoverExpand();
      try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch (e) {}
      var expandIcon = btn.querySelector('.sidebar-expand-icon');
      var collapseIcon = btn.querySelector('.sidebar-collapse-icon');
      if (expandIcon) expandIcon.classList.toggle('hidden', collapsed);
      if (collapseIcon) collapseIcon.classList.toggle('hidden', !collapsed);
-     btn.setAttribute('title', collapsed ? 'Expand sidebar' : 'Shrink sidebar');
-     btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Shrink sidebar');
+     btn.setAttribute('title', collapsed ? 'Pin sidebar open' : 'Use slim rail');
+     btn.setAttribute('aria-label', collapsed ? 'Pin sidebar open' : 'Use slim rail');
     }
+
+    function onSidebarEnter() {
+     if (!sidebar || body.getAttribute('data-sidebar-collapsed') !== 'true') return;
+     if (leaveTimer) {
+      clearTimeout(leaveTimer);
+      leaveTimer = null;
+     }
+     /* Drives --sidebar-width on body so main column + top bar shift with sidebar */
+     body.setAttribute('data-sidebar-hover-rail-open', 'true');
+    }
+
+    function onSidebarLeave() {
+     if (!sidebar || body.getAttribute('data-sidebar-collapsed') !== 'true') return;
+     if (leaveTimer) clearTimeout(leaveTimer);
+     leaveTimer = setTimeout(function () {
+      body.removeAttribute('data-sidebar-hover-rail-open');
+      leaveTimer = null;
+     }, HOVER_LEAVE_MS);
+    }
+
+    if (sidebar) {
+     sidebar.addEventListener('mouseenter', onSidebarEnter);
+     sidebar.addEventListener('mouseleave', onSidebarLeave);
+    }
+
+    window.addEventListener('resize', function () {
+     if (window.matchMedia('(max-width: 1023px)').matches) clearHoverExpand();
+    });
+
     try {
      var saved = localStorage.getItem(KEY);
-     if (saved === '1') applyState(true);
+     if (saved === null) applyState(true);
+     else if (saved === '1') applyState(true);
      else applyState(false);
-    } catch (e) { applyState(false); }
+    } catch (e) {
+     applyState(true);
+    }
+
     btn.addEventListener('click', function () {
      applyState(body.getAttribute('data-sidebar-collapsed') === 'true' ? false : true);
     });
    })();
   </script>
+  <!-- FamLedger: sidebar accent (dynamic --primary) -->
+  <script>
+   (function () {
+    var KEY = 'famledger-accent';
+    var ALLOWED = ['blue', 'teal', 'emerald', 'violet', 'amber'];
+    var root = document.documentElement;
+    var MODE_KEY = 'kt-theme';
+    function syncButtons() {
+     var current = root.getAttribute('data-fl-accent') || 'blue';
+     document.querySelectorAll('.fl-accent-btn[data-fl-accent]').forEach(function (btn) {
+      var id = btn.getAttribute('data-fl-accent');
+      var on = id === current;
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.classList.toggle('ring-primary', on);
+     });
+    }
+    function getResolvedTheme(mode) {
+     if (mode === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+     }
+     return mode === 'dark' ? 'dark' : 'light';
+    }
+    function applyThemeMode(mode) {
+     if (!/^(light|dark|system)$/.test(mode)) return;
+     var resolved = getResolvedTheme(mode);
+     root.classList.remove('light', 'dark');
+     root.classList.add(resolved);
+     root.setAttribute('data-kt-theme-mode', mode);
+     try { localStorage.setItem(MODE_KEY, mode); } catch (e) {}
+     syncModeButtons();
+    }
+    function syncModeButtons() {
+     var saved = null;
+     try { saved = localStorage.getItem(MODE_KEY); } catch (e) {}
+     var mode = /^(light|dark|system)$/.test(saved || '') ? saved : (root.getAttribute('data-kt-theme-mode') || 'light');
+     document.querySelectorAll('.fl-theme-mode-btn[data-fl-theme-mode]').forEach(function (btn) {
+      var on = btn.getAttribute('data-fl-theme-mode') === mode;
+      btn.classList.toggle('kt-btn-primary', on);
+      btn.classList.toggle('kt-btn-outline', !on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+     });
+    }
+    function applyAccent(name) {
+     if (ALLOWED.indexOf(name) === -1) return;
+     root.setAttribute('data-fl-accent', name);
+     try { localStorage.setItem(KEY, name); } catch (e) {}
+     syncButtons();
+    }
+    /* Capture phase: run before other handlers that might stopPropagation */
+    document.addEventListener(
+     'click',
+     function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('.fl-accent-btn[data-fl-accent]') : null;
+      if (!btn) return;
+      var name = btn.getAttribute('data-fl-accent');
+      if (name) applyAccent(name);
+     },
+     true
+    );
+    document.addEventListener(
+     'click',
+     function (e) {
+      var modeBtn = e.target && e.target.closest ? e.target.closest('.fl-theme-mode-btn[data-fl-theme-mode]') : null;
+      if (!modeBtn) return;
+      var mode = modeBtn.getAttribute('data-fl-theme-mode');
+      if (mode) applyThemeMode(mode);
+     },
+     true
+    );
+    function init() {
+     try {
+      var saved = localStorage.getItem(KEY);
+      if (saved && ALLOWED.indexOf(saved) !== -1) {
+       root.setAttribute('data-fl-accent', saved);
+      } else if (!root.getAttribute('data-fl-accent')) {
+       root.setAttribute('data-fl-accent', 'blue');
+      }
+     } catch (e) {}
+     syncButtons();
+     syncModeButtons();
+    }
+    if (document.readyState === 'loading') {
+     document.addEventListener('DOMContentLoaded', init);
+    } else {
+     init();
+    }
+    /* Dark/light toggle: Metronic swaps html.light / html.dark — re-sync swatch ring */
+    try {
+     var mo = new MutationObserver(function () {
+      syncButtons();
+     });
+     mo.observe(root, { attributes: true, attributeFilter: ['class'] });
+    } catch (e) {}
+
+    var panel = document.getElementById('theme_panel');
+    var backdrop = document.getElementById('theme_panel_backdrop');
+    var openBtn = document.getElementById('theme_panel_toggle');
+    var closeBtn = document.getElementById('theme_panel_close');
+    function openPanel() {
+     if (!panel || !backdrop) return;
+     panel.classList.add('is-open');
+     backdrop.classList.add('is-open');
+     backdrop.classList.remove('hidden');
+     panel.setAttribute('aria-hidden', 'false');
+     backdrop.setAttribute('aria-hidden', 'false');
+     document.body.classList.add('fl-theme-panel-open');
+    }
+    function closePanel() {
+     if (!panel || !backdrop) return;
+     panel.classList.remove('is-open');
+     backdrop.classList.remove('is-open');
+     panel.setAttribute('aria-hidden', 'true');
+     backdrop.setAttribute('aria-hidden', 'true');
+     document.body.classList.remove('fl-theme-panel-open');
+     setTimeout(function () {
+      if (!backdrop.classList.contains('is-open')) backdrop.classList.add('hidden');
+     }, 220);
+    }
+    if (openBtn) openBtn.addEventListener('click', openPanel);
+    if (closeBtn) closeBtn.addEventListener('click', closePanel);
+    if (backdrop) backdrop.addEventListener('click', closePanel);
+    document.addEventListener('keydown', function (e) {
+     if (e.key === 'Escape' && panel && panel.classList.contains('is-open')) closePanel();
+    });
+   })();
+  </script>
+  <!-- FamLedger sidebar: keep accordion groups open after KTMenu init (current route) -->
+  <script>
+   (function () {
+    function flPersistFamledgerAccordions() {
+     var menu = document.getElementById('sidebar_famledger_menu');
+     if (!menu) return;
+     menu.querySelectorAll('.kt-menu-item[data-fl-persist-open="1"]').forEach(function (el) {
+      el.classList.add('show');
+      el.classList.add('here');
+     });
+    }
+    function run() {
+     flPersistFamledgerAccordions();
+     setTimeout(flPersistFamledgerAccordions, 0);
+     setTimeout(flPersistFamledgerAccordions, 100);
+     setTimeout(flPersistFamledgerAccordions, 400);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    else run();
+   })();
+  </script>
   @php
     $sessionError = session('error');
-    $validationError = !$sessionError && isset($errors) && $errors->any() ? $errors->first() : null;
+    $skipValidationFlashForSwal = request()->routeIs('families.goals.create');
+    $validationError = ! $sessionError && ! $skipValidationFlashForSwal && isset($errors) && $errors->any() ? $errors->first() : null;
     $flashMessages = [
       'success' => session('success'),
       'error'   => $sessionError ?: $validationError,

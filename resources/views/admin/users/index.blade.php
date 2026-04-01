@@ -164,7 +164,8 @@
                             <th class="min-w-[180px]">Email</th>
                             <th class="min-w-[100px]">Status</th>
                             <th class="min-w-[140px]">Roles</th>
-                            <th class="w-24">Actions</th>
+                            <th class="min-w-[180px]">Families</th>
+                            <th class="w-14 text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -180,9 +181,35 @@
                                 @endphp
                                 {{ $roleText }}
                             </td>
-                            <td>
-                                <x-famledger.pulse-button variant="outline" size="sm" :href="route('admin.users.show', $u)">View</x-famledger.pulse-button>
-                                <x-famledger.pulse-button variant="outline" size="sm" :href="route('admin.users.edit', $u)">Edit</x-famledger.pulse-button>
+                            <td class="text-sm">
+                                @php
+                                    $familyRows = $u->familyMemberships->filter(fn ($m) => $m->family);
+                                @endphp
+                                @if ($familyRows->isEmpty())
+                                    —
+                                @else
+                                    @foreach ($familyRows as $m)
+                                        <span class="block">
+                                            <a href="{{ route('families.show', $m->family) }}" class="text-primary hover:underline">{{ $m->family->name }}</a>@if ($m->role)<span class="text-muted-foreground"> ({{ $m->role->name }})</span>@endif
+                                        </span>
+                                    @endforeach
+                                @endif
+                            </td>
+                            <td class="text-end align-middle">
+                                <x-famledger.dots-actions-menu :label="__('User actions')">
+                                    <div class="kt-menu-item">
+                                        <a class="kt-menu-link cursor-pointer" href="{{ route('admin.users.show', $u) }}">
+                                            <span class="kt-menu-icon"><i class="ki-filled ki-eye fl-dots-action-icon--primary"></i></span>
+                                            <span class="kt-menu-title">{{ __('View') }}</span>
+                                        </a>
+                                    </div>
+                                    <div class="kt-menu-item">
+                                        <a class="kt-menu-link cursor-pointer" href="{{ route('admin.users.edit', $u) }}">
+                                            <span class="kt-menu-icon"><i class="ki-filled ki-pencil fl-dots-action-icon--warning"></i></span>
+                                            <span class="kt-menu-title">{{ __('Edit') }}</span>
+                                        </a>
+                                    </div>
+                                </x-famledger.dots-actions-menu>
                             </td>
                         </tr>
                         @endforeach
@@ -221,6 +248,24 @@
                         @endphp
                         <span class="uppercase tracking-wide">Roles:</span>
                         <span class="font-medium text-foreground">{{ $roleText }}</span>
+                    </div>
+
+                    @php
+                        $familyRowsMobile = $u->familyMemberships->filter(fn ($m) => $m->family);
+                    @endphp
+                    <div class="text-[11px] text-muted-foreground">
+                        <span class="uppercase tracking-wide">Families:</span>
+                        @if ($familyRowsMobile->isEmpty())
+                            <span class="font-medium text-foreground">—</span>
+                        @else
+                            <span class="font-medium text-foreground block mt-0.5">
+                                @foreach ($familyRowsMobile as $m)
+                                    <span class="block">
+                                        <a href="{{ route('families.show', $m->family) }}" class="text-primary hover:underline">{{ $m->family->name }}</a>@if ($m->role) ({{ $m->role->name }})@endif
+                                    </span>
+                                @endforeach
+                            </span>
+                        @endif
                     </div>
 
                     <div class="flex flex-wrap justify-end gap-2 pt-1">

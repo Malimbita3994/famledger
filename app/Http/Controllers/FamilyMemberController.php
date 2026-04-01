@@ -9,7 +9,6 @@ use App\Models\FamilyMember;
 use App\Models\FamilyRole;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -88,24 +87,29 @@ class FamilyMemberController extends Controller
         $this->authorizeManageMembers($family);
 
         $validated = $request->validate([
-            'email'       => ['required', 'email'],
+            'email' => ['required', 'email'],
             'member_name' => ['nullable', 'string', 'max:255'],
-            'sex'         => ['nullable', Rule::in(['male', 'female'])],
+            'sex' => ['nullable', Rule::in(['male', 'female'])],
             'member_type' => ['nullable', Rule::in(['adult', 'child'])],
-            'role_id'     => ['required', 'exists:family_roles,id'],
+            'role_id' => ['required', 'exists:family_roles,id'],
         ], [
             'email.required' => 'Please enter an email address.',
-            'email.email'    => 'Please enter a valid email address.',
+            'email.email' => 'Please enter a valid email address.',
         ]);
 
         $user = User::where('email', $validated['email'])->first();
 
         if (! $user) {
-            $plainPassword = Str::password(12);
+            $plainPassword = (string) config('famledger.default_new_member_password');
+            $usedConfiguredDefault = $plainPassword !== '';
+            if (! $usedConfiguredDefault) {
+                $plainPassword = Str::password(12);
+            }
             $user = User::create([
-                'name'     => $validated['member_name'] ?? Str::before($validated['email'], '@'),
-                'email'    => $validated['email'],
-                'password' => Hash::make($plainPassword),
+                'name' => $validated['member_name'] ?? Str::before($validated['email'], '@'),
+                'email' => $validated['email'],
+                'password' => $plainPassword,
+                'must_change_password' => $usedConfiguredDefault,
             ]);
 
             Mail::to($user->email)->send(new MemberCredentialsMail(
@@ -131,15 +135,15 @@ class FamilyMemberController extends Controller
         }
 
         FamilyMember::create([
-            'family_id'   => $family->id,
-            'user_id'    => $user->id,
-            'role_id'    => $validated['role_id'],
-            'member_name'=> $validated['member_name'] ?? null,
-            'sex'        => $validated['sex'] ?? null,
-            'member_type'=> $validated['member_type'] ?? null,
+            'family_id' => $family->id,
+            'user_id' => $user->id,
+            'role_id' => $validated['role_id'],
+            'member_name' => $validated['member_name'] ?? null,
+            'sex' => $validated['sex'] ?? null,
+            'member_type' => $validated['member_type'] ?? null,
             'is_primary' => $isPrimary,
-            'status'     => 'active',
-            'joined_at'  => now(),
+            'status' => 'active',
+            'joined_at' => now(),
         ]);
 
         $message = $user->wasRecentlyCreated
@@ -184,10 +188,10 @@ class FamilyMemberController extends Controller
 
         $validated = $request->validate([
             'member_name' => ['nullable', 'string', 'max:255'],
-            'sex'         => ['nullable', Rule::in(['male', 'female'])],
+            'sex' => ['nullable', Rule::in(['male', 'female'])],
             'member_type' => ['nullable', Rule::in(['adult', 'child'])],
-            'role_id'     => ['required', 'exists:family_roles,id'],
-            'is_primary'  => ['nullable', 'boolean'],
+            'role_id' => ['required', 'exists:family_roles,id'],
+            'is_primary' => ['nullable', 'boolean'],
         ]);
 
         $newRole = FamilyRole::findOrFail($validated['role_id']);
@@ -199,10 +203,10 @@ class FamilyMemberController extends Controller
 
         $familyMember->update([
             'member_name' => $validated['member_name'] ?? null,
-            'sex'         => $validated['sex'] ?? null,
+            'sex' => $validated['sex'] ?? null,
             'member_type' => $validated['member_type'] ?? null,
-            'role_id'     => $validated['role_id'],
-            'is_primary'  => $newRole->name === 'Owner' ? $isPrimary : false,
+            'role_id' => $validated['role_id'],
+            'is_primary' => $newRole->name === 'Owner' ? $isPrimary : false,
         ]);
 
         return redirect()
@@ -269,9 +273,9 @@ class FamilyMemberController extends Controller
         FamilyMember::where('family_id', $family->id)->update(['is_primary' => false]);
 
         $target->update([
-            'role_id'    => $ownerRole->id,
+            'role_id' => $ownerRole->id,
             'is_primary' => true,
-            'status'     => 'active',
+            'status' => 'active',
         ]);
 
         return redirect()

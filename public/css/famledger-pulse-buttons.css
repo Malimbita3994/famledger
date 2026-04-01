@@ -1,14 +1,18 @@
 /**
  * FamLedger pulse buttons — use <x-famledger.pulse-button> or these classes:
+ *
+ * Metronic primary buttons use teal CRUD styling globally — see famledger-kt-btn-crud.css.
+ * Optional extra padding: fin-kt-btn-accent (same file).
  *   Primary:  fin-pulse-btn-primary
  *   Outline:  fin-pulse-btn-outline
  *   Danger:   fin-pulse-btn-outline fin-pulse-btn-outline-danger
  *   Compact:  fin-pulse-btn-sm (with any variant)
  * Aliases:  fmem-pulse-btn-primary, fmem-pulse-btn-primary-sm (legacy)
  */
+/* Align with famledger-kt-btn-crud.css teal tokens (fallbacks if crud CSS not loaded) */
 :root {
-    --fin-accent: #009ef7;
-    --fin-accent-2: #0ea5e9;
+    --fin-accent: #14b8a6;
+    --fin-accent-2: #0d9488;
 }
 
 .fin-pulse-btn-primary,
@@ -20,11 +24,17 @@
     padding: 0.65rem 1.15rem;
     font-size: 0.8125rem;
     font-weight: 600;
-    border-radius: 12px;
+    border-radius: 9999px;
     color: #fff !important;
-    background: linear-gradient(135deg, var(--fin-accent) 0%, var(--fin-accent-2) 100%);
+    background: linear-gradient(
+        180deg,
+        var(--fin-crud-teal-from, #2dd4bf) 0%,
+        var(--fin-crud-teal-to, #14b8a6) 100%
+    );
     border: none;
-    box-shadow: 0 4px 14px rgba(0, 158, 247, 0.35);
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.06),
+        0 4px 14px -3px var(--fin-crud-teal-shadow, rgba(20, 184, 166, 0.42));
     transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
     text-decoration: none !important;
     cursor: pointer;
@@ -40,7 +50,9 @@
 .fin-pulse-btn-primary:hover,
 .fmem-pulse-btn-primary:hover {
     filter: brightness(1.05);
-    box-shadow: 0 6px 20px rgba(0, 158, 247, 0.42);
+    box-shadow:
+        0 2px 4px rgba(15, 23, 42, 0.08),
+        0 10px 24px -4px var(--fin-crud-teal-shadow-strong, rgba(20, 184, 166, 0.52));
     transform: translateY(-1px);
 }
 
@@ -63,9 +75,9 @@
 }
 
 .fin-pulse-btn-outline:hover {
-    border-color: var(--fin-accent);
-    background: rgba(0, 158, 247, 0.06);
-    box-shadow: 0 0 0 1px rgba(0, 158, 247, 0.12);
+    border-color: var(--fin-crud-teal-to, #14b8a6);
+    background: rgba(20, 184, 166, 0.08);
+    box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.18);
 }
 
 .dark .fin-pulse-btn-outline {

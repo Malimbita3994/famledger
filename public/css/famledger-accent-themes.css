@@ -1,0 +1,169 @@
+/**
+ * FamLedger — adaptive UI accent + smooth theme side panel.
+ * !important beats Metronic :root / .dark unlayered blocks in styles.css.
+ */
+html.light[data-fl-accent="blue"],
+html:not(.dark)[data-fl-accent="blue"] {
+  --primary: var(--color-blue-500) !important;
+  --ring: var(--color-blue-500) !important;
+}
+html.dark[data-fl-accent="blue"] {
+  --primary: var(--color-blue-600) !important;
+  --ring: var(--color-blue-500) !important;
+}
+
+html.light[data-fl-accent="teal"],
+html:not(.dark)[data-fl-accent="teal"] {
+  --primary: var(--color-teal-600) !important;
+  --ring: var(--color-teal-600) !important;
+}
+html.dark[data-fl-accent="teal"] {
+  --primary: #2dd4bf !important;
+  --ring: #5eead4 !important;
+}
+
+html.light[data-fl-accent="emerald"],
+html:not(.dark)[data-fl-accent="emerald"] {
+  --primary: var(--color-green-600) !important;
+  --ring: var(--color-green-600) !important;
+}
+html.dark[data-fl-accent="emerald"] {
+  --primary: var(--color-green-500) !important;
+  --ring: var(--color-green-500) !important;
+}
+
+html.light[data-fl-accent="violet"],
+html:not(.dark)[data-fl-accent="violet"] {
+  --primary: var(--color-violet-600) !important;
+  --ring: var(--color-violet-600) !important;
+}
+html.dark[data-fl-accent="violet"] {
+  --primary: var(--color-violet-500) !important;
+  --ring: var(--color-violet-500) !important;
+}
+
+html.light[data-fl-accent="amber"],
+html:not(.dark)[data-fl-accent="amber"] {
+  --primary: #d97706 !important;
+  --ring: #d97706 !important;
+}
+html.dark[data-fl-accent="amber"] {
+  --primary: #fbbf24 !important;
+  --ring: #fcd34d !important;
+}
+
+html[data-fl-accent] #sidebar.famledger-sidebar-hover-rail {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+html.light[data-fl-accent]:not([data-fl-accent="blue"]) #sidebar.famledger-sidebar-hover-rail,
+html:not(.dark)[data-fl-accent]:not([data-fl-accent="blue"]) #sidebar.famledger-sidebar-hover-rail {
+  background-color: color-mix(in oklab, var(--primary) 5%, var(--background));
+}
+html.dark[data-fl-accent]:not([data-fl-accent="blue"]) #sidebar.famledger-sidebar-hover-rail {
+  background-color: color-mix(in oklab, var(--primary) 10%, var(--background));
+}
+
+/* Sidebar theming: make accent visible on nav itself */
+html[data-fl-accent] #sidebar .kt-menu-link {
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+html.light[data-fl-accent] #sidebar .kt-menu-link:hover,
+html.light[data-fl-accent] #sidebar .kt-menu-link:focus-visible,
+html:not(.dark)[data-fl-accent] #sidebar .kt-menu-link:hover,
+html:not(.dark)[data-fl-accent] #sidebar .kt-menu-link:focus-visible {
+  background-color: color-mix(in oklab, var(--primary) 14%, transparent) !important;
+}
+html.dark[data-fl-accent] #sidebar .kt-menu-link:hover,
+html.dark[data-fl-accent] #sidebar .kt-menu-link:focus-visible {
+  background-color: color-mix(in oklab, var(--primary) 22%, transparent) !important;
+}
+
+html.light[data-fl-accent] #sidebar .kt-menu-item-active > .kt-menu-link,
+html.light[data-fl-accent] #sidebar .kt-menu-item-show > .kt-menu-link,
+html.light[data-fl-accent] #sidebar .fl-sidebar-route-active,
+html:not(.dark)[data-fl-accent] #sidebar .kt-menu-item-active > .kt-menu-link,
+html:not(.dark)[data-fl-accent] #sidebar .kt-menu-item-show > .kt-menu-link,
+html:not(.dark)[data-fl-accent] #sidebar .fl-sidebar-route-active {
+  background-color: color-mix(in oklab, var(--primary) 20%, transparent) !important;
+}
+html.dark[data-fl-accent] #sidebar .kt-menu-item-active > .kt-menu-link,
+html.dark[data-fl-accent] #sidebar .kt-menu-item-show > .kt-menu-link,
+html.dark[data-fl-accent] #sidebar .fl-sidebar-route-active {
+  background-color: color-mix(in oklab, var(--primary) 30%, transparent) !important;
+}
+
+html[data-fl-accent] #sidebar .kt-menu-item-active > .kt-menu-link .kt-menu-icon,
+html[data-fl-accent] #sidebar .kt-menu-item-show > .kt-menu-link .kt-menu-icon,
+html[data-fl-accent] #sidebar .fl-sidebar-route-active .kt-menu-icon {
+  color: var(--primary) !important;
+}
+
+.fl-accent-btn {
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.fl-theme-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 74;
+  background: rgb(2 6 23 / 0.35);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.fl-theme-panel-backdrop.is-open {
+  opacity: 1;
+}
+
+.fl-theme-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(94vw, 360px);
+  z-index: 75;
+  background: var(--card);
+  color: var(--foreground);
+  border-left: 1px solid var(--border);
+  box-shadow: -18px 0 38px rgb(2 6 23 / 0.15);
+  transform: translateX(105%);
+  transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.fl-theme-panel.is-open {
+  transform: translateX(0);
+}
+
+.fl-theme-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.875rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.fl-theme-panel-body {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+body.fl-theme-panel-open {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-fl-accent] #sidebar.famledger-sidebar-hover-rail {
+    transition: none;
+  }
+  .fl-theme-panel,
+  .fl-theme-panel-backdrop {
+    transition: none;
+  }
+}

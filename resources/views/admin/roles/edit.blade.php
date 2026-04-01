@@ -25,13 +25,11 @@
         line-height: 1.2;
         color: var(--ap-accent);
     }
-    .admin-pulse-breadcrumb a,
-    .admin-pulse-back {
+    .admin-pulse-breadcrumb a {
         color: #64748b;
         transition: color 0.2s ease;
     }
-    .admin-pulse-breadcrumb a:hover,
-    .admin-pulse-back:hover {
+    .admin-pulse-breadcrumb a:hover {
         color: var(--ap-accent);
     }
     .admin-pulse-frame {
@@ -229,10 +227,7 @@
                 </div>
             </div>
             <div class="flex flex-col sm:items-end gap-2 shrink-0">
-                <a href="{{ route('admin.roles.index') }}" class="admin-pulse-back inline-flex items-center text-sm">
-                    <i class="ki-filled ki-left text-base me-1"></i>
-                    {{ __('Back to roles') }}
-                </a>
+                <x-fin-back-link href="{{ route('admin.roles.index') }}" class="!mb-0">{{ __('Back to roles') }}</x-fin-back-link>
                 <a href="{{ route('admin.roles.permissions.edit', $role) }}" class="admin-pulse-link-secondary inline-flex items-center gap-1">
                     <i class="ki-filled ki-setting-2 text-sm"></i>
                     {{ __('Manage permissions') }}

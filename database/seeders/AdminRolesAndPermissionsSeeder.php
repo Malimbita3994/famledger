@@ -3,11 +3,43 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class AdminRolesAndPermissionsSeeder extends Seeder
 {
+    /**
+     * Permissions that allow opening UI routes in a read-only / oversight capacity.
+     * Matches *_view*, view_*, plus explicit read-style gates that do not contain "view" in the name.
+     */
+    public static function auditorViewPermissions(string $guard): Collection
+    {
+        $extraNames = [
+            'access_admin_panel',
+            'reports_preview',
+            'reports_download',
+            'global_view_reports',
+            'global_audit_logs_access',
+            'audit_trail_export',
+            'audit_trail_filter',
+            'contact_messages_view',
+            'reports_admin_audit_access_logs',
+            'reports_admin_access_restricted',
+            'reports_finance_access_sensitive_data',
+            'family_projects_governance_access_confidential',
+        ];
+
+        return Permission::query()
+            ->where('guard_name', $guard)
+            ->where(function ($q) use ($extraNames) {
+                $q->where('name', 'like', '%_view%')
+                    ->orWhere('name', 'like', 'view_%')
+                    ->orWhereIn('name', $extraNames);
+            })
+            ->get();
+    }
+
     public function run(): void
     {
         $guard = config('auth.defaults.guard');
@@ -454,15 +486,7 @@ class AdminRolesAndPermissionsSeeder extends Seeder
             ->givePermissionTo(['access_admin_panel', 'manage_users', 'view_audit_logs', 'contact_messages_view', 'contact_messages_mark_read']);
 
         Role::firstOrCreate(['name' => 'Auditor', 'guard_name' => $guard])
-            ->givePermissionTo([
-                'access_admin_panel',
-                'view_audit_logs',
-                'audit_trail_view',
-                'audit_trail_view_platform',
-                'audit_trail_view_family',
-                'audit_trail_export',
-                'audit_trail_filter',
-            ]);
+            ->syncPermissions(self::auditorViewPermissions($guard));
 
         // Family/tenant-style roles (assign permissions in admin as needed)
         Role::firstOrCreate(['name' => 'Owner', 'guard_name' => $guard]);

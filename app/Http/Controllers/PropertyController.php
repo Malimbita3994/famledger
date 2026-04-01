@@ -2,48 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
-use App\Models\FamilyMember;
 use App\Models\Property;
 use App\Models\PropertyAttribute;
 use App\Models\PropertyAttributeValue;
 use App\Models\PropertyCategory;
-use App\Models\PropertyMaintenance;
-use App\Models\PropertyDocument;
-use App\Models\PropertyValuation;
 use App\Models\PropertyDepreciation;
+use App\Models\PropertyDocument;
+use App\Models\PropertyMaintenance;
+use App\Models\PropertyValuation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PropertyController extends Controller
 {
-    protected function authorizePropertyManager(Family $family): void
-    {
-        $userId = auth()->id();
-        if (! $userId) {
-            abort(403, 'You must be logged in.');
-        }
-
-        $member = FamilyMember::where('family_id', $family->id)
-            ->where('user_id', $userId)
-            ->with('role')
-            ->first();
-
-        $roleName = $member && $member->role ? mb_strtolower($member->role->name) : null;
-
-        if (! $member || ! in_array($roleName, ['owner', 'co-owner'], true)) {
-            abort(403, 'Only family owners and co-owners can manage properties.');
-        }
-    }
+    use AuthorizesFamilyMember;
 
     public function index(Request $request, Family $family): View
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $categories = PropertyCategory::where('is_active', true)->orderBy('name')->get();
 
@@ -67,7 +49,7 @@ class PropertyController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', '%'.$search.'%')
-                  ->orWhere('property_code', 'like', '%'.$search.'%');
+                    ->orWhere('property_code', 'like', '%'.$search.'%');
             });
         }
 
@@ -135,7 +117,7 @@ class PropertyController extends Controller
 
     public function create(Request $request, Family $family): View
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $categories = PropertyCategory::where('is_active', true)->orderBy('name')->get();
         $categoryId = (int) $request->query('category_id', $categories->first()->id ?? 0);
@@ -157,7 +139,7 @@ class PropertyController extends Controller
 
     public function edit(Property $property, Family $family): View
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         if ($property->family_id !== $family->id) {
             abort(404);
@@ -189,7 +171,7 @@ class PropertyController extends Controller
      */
     public function show(Property $property, Family $family): RedirectResponse
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         if ($property->family_id !== $family->id) {
             abort(404);
@@ -202,7 +184,7 @@ class PropertyController extends Controller
 
     public function update(Request $request, Property $property, Family $family)
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         if ($property->family_id !== $family->id) {
             abort(404);
@@ -274,7 +256,7 @@ class PropertyController extends Controller
         if ($categoryId) {
             $attributes = PropertyAttribute::where('category_id', $categoryId)->get();
             foreach ($attributes as $attr) {
-                $key = 'attr_' . $attr->id;
+                $key = 'attr_'.$attr->id;
                 if (! $request->has($key)) {
                     continue;
                 }
@@ -289,6 +271,7 @@ class PropertyController extends Controller
                     if ($record->exists) {
                         $record->delete();
                     }
+
                     continue;
                 }
 
@@ -302,9 +285,10 @@ class PropertyController extends Controller
             ->with('success', 'Property updated.')
             ->with('open_property_modal', $property->id);
     }
+
     public function store(Request $request, Family $family)
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
@@ -344,7 +328,7 @@ class PropertyController extends Controller
         $validator = Validator::make($request->all(), $rules);
         $validated = $validator->validate();
 
-        $propertyCode = 'PROP-' . strtoupper(Str::random(8));
+        $propertyCode = 'PROP-'.strtoupper(Str::random(8));
 
         $property = Property::create([
             'family_id' => $family->id,
@@ -377,7 +361,7 @@ class PropertyController extends Controller
         if (! empty($validated['category_id'])) {
             $attributes = PropertyAttribute::where('category_id', $validated['category_id'])->get();
             foreach ($attributes as $attr) {
-                $key = 'attr_' . $attr->id;
+                $key = 'attr_'.$attr->id;
                 if (! $request->has($key)) {
                     continue;
                 }
@@ -398,7 +382,7 @@ class PropertyController extends Controller
 
     public function maintenance(Request $request, Family $family): View
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         // Only list properties that realistically need maintenance (e.g. buildings, vehicles),
         // excluding assets like bare land.
@@ -451,7 +435,7 @@ class PropertyController extends Controller
 
     public function valuations(Request $request, Family $family): View
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $properties = Property::where('family_id', $family->id)
             ->orderBy('name')
@@ -493,7 +477,7 @@ class PropertyController extends Controller
 
     public function documents(Family $family): View
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $properties = Property::where('family_id', $family->id)
             ->orderBy('name')
@@ -518,7 +502,7 @@ class PropertyController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('original_name', 'like', '%'.$search.'%')
-                  ->orWhere('document_type', 'like', '%'.$search.'%');
+                    ->orWhere('document_type', 'like', '%'.$search.'%');
             });
         }
 
@@ -538,7 +522,7 @@ class PropertyController extends Controller
 
     public function depreciation(Request $request, Family $family): View
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $properties = Property::where('family_id', $family->id)
             ->orderBy('name')
@@ -575,7 +559,7 @@ class PropertyController extends Controller
 
     public function storeDocument(Request $request, Family $family)
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $rules = [
             'property_id' => ['required', 'integer', 'exists:properties,id'],
@@ -630,7 +614,7 @@ class PropertyController extends Controller
 
     public function storeValuation(Request $request, Family $family)
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $rules = [
             'property_id' => ['required', 'integer', 'exists:properties,id'],
@@ -671,7 +655,7 @@ class PropertyController extends Controller
 
     public function storeMaintenance(Request $request, Family $family)
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $rules = [
             'property_id' => ['required', 'integer', 'exists:properties,id'],
@@ -706,7 +690,7 @@ class PropertyController extends Controller
 
     public function storeDepreciation(Request $request, Family $family)
     {
-        $this->authorizePropertyManager($family);
+        $this->authorizeFamilyMember($family);
 
         $currentYear = now()->year;
 
@@ -753,4 +737,3 @@ class PropertyController extends Controller
             ->with('success', 'Depreciation updated.');
     }
 }
-

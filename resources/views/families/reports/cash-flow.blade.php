@@ -24,28 +24,23 @@
 }
 </style>
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
-    <a href="{{ route('families.reports.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.reports.index') }}">
         Back to Reports
-    </a>
+    </x-fin-back-link>
 
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="font-medium text-lg text-mono">Cash Flow Report</h1>
-        </div>
-        <a href="{{ route('families.reports.cash-flow.export-pdf') . '?' . http_build_query(request()->only(['from','to','wallet_id'])) }}"
-           class="kt-btn kt-btn-sm kt-btn-outline inline-flex items-center gap-1.5">
-            <i class="ki-filled ki-file-down text-base"></i>
-            Export PDF
-        </a>
+    <div class="mb-6">
+        <h1 class="font-medium text-lg text-mono">Cash Flow Report</h1>
     </div>
 
     {{-- Filters (card style like accounts/income) --}}
     <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card mb-6">
-        <div class="kt-card-header flex-wrap gap-2">
-            <h3 class="kt-card-title text-sm">Filter report</h3>
+        <div class="kt-card-header flex-wrap gap-0 border-b border-border !p-0 overflow-visible">
+            <div class="flex flex-wrap items-center justify-between gap-4 px-4 sm:px-6 pt-5 sm:pt-6 pb-5 w-full">
+                <h3 class="text-sm font-semibold tracking-tight text-primary mb-0">{{ __('Filter report') }}</h3>
+                <x-famledger.export-pdf-button :href="route('families.reports.cash-flow.export-pdf') . '?' . http_build_query(request()->only(['from','to','wallet_id']))" />
+            </div>
         </div>
-        <div class="kt-card-content">
+        <div class="kt-card-content px-4 sm:px-6 pt-4">
             <form method="get" action="{{ route('families.reports.cash-flow') }}" class="flex flex-wrap items-end gap-4">
                 <div>
                     <label class="block text-sm text-muted-foreground mb-1">From</label>
@@ -89,7 +84,7 @@
         </x-famledger.pulse-stat-card>
 
         <x-famledger.pulse-stat-card
-            class="cash-flow-kpi-card"
+            class="cash-flow-kpi-card cash-flow-kpi-card--expenses"
             label="Total expenses"
             :value="'− ' . number_format($totalExpenses, 0) . ' ' . $currency"
         >
@@ -133,8 +128,8 @@
                             <td class="text-right tabular-nums font-medium text-green-600">+ {{ number_format($totalIncome, 0) }}</td>
                         </tr>
                         <tr>
-                            <td class="text-foreground">− Total expenses</td>
-                            <td class="text-right tabular-nums font-medium text-red-600">− {{ number_format($totalExpenses, 0) }}</td>
+                            <td class="text-red-600 dark:text-red-400 font-medium">− Total expenses</td>
+                            <td class="text-right tabular-nums font-medium text-red-600 dark:text-red-400">− {{ number_format($totalExpenses, 0) }}</td>
                         </tr>
                         <tr>
                             <td class="font-medium text-foreground">= Net cash flow</td>

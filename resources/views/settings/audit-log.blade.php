@@ -295,10 +295,7 @@
                 </div>
             </div>
             <div class="shrink-0 ms-auto">
-                <a href="{{ route('settings.index') }}" class="admin-pulse-btn-outline inline-flex">
-                    <i class="ki-filled ki-left text-base"></i>
-                    {{ __('Back to settings') }}
-                </a>
+                <x-fin-back-link href="{{ route('settings.index') }}" class="!mb-0">{{ __('Back to settings') }}</x-fin-back-link>
             </div>
         </div>
     </div>
@@ -423,13 +420,7 @@
                                     @endif
                                 </h2>
                                 <div class="flex items-center gap-2 flex-wrap shrink-0 ms-auto">
-                                    <a
-                                        href="{{ route('settings.audit-log.export-pdf', array_filter(request()->only(['family_id', 'type', 'from', 'to']))) }}"
-                                        class="admin-pulse-btn-outline-sm inline-flex items-center gap-1"
-                                    >
-                                        <i class="ki-filled ki-file-down text-sm"></i>
-                                        {{ __('Export PDF') }}
-                                    </a>
+                                    <x-famledger.export-pdf-button :href="route('settings.audit-log.export-pdf', array_filter(request()->only(['family_id', 'type', 'from', 'to'])))" />
                                     <a
                                         href="{{ route('settings.audit-log.export-csv', array_filter(request()->only(['family_id', 'type', 'from', 'to']))) }}"
                                         class="admin-pulse-btn-outline-sm inline-flex items-center gap-1"

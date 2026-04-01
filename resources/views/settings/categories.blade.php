@@ -68,16 +68,9 @@
         background-color: rgba(30, 41, 59, 0.55) !important;
         color: var(--foreground, #e2e8f0);
     }
-    /* Solid primary actions inside cards (Add / Save where Metronic uses kt-btn-primary without ghost) */
+    /* Solid primary = global FamLedger teal CRUD (famledger-kt-btn-crud.css); keep radius aligned */
     .cat-pulse-page .kt-btn.kt-btn-primary:not(.kt-btn-ghost) {
-        background: linear-gradient(135deg, var(--ap-accent) 0%, var(--ap-accent-2) 100%) !important;
-        border-color: transparent !important;
-        color: #fff !important;
-        box-shadow: 0 4px 12px rgba(0, 158, 247, 0.32);
-    }
-    .cat-pulse-page .kt-btn.kt-btn-primary:not(.kt-btn-ghost):hover {
-        filter: brightness(1.05);
-        box-shadow: 0 6px 18px rgba(0, 158, 247, 0.4);
+        border-radius: 9999px !important;
     }
     /* Outline row actions: accent on hover */
     .cat-pulse-page .kt-btn.kt-btn-outline {
@@ -243,10 +236,7 @@
                     <i class="ki-filled ki-plus text-base"></i>
                     {{ __('Add lookup') }}
                 </button>
-                <a href="{{ route('settings.index') }}" class="admin-pulse-btn-outline inline-flex">
-                    <i class="ki-filled ki-left text-base"></i>
-                    {{ __('Back to settings') }}
-                </a>
+                <x-fin-back-link href="{{ route('settings.index') }}" class="!mb-0">{{ __('Back to settings') }}</x-fin-back-link>
             </div>
         </div>
     </div>

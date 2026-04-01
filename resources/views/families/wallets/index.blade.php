@@ -5,38 +5,37 @@
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12 w-full max-w-full min-w-0">
-    <a href="{{ route('families.overview') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <i class="ki-filled ki-left text-base mr-1"></i>
+        <x-fin-back-link href="{{ route('families.overview') }}">
         Back to {{ $family->name }}
-    </a>
+    </x-fin-back-link>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 w-full min-w-0">
         <h1 class="font-medium text-lg text-mono shrink-0">Family Wallets</h1>
         <div class="flex flex-wrap justify-end gap-1.5 w-full sm:w-auto sm:ms-auto min-w-0">
-            <x-famledger.pulse-button variant="outline" :href="route('families.incomes.create')">
+            <a href="{{ route('families.incomes.create') }}" class="kt-btn kt-btn-primary inline-flex items-center gap-1.5">
                 <i class="ki-filled ki-arrow-up"></i>
                 Record income
-            </x-famledger.pulse-button>
-            <x-famledger.pulse-button variant="outline" :href="route('families.expenses.create')">
+            </a>
+            <a href="{{ route('families.expenses.create') }}" class="kt-btn kt-btn-primary inline-flex items-center gap-1.5">
                 <i class="ki-filled ki-arrow-down"></i>
                 Record expense
-            </x-famledger.pulse-button>
-            <x-famledger.pulse-button variant="outline" :href="route('families.transfers.create')">
+            </a>
+            <a href="{{ route('families.transfers.create') }}" class="kt-btn kt-btn-primary inline-flex items-center gap-1.5">
                 <i class="ki-filled ki-arrow-right-left"></i>
                 Transfer
-            </x-famledger.pulse-button>
-            <x-famledger.pulse-button variant="outline" :href="route('families.reconciliations.create')">
+            </a>
+            <a href="{{ route('families.reconciliations.create') }}" class="kt-btn kt-btn-primary inline-flex items-center gap-1.5">
                 <i class="ki-filled ki-check-circle"></i>
                 Reconcile
-            </x-famledger.pulse-button>
-            <x-famledger.pulse-button variant="outline" :href="route('families.savings-goals.index')">
+            </a>
+            <a href="{{ route('families.savings-goals.index') }}" class="kt-btn kt-btn-primary inline-flex items-center gap-1.5">
                 <i class="ki-filled ki-safe"></i>
                 Savings goals
-            </x-famledger.pulse-button>
-            <x-famledger.pulse-button variant="primary" :href="route('families.wallets.create')">
+            </a>
+            <a href="{{ route('families.wallets.create') }}" class="kt-btn kt-btn-primary inline-flex items-center gap-1.5">
                 <i class="ki-filled ki-plus"></i>
                 Add wallet
-            </x-famledger.pulse-button>
+            </a>
         </div>
     </div>
 
@@ -50,10 +49,15 @@
     @if ($wallets->isEmpty())
         <div class="kt-card">
             <div class="kt-card-content py-12 text-center">
-                <i class="ki-filled ki-wallet text-5xl text-muted-foreground mb-4"></i>
+                <div class="flex justify-center mb-4">
+                    <x-famledger.wallet-mark size="lg" />
+                </div>
                 <p class="font-semibold text-foreground">No wallets yet</p>
                 <p class="text-sm text-secondary-foreground mt-1">Create a wallet to start tracking income, expenses, and transfers for this family.</p>
-                <x-famledger.pulse-button variant="primary" class="mt-6" :href="route('families.wallets.create')">Add wallet</x-famledger.pulse-button>
+                <a href="{{ route('families.wallets.create') }}" class="kt-btn kt-btn-primary inline-flex items-center gap-1.5 mt-6">
+                    <i class="ki-filled ki-plus"></i>
+                    Add wallet
+                </a>
             </div>
         </div>
     @else
@@ -81,9 +85,7 @@
                                 <td>
                                     <div class="flex flex-col gap-0.5 min-w-0">
                                         <a href="{{ route('families.wallets.show', $wallet) }}" class="flex items-center gap-2.5 hover:opacity-90">
-                                            <span class="flex items-center justify-center rounded-full size-9 shrink-0 bg-muted text-foreground font-medium text-sm">
-                                                <i class="ki-filled ki-wallet text-lg"></i>
-                                            </span>
+                                            <x-famledger.wallet-mark />
                                             <span class="text-sm font-medium text-mono hover:text-primary min-w-0 truncate">{{ $wallet->name }}</span>
                                         </a>
                                         @if ($wallet->dedicatedProject)
@@ -166,9 +168,7 @@
                             {{-- Header --}}
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-2.5 min-w-0">
-                                    <span class="flex items-center justify-center rounded-full size-9 shrink-0 bg-muted text-foreground">
-                                        <i class="ki-filled ki-wallet text-lg"></i>
-                                    </span>
+                                    <x-famledger.wallet-mark />
                                     <div class="flex flex-col min-w-0">
                                         <a href="{{ route('families.wallets.show', $wallet) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
                                             {{ $wallet->display_name }}
@@ -221,12 +221,12 @@
 
                             {{-- Actions --}}
                             <div class="flex flex-wrap justify-end gap-2 pt-1">
-                                <x-famledger.pulse-button variant="outline" size="sm" :href="route('families.wallets.show', $wallet)">
+                                <a href="{{ route('families.wallets.show', $wallet) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1">
                                     View
-                                </x-famledger.pulse-button>
-                                <x-famledger.pulse-button variant="outline" size="sm" :href="route('families.wallets.edit', $wallet)">
+                                </a>
+                                <a href="{{ route('families.wallets.edit', $wallet) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1">
                                     Edit
-                                </x-famledger.pulse-button>
+                                </a>
                                 <form action="{{ route('families.wallets.destroy', $wallet) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Remove this wallet?" data-confirm-message="This cannot be undone.">
                                     @csrf
                                     @method('DELETE')

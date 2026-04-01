@@ -2,21 +2,22 @@
 
 namespace App\Providers;
 
+use App\Events\FamilyFinancialDataChanged;
 use App\Models\Budget;
 use App\Models\Expense;
 use App\Models\Family;
-use App\Models\FamilyMember;
 use App\Models\FamilyInvitation;
 use App\Models\FamilyLiability;
+use App\Models\FamilyMember;
 use App\Models\Income;
 use App\Models\Project;
+use App\Models\ProjectFunding;
 use App\Models\Property;
-use App\Models\SavingsGoal;
 use App\Models\SavingsContribution;
+use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\Wallet;
 use App\Models\WalletReconciliation;
-use App\Models\ProjectFunding;
 use App\Observers\AuditLogObserver;
 use App\Policies\FamilyPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -56,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
             $data = request()->attributes->get($key);
             if ($data !== null) {
                 $view->with($data);
+
                 return;
             }
 
@@ -78,9 +80,10 @@ class AppServiceProvider extends ServiceProvider
                         ? mb_strtolower($currentFamilyMembership->role->name)
                         : null;
                     $isOwnerOrCoOwner = in_array($roleName, ['owner', 'co-owner'], true);
-                    $canViewFamilyAuditTrail = $user->hasRole('Super Admin') || $user->hasRole('Auditor') || $isOwnerOrCoOwner;
+                    $canViewFamilyAuditTrail = $user->hasRole('Auditor') || $isOwnerOrCoOwner;
                     $canManageInvites = $isOwnerOrCoOwner;
-                    $canManageProperty = $isOwnerOrCoOwner;
+                    /* Any active family member may use family Property (assets); owners/co-owner only for invites/audit, etc. */
+                    $canManageProperty = $currentFamilyMembership !== null;
                     $roleLabelForTopbar = $currentFamilyMembership && $currentFamilyMembership->role
                         ? $currentFamilyMembership->role->name
                         : '';
@@ -124,5 +127,34 @@ class AppServiceProvider extends ServiceProvider
         FamilyLiability::observe(AuditLogObserver::class);
         FamilyInvitation::observe(AuditLogObserver::class);
         WalletReconciliation::observe(AuditLogObserver::class);
+
+        Expense::saved(function (Expense $expense): void {
+            FamilyFinancialDataChanged::dispatch($expense->family_id, 'expense');
+        });
+        Expense::deleted(function (Expense $expense): void {
+            FamilyFinancialDataChanged::dispatch($expense->family_id, 'expense_deleted');
+        });
+        Income::saved(function (Income $income): void {
+            FamilyFinancialDataChanged::dispatch($income->family_id, 'income');
+        });
+        Income::deleted(function (Income $income): void {
+            FamilyFinancialDataChanged::dispatch($income->family_id, 'income_deleted');
+        });
+        Transfer::saved(function (Transfer $transfer): void {
+            FamilyFinancialDataChanged::dispatch($transfer->family_id, 'transfer');
+        });
+        Transfer::deleted(function (Transfer $transfer): void {
+            FamilyFinancialDataChanged::dispatch($transfer->family_id, 'transfer_deleted');
+        });
+
+        Budget::saved(function (Budget $budget): void {
+            FamilyFinancialDataChanged::dispatch($budget->family_id, 'budget');
+        });
+        Project::saved(function (Project $project): void {
+            FamilyFinancialDataChanged::dispatch($project->family_id, 'project');
+        });
+        Project::deleted(function (Project $project): void {
+            FamilyFinancialDataChanged::dispatch($project->family_id, 'project_deleted');
+        });
     }
 }

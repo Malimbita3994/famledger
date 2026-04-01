@@ -81,6 +81,7 @@ class AuthController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'must_change_password' => (bool) $user->must_change_password,
             'families' => $user->families->map(fn ($f) => [
                 'id' => $f->id,
                 'name' => $f->name,
