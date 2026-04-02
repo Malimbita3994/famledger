@@ -9,10 +9,9 @@
         Back to {{ $family->name }}
     </x-fin-back-link>
 
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8 sm:mb-10">
         <div>
             <h1 class="font-medium text-lg text-mono">Transactions</h1>
-            <p class="text-sm text-muted-foreground mt-0.5">Manage income and expenses from one place. Use filters to narrow by type or wallet.</p>
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('families.incomes.create') }}" class="kt-btn kt-btn-primary inline-flex items-center gap-2">
@@ -55,7 +54,7 @@
             }
         }
     </style>
-    <div class="txn-stats-grid">
+    <div class="txn-stats-grid mt-2 sm:mt-3">
         <div class="kt-card rounded-xl border border-border bg-card px-4 py-3">
             <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Income</div>
             <div class="mt-1.5 text-lg font-semibold tabular-nums text-green-600">{{ $family->currency_code }} {{ number_format((float) $totalIncome, 2) }}</div>
@@ -108,24 +107,55 @@
     </div>
 
     <div class="kt-card kt-card-grid w-full min-w-0 max-w-full shrink-0">
-        <div class="kt-card-header flex-wrap gap-3 min-w-0">
-            <h3 class="kt-card-title text-sm shrink-0">All transactions</h3>
-            <form method="get" class="flex flex-wrap items-center gap-3 min-w-0 max-w-full">
-                <label for="type" class="text-sm text-muted-foreground whitespace-nowrap">Type</label>
-                <select name="type" id="type" class="kt-select kt-select-sm w-auto" onchange="this.form.submit()">
-                    <option value="" {{ ($type ?? '') === '' ? 'selected' : '' }}>All</option>
-                    <option value="income" {{ ($type ?? '') === 'income' ? 'selected' : '' }}>Income</option>
-                    <option value="expense" {{ ($type ?? '') === 'expense' ? 'selected' : '' }}>Expense</option>
-                </select>
-
-                <label for="wallet_id" class="text-sm text-muted-foreground whitespace-nowrap">Wallet</label>
-                <select name="wallet_id" id="wallet_id" class="kt-select kt-select-sm w-auto" onchange="this.form.submit()">
-                    <option value="">All wallets</option>
-                    @foreach ($wallets as $w)
-                        <option value="{{ $w->id }}" {{ request('wallet_id') == $w->id ? 'selected' : '' }}>{{ $w->name }} ({{ $w->currency_code }})</option>
-                    @endforeach
-                </select>
-            </form>
+        <div class="border-b border-border bg-muted/30 px-5 py-4 sm:px-6 sm:py-5 dark:bg-muted/10">
+            <div class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+                <div class="min-w-0 max-w-xl sm:pt-0.5">
+                    <h3 class="text-lg font-semibold leading-snug tracking-tight text-primary sm:text-xl">
+                        {{ __('All transactions') }}
+                    </h3>
+                </div>
+                <form
+                    method="get"
+                    action="{{ route('families.transactions.index') }}"
+                    class="flex w-full min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2.5 sm:ms-auto sm:w-auto sm:shrink-0 sm:justify-end"
+                >
+                    <div
+                        class="flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2 shadow-sm dark:bg-card sm:gap-3 sm:px-3.5 sm:py-2"
+                    >
+                        <label for="txn-filter-type" class="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {{ __('Type') }}
+                        </label>
+                        <select
+                            name="type"
+                            id="txn-filter-type"
+                            class="kt-select kt-select-sm w-[11.5rem] min-w-[10.5rem] max-w-[14rem]"
+                            onchange="this.form.submit()"
+                        >
+                            <option value="" {{ ($type ?? '') === '' ? 'selected' : '' }}>{{ __('All') }}</option>
+                            <option value="income" {{ ($type ?? '') === 'income' ? 'selected' : '' }}>{{ __('Income') }}</option>
+                            <option value="expense" {{ ($type ?? '') === 'expense' ? 'selected' : '' }}>{{ __('Expense') }}</option>
+                        </select>
+                    </div>
+                    <div
+                        class="flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2 shadow-sm dark:bg-card sm:gap-3 sm:px-3.5 sm:py-2"
+                    >
+                        <label for="txn-filter-wallet" class="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {{ __('Wallet') }}
+                        </label>
+                        <select
+                            name="wallet_id"
+                            id="txn-filter-wallet"
+                            class="kt-select kt-select-sm w-[11.5rem] min-w-[10.5rem] max-w-[14rem]"
+                            onchange="this.form.submit()"
+                        >
+                            <option value="">{{ __('All wallets') }}</option>
+                            @foreach ($wallets as $w)
+                                <option value="{{ $w->id }}" {{ request('wallet_id') == $w->id ? 'selected' : '' }}>{{ $w->name }} ({{ $w->currency_code }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </form>
+            </div>
         </div>
         <div class="kt-card-content p-0">
             @if ($transactions->isEmpty())
@@ -188,8 +218,24 @@
                     </table>
                 </div>
 
-                <div class="px-4 py-3 border-t border-border">
-                    {{ $transactions->links() }}
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-border bg-muted/20 dark:bg-muted/5">
+                    <p class="text-xs text-muted-foreground tabular-nums order-2 sm:order-1">
+                        @if ($transactions->total() > 0)
+                            {{ __('Showing :from–:to of :total', [
+                                'from' => $transactions->firstItem(),
+                                'to' => $transactions->lastItem(),
+                                'total' => $transactions->total(),
+                            ]) }}
+                            @if ($transactions->hasPages())
+                                <span class="text-muted-foreground/80">· {{ __('10 per page') }}</span>
+                            @endif
+                        @endif
+                    </p>
+                    @if ($transactions->hasPages())
+                        <div class="order-1 sm:order-2 min-w-0 flex justify-end [&_.pagination]:mb-0">
+                            {{ $transactions->withQueryString()->onEachSide(1)->links() }}
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>

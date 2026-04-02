@@ -117,6 +117,14 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    #sidebar .kt-menu-arrow i[class*="ki-"] {
     color: inherit !important;
    }
+
+   /* Sidebar footer icon row: theme, notifications, logout — all use accent */
+   #sidebar .fl-sidebar-footer-icon {
+    color: var(--primary) !important;
+   }
+   #sidebar .fl-sidebar-footer-icon i[class*="ki-"] {
+    color: var(--primary) !important;
+   }
   </style>
   <link href="{{ asset('css/famledger-sidebar-icons.css') }}" rel="stylesheet"/>
  </head>
@@ -2106,13 +2114,13 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
       </div>
       <!-- End of User -->
       <div class="flex items-center gap-1.5">
-       <button class="kt-btn kt-btn-ghost kt-btn-icon size-8 hover:bg-background hover:[&_i]:text-primary" type="button" id="theme_panel_toggle" title="{{ __('Theme') }}" aria-label="{{ __('Theme') }}">
-        <i class="ki-filled ki-color-swatch text-lg">
+       <button class="fl-sidebar-footer-icon kt-btn kt-btn-ghost kt-btn-icon size-8 text-primary hover:bg-primary/15 [&_i]:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35" type="button" id="theme_panel_toggle" title="{{ __('Theme') }}" aria-label="{{ __('Theme') }}">
+        <i class="ki-filled ki-color-swatch text-lg text-primary">
         </i>
        </button>
        <!-- Notifications -->
-       <button class="kt-btn kt-btn-ghost kt-btn-icon size-8 hover:bg-background hover:[&_i]:text-primary" data-kt-drawer-toggle="#notifications_drawer">
-        <i class="ki-filled ki-notification-status text-lg">
+       <button class="fl-sidebar-footer-icon kt-btn kt-btn-ghost kt-btn-icon size-8 text-primary hover:bg-primary/15 [&_i]:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35" type="button" data-kt-drawer-toggle="#notifications_drawer" title="{{ __('Notifications') }}" aria-label="{{ __('Notifications') }}">
+        <i class="ki-filled ki-notification-status text-lg text-primary">
         </i>
        </button>
        <!--Notifications Drawer-->
@@ -3465,8 +3473,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        <!-- End of Notifications -->
       <form method="POST" action="{{ route('logout') }}">
        @csrf
-       <button class="kt-btn kt-btn-ghost kt-btn-icon size-8 hover:bg-background hover:[&_i]:text-destructive" type="submit" title="Logout">
-        <i class="ki-filled ki-exit-right">
+       <button class="fl-sidebar-footer-icon kt-btn kt-btn-ghost kt-btn-icon size-8 text-primary hover:bg-primary/15 [&_i]:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35" type="submit" title="{{ __('Log out') }}" aria-label="{{ __('Log out') }}">
+        <i class="ki-filled ki-exit-right text-lg text-primary">
         </i>
        </button>
       </form>
@@ -3482,17 +3490,17 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        <p class="text-xs text-muted-foreground uppercase tracking-wide">{{ __('Adaptive UI') }}</p>
        <h3 class="text-sm font-semibold text-foreground">{{ __('Theme selection') }}</h3>
       </div>
-      <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" id="theme_panel_close" aria-label="{{ __('Close') }}">
-       <i class="ki-filled ki-cross"></i>
+      <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost text-primary hover:bg-primary/10 [&_i]:text-primary" id="theme_panel_close" aria-label="{{ __('Close') }}">
+       <i class="ki-filled ki-cross text-primary"></i>
       </button>
      </div>
      <div class="fl-theme-panel-body">
       <section class="space-y-2">
        <p class="text-xs text-muted-foreground uppercase tracking-wide">{{ __('Mode') }}</p>
-       <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label="{{ __('Theme mode') }}">
-        <button type="button" class="fl-theme-mode-btn kt-btn kt-btn-sm kt-btn-outline justify-center" data-fl-theme-mode="light">{{ __('Light') }}</button>
-        <button type="button" class="fl-theme-mode-btn kt-btn kt-btn-sm kt-btn-outline justify-center" data-fl-theme-mode="dark">{{ __('Dark') }}</button>
-        <button type="button" class="fl-theme-mode-btn kt-btn kt-btn-sm kt-btn-outline justify-center" data-fl-theme-mode="system">{{ __('System') }}</button>
+       <div class="grid grid-cols-3 gap-2 min-w-0" role="radiogroup" aria-label="{{ __('Theme mode') }}">
+        <button type="button" class="fl-theme-mode-btn w-full min-w-0" data-fl-theme-mode="light">{{ __('Light') }}</button>
+        <button type="button" class="fl-theme-mode-btn w-full min-w-0" data-fl-theme-mode="dark">{{ __('Dark') }}</button>
+        <button type="button" class="fl-theme-mode-btn w-full min-w-0" data-fl-theme-mode="system">{{ __('System') }}</button>
        </div>
       </section>
       <section class="space-y-2 mt-5">
@@ -5073,8 +5081,13 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      document.querySelectorAll('.fl-accent-btn[data-fl-accent]').forEach(function (btn) {
       var id = btn.getAttribute('data-fl-accent');
       var on = id === current;
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.classList.toggle('ring-primary', on);
+      var pressed = on ? 'true' : 'false';
+      if (btn.getAttribute('aria-pressed') !== pressed) {
+       btn.setAttribute('aria-pressed', pressed);
+      }
+      if (btn.classList.contains('ring-primary') !== on) {
+       btn.classList.toggle('ring-primary', on);
+      }
      });
     }
     function getResolvedTheme(mode) {
@@ -5082,6 +5095,31 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
      }
      return mode === 'dark' ? 'dark' : 'light';
+    }
+    /** Prefer storage, but reconcile with html class (KT switch / other scripts). */
+    function getCurrentMode() {
+     var saved = '';
+     try { saved = localStorage.getItem(MODE_KEY) || ''; } catch (e) {}
+     var domDark = root.classList.contains('dark');
+     var domLight = root.classList.contains('light');
+     if (saved === 'system') return 'system';
+     if (saved === 'dark') {
+      if (domLight && !domDark) {
+       try { localStorage.setItem(MODE_KEY, 'light'); } catch (e2) {}
+       return 'light';
+      }
+      return 'dark';
+     }
+     if (saved === 'light') {
+      if (domDark && !domLight) {
+       try { localStorage.setItem(MODE_KEY, 'dark'); } catch (e3) {}
+       return 'dark';
+      }
+      return 'light';
+     }
+     var attr = root.getAttribute('data-kt-theme-mode');
+     if (/^(light|dark|system)$/.test(attr || '')) return attr;
+     return domDark ? 'dark' : 'light';
     }
     function applyThemeMode(mode) {
      if (!/^(light|dark|system)$/.test(mode)) return;
@@ -5091,16 +5129,24 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      root.setAttribute('data-kt-theme-mode', mode);
      try { localStorage.setItem(MODE_KEY, mode); } catch (e) {}
      syncModeButtons();
+     try {
+      var sw = document.querySelector('[data-kt-theme-switch-toggle="true"]');
+      if (sw && sw.type === 'checkbox') sw.checked = resolved === 'dark';
+     } catch (e2) {}
     }
     function syncModeButtons() {
-     var saved = null;
-     try { saved = localStorage.getItem(MODE_KEY); } catch (e) {}
-     var mode = /^(light|dark|system)$/.test(saved || '') ? saved : (root.getAttribute('data-kt-theme-mode') || 'light');
+     var mode = getCurrentMode();
+     /* Never write the same value in a tight loop — MutationObserver + setAttribute caused main-thread freeze */
+     var prev = root.getAttribute('data-kt-theme-mode');
+     if (prev !== mode) {
+      root.setAttribute('data-kt-theme-mode', mode);
+     }
      document.querySelectorAll('.fl-theme-mode-btn[data-fl-theme-mode]').forEach(function (btn) {
       var on = btn.getAttribute('data-fl-theme-mode') === mode;
-      btn.classList.toggle('kt-btn-primary', on);
-      btn.classList.toggle('kt-btn-outline', !on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      var pressed = on ? 'true' : 'false';
+      if (btn.getAttribute('aria-pressed') !== pressed) {
+       btn.setAttribute('aria-pressed', pressed);
+      }
      });
     }
     function applyAccent(name) {
@@ -5147,13 +5193,37 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     } else {
      init();
     }
-    /* Dark/light toggle: Metronic swaps html.light / html.dark — re-sync swatch ring */
+    /* KT switch / Metronic: only observe class — syncing data-kt-theme-mode here caused an observer/setAttribute loop */
     try {
+     var moTimer = null;
      var mo = new MutationObserver(function () {
-      syncButtons();
+      if (moTimer) clearTimeout(moTimer);
+      moTimer = setTimeout(function () {
+       moTimer = null;
+       syncButtons();
+       syncModeButtons();
+      }, 0);
      });
      mo.observe(root, { attributes: true, attributeFilter: ['class'] });
     } catch (e) {}
+    try {
+     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+      try {
+       if (localStorage.getItem(MODE_KEY) === 'system') applyThemeMode('system');
+      } catch (e) {}
+     });
+    } catch (e) {}
+    document.addEventListener(
+     'change',
+     function (e) {
+      var t = e.target;
+      if (!t || !t.matches || !t.matches('[data-kt-theme-switch-toggle="true"]')) return;
+      window.setTimeout(function () {
+       syncModeButtons();
+      }, 0);
+     },
+     true
+    );
 
     var panel = document.getElementById('theme_panel');
     var backdrop = document.getElementById('theme_panel_backdrop');
@@ -5161,6 +5231,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     var closeBtn = document.getElementById('theme_panel_close');
     function openPanel() {
      if (!panel || !backdrop) return;
+     syncModeButtons();
+     syncButtons();
      panel.classList.add('is-open');
      backdrop.classList.add('is-open');
      backdrop.classList.remove('hidden');

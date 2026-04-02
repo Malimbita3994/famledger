@@ -18,6 +18,7 @@ use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\Wallet;
 use App\Models\WalletReconciliation;
+use App\Services\FirebaseClient;
 use App\Observers\AuditLogObserver;
 use App\Policies\FamilyPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Kreait\Firebase\Factory;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,7 +36,42 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(Factory::class, function () {
+            $factory = new Factory();
+
+            $credentialsPath = config('firebase.credentials.path');
+            $credentialsJson = config('firebase.credentials.json');
+
+            if (is_string($credentialsPath) && $credentialsPath !== '') {
+                $factory = $factory->withServiceAccount($credentialsPath);
+            } elseif (is_string($credentialsJson) && $credentialsJson !== '') {
+                $decoded = json_decode($credentialsJson, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $factory = $factory->withServiceAccount($decoded);
+                }
+            }
+
+            $projectId = config('firebase.project_id');
+            if (is_string($projectId) && $projectId !== '') {
+                $factory = $factory->withProjectId($projectId);
+            }
+
+            $databaseUrl = config('firebase.database_url');
+            if (is_string($databaseUrl) && $databaseUrl !== '') {
+                $factory = $factory->withDatabaseUri($databaseUrl);
+            }
+
+            $storageBucket = config('firebase.storage_bucket');
+            if (is_string($storageBucket) && $storageBucket !== '') {
+                $factory = $factory->withDefaultStorageBucket($storageBucket);
+            }
+
+            return $factory;
+        });
+
+        $this->app->singleton(FirebaseClient::class, function ($app) {
+            return new FirebaseClient($app->make(Factory::class));
+        });
     }
 
     /**

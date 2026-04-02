@@ -5,59 +5,64 @@
 
 @push('styles')
 <style>
+    /*
+     * Use Metronic / FamLedger tokens so this page follows Theme panel → UI Color (data-fl-accent).
+     * famledger-accent-themes.css maps each accent to --primary and --ring on <html>.
+     */
     .admin-roles-page {
-        --ar-accent: #009ef7;
-        --ar-accent-2: #0ea5e9;
+        --ar-accent: var(--primary);
+        --ar-accent-2: var(--ring, var(--primary));
     }
     .admin-roles-eyebrow {
         font-size: 0.6875rem;
         font-weight: 600;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: #64748b;
     }
     .admin-roles-title {
         font-size: clamp(1.35rem, 2.8vw, 1.7rem);
         font-weight: 700;
         letter-spacing: -0.03em;
         line-height: 1.2;
-        color: var(--ar-accent);
+        color: var(--primary);
     }
     .admin-roles-sub {
         font-size: 0.875rem;
         line-height: 1.5;
-        color: #64748b;
         margin-top: 0.35rem;
-    }
-    .dark .admin-roles-sub {
-        color: #94a3b8;
     }
     .admin-roles-pulse-card {
         border-radius: 16px;
-        border: 1px solid rgba(14, 165, 233, 0.18);
-        background: linear-gradient(180deg, #ffffff 0%, #f8fcff 100%);
+        border: 1px solid color-mix(in oklab, var(--primary) 22%, var(--border));
+        background: linear-gradient(
+            180deg,
+            var(--card) 0%,
+            color-mix(in oklab, var(--primary) 6%, var(--card)) 100%
+        );
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
         transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     }
     .admin-roles-pulse-card:hover {
-        border-color: rgba(0, 158, 247, 0.35);
-        box-shadow: 0 12px 32px rgba(0, 158, 247, 0.12);
+        border-color: color-mix(in oklab, var(--primary) 42%, var(--border));
+        box-shadow: 0 12px 32px color-mix(in oklab, var(--primary) 14%, transparent);
         transform: translateY(-2px);
     }
     .dark .admin-roles-pulse-card {
-        background: linear-gradient(180deg, rgb(30 41 59 / 0.9) 0%, rgb(15 23 42 / 0.95) 100%);
-        border-color: rgba(14, 165, 233, 0.22);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .dark .admin-roles-pulse-card:hover {
+        box-shadow: 0 12px 32px color-mix(in oklab, var(--primary) 18%, transparent);
     }
     .admin-roles-pulse-card .admin-roles-card-name {
         font-weight: 700;
         letter-spacing: -0.02em;
-        color: var(--ar-accent);
+        color: var(--primary);
     }
     .admin-roles-pulse-card .admin-roles-card-name:hover {
-        color: var(--ar-accent-2);
+        color: var(--ring, var(--primary));
     }
     .admin-roles-pulse-card .admin-roles-card-icon {
-        color: var(--ar-accent);
+        color: var(--primary);
     }
     .settings-hub-pulse-tile {
         padding: 1.25rem 1.5rem;
@@ -80,9 +85,9 @@
     <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 pt-6 lg:pt-8 pb-4">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pb-2">
             <div>
-                <p class="admin-roles-eyebrow mb-1.5">{{ __('Workspace') }}</p>
+                <p class="admin-roles-eyebrow mb-1.5 text-muted-foreground">{{ __('Workspace') }}</p>
                 <h1 class="admin-roles-title">{{ __('Settings') }}</h1>
-                <p class="admin-roles-sub max-w-2xl">
+                <p class="admin-roles-sub max-w-2xl text-muted-foreground">
                     {{ __('Manage your FamLedger profile, family configuration, categories, notifications and audit log from one place.') }}
                 </p>
             </div>
