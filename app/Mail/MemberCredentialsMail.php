@@ -29,7 +29,7 @@ class MemberCredentialsMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your login for ' . $this->family->name . ' – FamLedger',
+            subject: 'Your login for '.$this->family->name.' – FamLedger',
         );
     }
 

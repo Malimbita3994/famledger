@@ -14,6 +14,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Wallet extends Model
 {
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_INACTIVE = 'inactive';
+
     protected $fillable = [
         'family_id',
         'name',
@@ -47,6 +51,14 @@ class Wallet extends Model
             'allowance' => 'Allowance',
             'business_fund' => 'Business Fund',
             'other' => 'Other',
+        ];
+    }
+
+    public static function statuses(): array
+    {
+        return [
+            self::STATUS_ACTIVE => 'Active',
+            self::STATUS_INACTIVE => 'Inactive',
         ];
     }
 

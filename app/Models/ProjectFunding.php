@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProjectFunding extends Model
 {
     public const SOURCE_TRANSFER = 'transfer';
+
     public const SOURCE_SAVINGS = 'savings';
+
     public const SOURCE_INCOME = 'income';
 
     protected $fillable = [

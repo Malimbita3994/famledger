@@ -25,6 +25,7 @@ class ReportController extends Controller
 
         $items = $families->map(function (Family $f) {
             $primary = $f->familyMembers->first();
+
             return [
                 'id' => $f->id,
                 'name' => $f->name,

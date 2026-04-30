@@ -6,8 +6,6 @@ use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\ExpenseCategory;
 use App\Models\Family;
 use App\Models\IncomeCategory;
-use App\Models\Wallet;
-use App\Models\WalletReconciliation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -114,7 +112,7 @@ class ReconciliationController extends Controller
                     'currency_code' => $wallet->currency_code,
                     'source' => 'Reconciliation surplus',
                     'received_date' => now()->toDateString(),
-                    'notes' => 'Adjustment: actual balance was higher than system balance. Reconciled ' . now()->format('M j, Y'),
+                    'notes' => 'Adjustment: actual balance was higher than system balance. Reconciled '.now()->format('M j, Y'),
                     'received_by' => auth()->id(),
                     'created_by' => auth()->id(),
                     'reconciliation_id' => $reconciliation->id,

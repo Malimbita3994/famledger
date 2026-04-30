@@ -12,6 +12,7 @@ class LookupController extends Controller
     public function incomeCategories(): JsonResponse
     {
         $categories = IncomeCategory::defaults();
+
         return response()->json([
             'categories' => $categories->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]),
         ]);
@@ -20,6 +21,7 @@ class LookupController extends Controller
     public function expenseCategories(): JsonResponse
     {
         $categories = ExpenseCategory::defaults();
+
         return response()->json([
             'categories' => $categories->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]),
         ]);

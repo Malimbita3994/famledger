@@ -93,6 +93,7 @@ class SavingsGoal extends Model
         if (isset($this->attributes['contributions_sum_amount'])) {
             return (float) $this->attributes['contributions_sum_amount'];
         }
+
         return (float) $this->contributions()->sum('amount');
     }
 
@@ -106,6 +107,7 @@ class SavingsGoal extends Model
         if ((float) $this->target_amount <= 0) {
             return 0;
         }
+
         return min(100, round(((float) $this->saved_amount / (float) $this->target_amount) * 100, 1));
     }
 

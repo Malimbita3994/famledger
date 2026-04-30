@@ -44,7 +44,7 @@ class WalletTransaction extends Model
      */
     public function reference()
     {
-        if (!$this->reference_type || !$this->reference_id) {
+        if (! $this->reference_type || ! $this->reference_id) {
             return null;
         }
 

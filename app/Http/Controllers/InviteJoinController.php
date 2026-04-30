@@ -30,19 +30,19 @@ class InviteJoinController extends Controller
             }
 
             return view('invite.join', [
-                'type'        => 'email',
-                'family'      => $invitation->family,
-                'invitation'  => $invitation,
-                'token'       => $token,
+                'type' => 'email',
+                'family' => $invitation->family,
+                'invitation' => $invitation,
+                'token' => $token,
             ]);
         }
 
         $family = Family::where('invite_token', $token)->first();
         if ($family) {
             return view('invite.join', [
-                'type'   => 'link',
+                'type' => 'link',
                 'family' => $family,
-                'token'  => $token,
+                'token' => $token,
             ]);
         }
 
@@ -72,7 +72,7 @@ class InviteJoinController extends Controller
             }
             if (strtolower($user->email) !== strtolower($invitation->email)) {
                 return redirect()->route('invite.join', ['token' => $token])
-                    ->with('error', 'This invitation was sent to ' . $invitation->email . '. Please sign in with that account.');
+                    ->with('error', 'This invitation was sent to '.$invitation->email.'. Please sign in with that account.');
             }
             if ($invitation->family->members()->where('user_id', $user->id)->exists()) {
                 $invitation->update(['status' => 'accepted', 'accepted_at' => now()]);
@@ -85,19 +85,19 @@ class InviteJoinController extends Controller
             $role = $invitation->role;
             $isPrimary = false;
             FamilyMember::create([
-                'family_id'   => $invitation->family_id,
-                'user_id'     => $user->id,
-                'role_id'     => $role->id,
+                'family_id' => $invitation->family_id,
+                'user_id' => $user->id,
+                'role_id' => $role->id,
                 'member_name' => $user->name,
-                'is_primary'  => $isPrimary,
-                'status'      => 'active',
-                'joined_at'   => now(),
+                'is_primary' => $isPrimary,
+                'status' => 'active',
+                'joined_at' => now(),
             ]);
             $invitation->update(['status' => 'accepted', 'accepted_at' => now()]);
             session()->put('current_family_id', $invitation->family_id);
 
             return redirect()->route('families.overview')
-                ->with('success', 'You have joined ' . $invitation->family->name . ' as ' . $role->name . '.');
+                ->with('success', 'You have joined '.$invitation->family->name.' as '.$role->name.'.');
         }
 
         $family = Family::where('invite_token', $token)->first();
@@ -116,19 +116,19 @@ class InviteJoinController extends Controller
             }
 
             FamilyMember::create([
-                'family_id'   => $family->id,
-                'user_id'     => $user->id,
-                'role_id'     => $memberRole->id,
+                'family_id' => $family->id,
+                'user_id' => $user->id,
+                'role_id' => $memberRole->id,
                 'member_name' => $user->name,
-                'is_primary'  => false,
-                'status'      => 'active',
-                'joined_at'   => now(),
+                'is_primary' => false,
+                'status' => 'active',
+                'joined_at' => now(),
             ]);
 
             session()->put('current_family_id', $family->id);
 
             return redirect()->route('families.overview')
-                ->with('success', 'You have joined ' . $family->name . '.');
+                ->with('success', 'You have joined '.$family->name.'.');
         }
 
         return redirect()->route('landing')->with('error', 'Invalid or expired invite link.');

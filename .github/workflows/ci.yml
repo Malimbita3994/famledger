@@ -30,6 +30,9 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: Audit Composer dependencies
+        run: composer audit
+
       - name: Prepare Laravel environment
         run: |
           cp .env.example .env
@@ -43,3 +46,9 @@ jobs:
 
       - name: Build frontend assets
         run: npm run build
+
+      - name: Check code style
+        run: ./vendor/bin/pint --test
+
+      - name: Run static analysis
+        run: ./vendor/bin/phpstan analyse --configuration=phpstan.neon --no-progress --memory-limit=1G

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('description', 1000)->nullable()->after('display_name');
         });
     }
-    
+
     public function down()
     {
         Schema::table('permissions', function (Blueprint $table) {

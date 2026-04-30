@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Blade;
 
 class ContactMessageController extends Controller
@@ -58,7 +59,7 @@ class ContactMessageController extends Controller
     /**
      * HTML fragment: Bootstrap contact modal (view variant) for AJAX injection on the index page.
      */
-    public function modal(ContactMessage $contact_message): \Illuminate\Http\Response
+    public function modal(ContactMessage $contact_message): Response
     {
         // Do not mark read here: this endpoint is loaded via AJAX and the list row would stay "New"
         // until a full page reload. Use "Mark as read" in the modal (redirect refreshes the table).

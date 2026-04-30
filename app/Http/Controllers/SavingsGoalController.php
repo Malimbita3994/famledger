@@ -232,8 +232,8 @@ class SavingsGoalController extends Controller
                 'amount' => $validated['amount'],
                 'currency_code' => strtoupper($savingsGoal->wallet->currency_code),
                 'transfer_date' => now()->toDateString(),
-                'description' => 'Savings: ' . $savingsGoal->name,
-                'reference' => 'goal:' . $savingsGoal->id,
+                'description' => 'Savings: '.$savingsGoal->name,
+                'reference' => 'goal:'.$savingsGoal->id,
                 'created_by' => auth()->id(),
             ]);
 

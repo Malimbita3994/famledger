@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class CreateSuperAdminCommand extends Command
 {
@@ -24,6 +23,7 @@ class CreateSuperAdminCommand extends Command
 
         if (strlen($password) < 8) {
             $this->error('Password must be at least 8 characters.');
+
             return self::FAILURE;
         }
 

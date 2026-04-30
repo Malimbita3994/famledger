@@ -6,7 +6,6 @@ use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
 use App\Models\Project;
 use App\Models\ProjectFunding;
-use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -127,7 +126,7 @@ class ProjectFundingController extends Controller
                     'name' => $project->name,
                     'type' => 'project_fund',
                     'currency_code' => $currency,
-                    'description' => 'Fund bucket for: ' . $project->name,
+                    'description' => 'Fund bucket for: '.$project->name,
                     'initial_balance' => 0,
                     'is_shared' => true,
                     'status' => 'active',
@@ -138,11 +137,13 @@ class ProjectFundingController extends Controller
 
             if ($sourceWallet->id === $projectWallet->id) {
                 DB::rollBack();
+
                 return back()->withInput()->withErrors(['wallet_id' => 'Source wallet cannot be the project wallet. Choose another family wallet.']);
             }
 
             if (strtoupper($sourceWallet->currency_code) !== strtoupper($projectWallet->currency_code)) {
                 DB::rollBack();
+
                 return back()->withInput()->withErrors(['wallet_id' => 'Source wallet currency must match project currency.']);
             }
 
@@ -152,7 +153,7 @@ class ProjectFundingController extends Controller
                 'amount' => $validated['amount'],
                 'currency_code' => $currency,
                 'transfer_date' => $validated['funding_date'],
-                'description' => 'Project funding: ' . $project->name,
+                'description' => 'Project funding: '.$project->name,
                 'reference' => $validated['reference'] ?? null,
                 'created_by' => auth()->id(),
             ]);

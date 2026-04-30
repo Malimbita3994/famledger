@@ -30,7 +30,7 @@ class FamilyRoleSeeder extends Seeder
                 ['name' => $role['name']],
                 [
                     'description' => $role['description'],
-                    'is_system'   => $role['is_system'],
+                    'is_system' => $role['is_system'],
                 ]
             );
         }

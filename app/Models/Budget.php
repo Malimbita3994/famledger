@@ -36,8 +36,11 @@ class Budget extends Model
     }
 
     public const TYPE_FAMILY = 'family';
+
     public const TYPE_CATEGORY = 'category';
+
     public const TYPE_WALLET = 'wallet';
+
     public const TYPE_PROJECT = 'project';
 
     public static function types(): array
@@ -151,6 +154,7 @@ class Budget extends Model
         if ((float) $this->amount <= 0) {
             return 0;
         }
+
         return min(100, round(($this->used_amount / (float) $this->amount) * 100, 1));
     }
 

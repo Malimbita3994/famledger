@@ -44,4 +44,3 @@ class PropertyAttribute extends Model
         return $this->hasMany(PropertyAttributeValue::class, 'attribute_id');
     }
 }
-

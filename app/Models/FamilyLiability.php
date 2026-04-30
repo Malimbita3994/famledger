@@ -87,4 +87,3 @@ class FamilyLiability extends Model
         return max(0, $principal + $draws - $repayments);
     }
 }
-

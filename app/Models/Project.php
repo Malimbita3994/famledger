@@ -9,22 +9,35 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Project extends Model
 {
     public const TYPE_CONSTRUCTION = 'construction';
+
     public const TYPE_EVENT = 'event';
+
     public const TYPE_EDUCATION = 'education';
+
     public const TYPE_BUSINESS = 'business';
+
     public const TYPE_PURCHASE = 'purchase';
+
     public const TYPE_INVESTMENT = 'investment';
+
     public const TYPE_OTHER = 'other';
 
     public const STATUS_PLANNING = 'planning';
+
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_ON_HOLD = 'on_hold';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     public const PRIORITY_LOW = 'low';
+
     public const PRIORITY_MEDIUM = 'medium';
+
     public const PRIORITY_HIGH = 'high';
+
     public const PRIORITY_CRITICAL = 'critical';
 
     protected $fillable = [
@@ -155,6 +168,7 @@ class Project extends Model
         if ($planned <= 0) {
             return 0;
         }
+
         return min(100, round(($this->total_funding / $planned) * 100, 1));
     }
 
@@ -165,6 +179,7 @@ class Project extends Model
         if ($planned <= 0) {
             return 0;
         }
+
         return round(($this->total_expenses / $planned) * 100, 1);
     }
 
@@ -193,8 +208,9 @@ class Project extends Model
             ['l' => __('Remaining (budget − funded)'), 'v' => number_format($remaining, 2).' '.$ccy],
         ];
 
-        if (array_key_exists('expenses_sum_amount', $this->getAttributes())) {
-            $exp = (float) $this->expenses_sum_amount;
+        $attributes = $this->getAttributes();
+        if (array_key_exists('expenses_sum_amount', $attributes)) {
+            $exp = (float) $attributes['expenses_sum_amount'];
             $rows[] = ['l' => __('Total expenses'), 'v' => number_format($exp, 2).' '.$ccy];
         }
 

@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('balance_after', 15, 2)->nullable(); // Computed balance after this transaction
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
-            
+
             $table->index(['wallet_id', 'created_at']);
             $table->index(['reference_type', 'reference_id']);
         });

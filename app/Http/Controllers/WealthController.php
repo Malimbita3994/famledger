@@ -14,6 +14,7 @@ use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class WealthController extends Controller
 {
@@ -229,7 +230,7 @@ class WealthController extends Controller
     /**
      * Export wealth overview as PDF.
      */
-    public function exportPdf(Request $request, Family $family): \Symfony\Component\HttpFoundation\Response
+    public function exportPdf(Request $request, Family $family): Response
     {
         $this->authorizeFamilyMember($family);
 

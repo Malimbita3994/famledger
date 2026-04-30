@@ -22,4 +22,3 @@ class SystemLookup extends Model
         ];
     }
 }
-

@@ -83,7 +83,7 @@ class ExpenseController extends Controller
             'budget_id' => ['nullable', Rule::exists('budgets', 'id')->where('family_id', $family->id)],
         ]);
 
-        return DB::transaction(function () use ($family, $validated, $wallet) {
+        return DB::transaction(function () use ($family, $validated) {
             $locked = WalletBalanceGuard::lockWalletsForUpdate([(int) $validated['wallet_id']]);
             $w = $locked->get((int) $validated['wallet_id']);
             if (! $w || $w->status !== 'active') {

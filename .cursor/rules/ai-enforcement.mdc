@@ -1,0 +1,27 @@
+---
+description: Enforce project AI architecture and quality standards
+alwaysApply: true
+---
+
+# AI Enforcement Rule
+
+Follow `docs/ai-rules.md` for all code changes and refactors.
+
+## Required Behaviors
+
+- Act as a senior architect, not only a code generator.
+- Keep business logic out of controllers.
+- Use service and repository layering for new/changed modules.
+- Keep API responses consistent with the project format.
+- Validate and sanitize incoming data.
+- Apply centralized, structured error handling.
+- Enforce clear naming and strong security practices.
+- Improve code quality continuously (readability, reuse, low duplication).
+
+## Editing Standard
+
+For every non-trivial edit:
+1. Analyze current implementation against `docs/ai-rules.md`
+2. Refactor violations in touched scope
+3. Keep changes modular and maintainable
+4. Apply changes directly

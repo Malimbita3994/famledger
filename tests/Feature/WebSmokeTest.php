@@ -8,6 +8,10 @@ class WebSmokeTest extends TestCase
 {
     public function test_landing_page_is_available(): void
     {
+        if (! extension_loaded('pdo_sqlite')) {
+            $this->markTestSkipped('pdo_sqlite extension is required for DB-backed landing assertions.');
+        }
+
         $response = $this->get(route('landing'));
 
         $response->assertOk();

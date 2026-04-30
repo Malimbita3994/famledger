@@ -26,4 +26,3 @@ class PropertyAttributeOption extends Model
         return $this->belongsTo(PropertyAttribute::class, 'attribute_id');
     }
 }
-

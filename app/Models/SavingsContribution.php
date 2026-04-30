@@ -27,7 +27,9 @@ class SavingsContribution extends Model
     }
 
     public const SOURCE_TRANSFER = 'transfer';
+
     public const SOURCE_INCOME = 'income';
+
     public const SOURCE_MANUAL = 'manual';
 
     public function goal(): BelongsTo

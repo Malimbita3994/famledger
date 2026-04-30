@@ -11,9 +11,7 @@ use Kreait\Firebase\Factory;
 
 class FirebaseClient
 {
-    public function __construct(private readonly Factory $factory)
-    {
-    }
+    public function __construct(private readonly Factory $factory) {}
 
     public function auth(): Auth
     {
@@ -40,4 +38,3 @@ class FirebaseClient
         return $this->factory->createStorage();
     }
 }
-

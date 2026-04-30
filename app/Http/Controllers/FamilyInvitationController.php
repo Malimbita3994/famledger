@@ -15,7 +15,7 @@ class FamilyInvitationController extends Controller
 {
     protected function authorizeManageMembers(Family $family): void
     {
-        $membership = \App\Models\FamilyMember::where('family_id', $family->id)
+        $membership = FamilyMember::where('family_id', $family->id)
             ->where('user_id', auth()->id())
             ->with('role')
             ->first();
@@ -36,7 +36,7 @@ class FamilyInvitationController extends Controller
             $query->where('status', $request->status);
         }
         if ($request->filled('search')) {
-            $query->where('email', 'like', '%' . $request->search . '%');
+            $query->where('email', 'like', '%'.$request->search.'%');
         }
         $invitations = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
 
@@ -55,7 +55,7 @@ class FamilyInvitationController extends Controller
         $this->authorizeManageMembers($family);
 
         $validated = $request->validate([
-            'email'   => ['required', 'email'],
+            'email' => ['required', 'email'],
             'role_id' => ['required', 'exists:family_roles,id'],
         ]);
 
@@ -81,17 +81,17 @@ class FamilyInvitationController extends Controller
         }
 
         FamilyInvitation::create([
-            'family_id'   => $family->id,
-            'email'       => $validated['email'],
-            'role_id'     => $validated['role_id'],
-            'token'       => FamilyInvitation::generateToken(),
-            'invited_by'  => auth()->id(),
-            'expires_at'  => now()->addDays(7),
-            'status'      => 'pending',
+            'family_id' => $family->id,
+            'email' => $validated['email'],
+            'role_id' => $validated['role_id'],
+            'token' => FamilyInvitation::generateToken(),
+            'invited_by' => auth()->id(),
+            'expires_at' => now()->addDays(7),
+            'status' => 'pending',
         ]);
 
         return redirect()->route('families.invites.index')
-            ->with('success', 'Invitation sent to ' . $validated['email']);
+            ->with('success', 'Invitation sent to '.$validated['email']);
     }
 
     public function resetLink(Family $family)

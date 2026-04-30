@@ -13,7 +13,6 @@ use App\Models\Project;
 use App\Models\Property;
 use App\Models\PropertyDepreciation;
 use App\Models\PropertyValuation;
-use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\Wallet;
 use App\Support\FinancialYear;
@@ -35,6 +34,7 @@ class ReportController extends Controller
     {
         $from = FinancialYear::start()->format('Y-m-d');
         $to = FinancialYear::end()->format('Y-m-d');
+
         return [$from, $to];
     }
 
@@ -150,12 +150,12 @@ class ReportController extends Controller
                 ->whereBetween('transfer_date', [$from, $to])
                 ->with('fromWallet:id,name')
                 ->get()
-                ->each(fn ($t) => $events[] = ['date' => $t->transfer_date, 'income' => (float) $t->amount, 'expense' => null, 'desc' => 'Transfer from ' . ($t->fromWallet->name ?? 'Wallet'), 'type' => 'transfer_in']);
+                ->each(fn ($t) => $events[] = ['date' => $t->transfer_date, 'income' => (float) $t->amount, 'expense' => null, 'desc' => 'Transfer from '.($t->fromWallet->name ?? 'Wallet'), 'type' => 'transfer_in']);
             Transfer::where('from_wallet_id', $wallet->id)
                 ->whereBetween('transfer_date', [$from, $to])
                 ->with('toWallet:id,name')
                 ->get()
-                ->each(fn ($t) => $events[] = ['date' => $t->transfer_date, 'income' => null, 'expense' => (float) $t->amount, 'desc' => 'Transfer to ' . ($t->toWallet->name ?? 'Wallet'), 'type' => 'transfer_out']);
+                ->each(fn ($t) => $events[] = ['date' => $t->transfer_date, 'income' => null, 'expense' => (float) $t->amount, 'desc' => 'Transfer to '.($t->toWallet->name ?? 'Wallet'), 'type' => 'transfer_out']);
 
             usort($events, fn ($a, $b) => $a['date'] <=> $b['date']);
             foreach ($events as $e) {
@@ -207,6 +207,7 @@ class ReportController extends Controller
             ->get()
             ->map(function ($row) use ($totalExpenses) {
                 $pct = $totalExpenses > 0 ? round(($row->total / $totalExpenses) * 100, 1) : 0;
+
                 return ['name' => $row->category->name ?? 'Uncategorized', 'total' => (float) $row->total, 'percent' => $pct];
             })
             ->sortByDesc('total')
@@ -279,6 +280,7 @@ class ReportController extends Controller
         $bySource = collect($groupTotals)
             ->map(function ($total, $name) use ($totalIncome) {
                 $pct = $totalIncome > 0 ? round(($total / $totalIncome) * 100, 1) : 0;
+
                 return ['name' => $name, 'total' => (float) $total, 'percent' => $pct];
             })
             ->sortByDesc('total')
@@ -393,6 +395,7 @@ class ReportController extends Controller
             $planned = (float) $b->amount;
             $used = (float) $b->used_amount;
             $pct = $planned > 0 ? min(100, round(($used / $planned) * 100, 1)) : 0;
+
             return [
                 'id' => $b->id,
                 'name' => $b->name,
@@ -427,6 +430,7 @@ class ReportController extends Controller
             $target = (float) $g->target_amount;
             $saved = (float) $g->saved_amount;
             $pct = $target > 0 ? min(100, round(($saved / $target) * 100, 1)) : 0;
+
             return [
                 'id' => $g->id,
                 'name' => $g->name,
@@ -470,7 +474,7 @@ class ReportController extends Controller
             $query->whereHas('fundings');
         }
         if ($search && trim($search) !== '') {
-            $query->where('name', 'like', '%' . trim($search) . '%');
+            $query->where('name', 'like', '%'.trim($search).'%');
         }
 
         $projects = $query->get()->map(fn ($p) => [
@@ -537,6 +541,7 @@ class ReportController extends Controller
         $items = $properties->map(function ($p) use ($latestValuations, $latestDepreciations) {
             $val = $latestValuations->get($p->id);
             $dep = $latestDepreciations->get($p->id);
+
             return [
                 'id' => $p->id,
                 'name' => $p->name,

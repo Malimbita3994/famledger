@@ -55,6 +55,7 @@ class UserController extends Controller
         $this->authorizeAdmin();
 
         $user->load('roles:id,name', 'familyMemberships.role:id,name', 'familyMemberships.family:id,name');
+
         return response()->json($this->formatUserDetail($user));
     }
 

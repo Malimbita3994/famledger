@@ -4,7 +4,6 @@
  * Strip $family / $currentFamily from route() / ->route() for /account/* URLs.
  * Preserves: families.show, families.edit, families.update, families.destroy, families.currency.switch
  */
-
 $dirs = [
     __DIR__.'/../app/Http/Controllers',
     __DIR__.'/../resources/views',

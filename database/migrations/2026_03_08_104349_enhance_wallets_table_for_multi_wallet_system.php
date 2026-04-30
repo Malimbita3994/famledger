@@ -16,12 +16,12 @@ return new class extends Migration
             if (Schema::hasColumn('wallets', 'balance')) {
                 $table->dropColumn('balance');
             }
-            
+
             // Add fields for multi-wallet system
-            if (!Schema::hasColumn('wallets', 'is_liquid')) {
+            if (! Schema::hasColumn('wallets', 'is_liquid')) {
                 $table->boolean('is_liquid')->default(true)->after('is_primary');
             }
-            if (!Schema::hasColumn('wallets', 'is_wealth_wallet')) {
+            if (! Schema::hasColumn('wallets', 'is_wealth_wallet')) {
                 $table->boolean('is_wealth_wallet')->default(false)->after('is_liquid');
             }
         });
@@ -39,9 +39,9 @@ return new class extends Migration
             if (Schema::hasColumn('wallets', 'is_liquid')) {
                 $table->dropColumn('is_liquid');
             }
-            
+
             // Restore balance column if needed
-            if (!Schema::hasColumn('wallets', 'balance')) {
+            if (! Schema::hasColumn('wallets', 'balance')) {
                 $table->decimal('balance', 15, 2)->default(0)->after('type');
             }
         });

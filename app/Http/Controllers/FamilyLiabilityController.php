@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Models\Family;
 use App\Models\FamilyLiability;
-use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -162,4 +161,3 @@ class FamilyLiabilityController extends Controller
             ->with('success', 'Liability removed.');
     }
 }
-

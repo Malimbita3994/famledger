@@ -571,41 +571,45 @@ class SearchService
     {
         $text = trim($queryText);
         $cleanText = str_replace([',', ' '], '', $text);
-        
+
         $incQ = Income::query()->where('family_id', $householdId);
         $expQ = Expense::query()->where('family_id', $householdId);
-        
-        if (!empty($filters['type'])) {
-            if ($filters['type'] === 'expense') $incQ->whereRaw('1 = 0');
-            if ($filters['type'] === 'income') $expQ->whereRaw('1 = 0');
+
+        if (! empty($filters['type'])) {
+            if ($filters['type'] === 'expense') {
+                $incQ->whereRaw('1 = 0');
+            }
+            if ($filters['type'] === 'income') {
+                $expQ->whereRaw('1 = 0');
+            }
         }
-        
+
         // Date filters
-        if (!empty($filters['date_from'])) {
-            $incQ->where(function($q) use ($filters) {
-                $q->where('received_date', '>=', $filters['date_from'])->orWhere(function($sq) use ($filters) {
+        if (! empty($filters['date_from'])) {
+            $incQ->where(function ($q) use ($filters) {
+                $q->where('received_date', '>=', $filters['date_from'])->orWhere(function ($sq) use ($filters) {
                     $sq->whereNull('received_date')->whereDate('created_at', '>=', $filters['date_from']);
                 });
             });
-            $expQ->where(function($q) use ($filters) {
-                $q->where('expense_date', '>=', $filters['date_from'])->orWhere(function($sq) use ($filters) {
+            $expQ->where(function ($q) use ($filters) {
+                $q->where('expense_date', '>=', $filters['date_from'])->orWhere(function ($sq) use ($filters) {
                     $sq->whereNull('expense_date')->whereDate('created_at', '>=', $filters['date_from']);
                 });
             });
         }
-        if (!empty($filters['date_to'])) {
-            $incQ->where(function($q) use ($filters) {
-                $q->where('received_date', '<=', $filters['date_to'])->orWhere(function($sq) use ($filters) {
+        if (! empty($filters['date_to'])) {
+            $incQ->where(function ($q) use ($filters) {
+                $q->where('received_date', '<=', $filters['date_to'])->orWhere(function ($sq) use ($filters) {
                     $sq->whereNull('received_date')->whereDate('created_at', '<=', $filters['date_to']);
                 });
             });
-            $expQ->where(function($q) use ($filters) {
-                $q->where('expense_date', '<=', $filters['date_to'])->orWhere(function($sq) use ($filters) {
+            $expQ->where(function ($q) use ($filters) {
+                $q->where('expense_date', '<=', $filters['date_to'])->orWhere(function ($sq) use ($filters) {
                     $sq->whereNull('expense_date')->whereDate('created_at', '<=', $filters['date_to']);
                 });
             });
         }
-        
+
         // Amount filters
         if (isset($filters['amount_gte'])) {
             $incQ->where('amount', '>=', $filters['amount_gte']);
@@ -618,64 +622,68 @@ class SearchService
 
         // Textual fallback conditions
         if ($text !== '') {
-            $dbLike = '%' . strtolower($text) . '%';
+            $dbLike = '%'.strtolower($text).'%';
             $isNum = preg_match('/^-?\d+(\.\d{1,4})?$/', $cleanText);
             $n = $isNum ? (float) $cleanText : null;
-            
+
             $eps = $n !== null ? max(1.0, abs($n) * 0.005) : 0;
-            
-            $incQ->where(function($q) use ($dbLike, $n, $eps) {
+
+            $incQ->where(function ($q) use ($dbLike, $n, $eps) {
                 $q->whereRaw('LOWER(source) LIKE ?', [$dbLike])
-                  ->orWhereRaw('LOWER(notes) LIKE ?', [$dbLike]);
+                    ->orWhereRaw('LOWER(notes) LIKE ?', [$dbLike]);
                 if ($n !== null) {
                     $q->orWhereBetween('amount', [$n - $eps, $n + $eps]);
                 }
             });
-            
-            $expQ->where(function($q) use ($dbLike, $n, $eps) {
+
+            $expQ->where(function ($q) use ($dbLike, $n, $eps) {
                 $q->whereRaw('LOWER(merchant) LIKE ?', [$dbLike])
-                  ->orWhereRaw('LOWER(description) LIKE ?', [$dbLike])
-                  ->orWhereRaw('LOWER(reference) LIKE ?', [$dbLike]);
+                    ->orWhereRaw('LOWER(description) LIKE ?', [$dbLike])
+                    ->orWhereRaw('LOWER(reference) LIKE ?', [$dbLike]);
                 if ($n !== null) {
                     $q->orWhereBetween('amount', [$n - $eps, $n + $eps]);
                 }
             });
         }
-        
+
         $incRows = clone $incQ;
         $expRows = clone $expQ;
-        
+
         $incomes = $incRows->with(['category', 'receivedBy'])->get();
         $expenses = $expRows->with(['category', 'paidBy'])->get();
-        
+
         $factory = app(TransactionDocumentFactory::class);
         $all = collect();
-        foreach ($incomes as $i) $all->push($factory->fromIncome($i));
-        foreach ($expenses as $e) $all->push($factory->fromExpense($e));
-        
+        foreach ($incomes as $i) {
+            $all->push($factory->fromIncome($i));
+        }
+        foreach ($expenses as $e) {
+            $all->push($factory->fromExpense($e));
+        }
+
         // Sorting
         $sort = $filters['sort'] ?? 'date_desc';
-        $all = match($sort) {
+        $all = match ($sort) {
             'date_asc' => $all->sortBy('date'),
             'amount_desc' => $all->sortByDesc('amount'),
             'amount_asc' => $all->sortBy('amount'),
             default => $all->sortByDesc('date')
         };
-        
+
         $total = $all->count();
         $paginated = $all->slice($from, $size)->values()->all();
-        
+
         return [
             'hits' => $paginated,
             'total' => $total,
             'aggregations' => [
                 'total_amount' => ['value' => $all->sum('amount')],
                 'income_total' => ['sum_amount' => ['value' => $all->where('type', 'income')->sum('amount')]],
-                'expense_total' => ['sum_amount' => ['value' => $all->where('type', 'expense')->sum('amount')]]
+                'expense_total' => ['sum_amount' => ['value' => $all->where('type', 'expense')->sum('amount')]],
             ],
             'suggest' => [],
             'took' => 10,
-            'error' => $errorObj . ' (Fell back to SQL search temporarily)',
+            'error' => $errorObj.' (Fell back to SQL search temporarily)',
         ];
     }
 }
