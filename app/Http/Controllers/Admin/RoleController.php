@@ -3,20 +3,48 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleController extends Controller
 {
+    /** @var list<string> */
+    private const PROTECTED_ROLE_NAMES = ['Super Admin', 'Admin'];
+
     public function index()
     {
-        $roles = Role::where('guard_name', config('auth.defaults.guard'))
-            ->withCount(['permissions', 'users'])
+        $guard = config('auth.defaults.guard');
+
+        $roles = Role::query()
+            ->where('guard_name', $guard)
+            ->withCount('permissions')
             ->orderBy('name')
             ->get();
 
-        return view('admin.roles.index', compact('roles'));
+        $pivot = config('permission.table_names.model_has_roles', 'model_has_roles');
+        $morphType = (new User)->getMorphClass();
+
+        $counts = DB::table($pivot)
+            ->where('model_type', $morphType)
+            ->whereIn('role_id', $roles->pluck('id'))
+            ->selectRaw('role_id, COUNT(*) as assigned_users')
+            ->groupBy('role_id')
+            ->pluck('assigned_users', 'role_id');
+
+        foreach ($roles as $role) {
+            $role->setAttribute('users_count', (int) ($counts[$role->id] ?? 0));
+        }
+
+        return view('admin.roles.index', [
+            'roles' => $roles,
+            'protectedRoleNames' => self::PROTECTED_ROLE_NAMES,
+        ]);
     }
 
     public function create()
@@ -58,7 +86,7 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('roles')->ignore($role->id)],
+            'name' => ['required', 'string', 'max:255', Rule::unique('roles')->ignore($role->id)],
             'display_name' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
@@ -70,6 +98,32 @@ class RoleController extends Controller
         ]);
 
         return redirect()->route('admin.roles.index')->with('success', 'Role updated.');
+    }
+
+    public function destroy(Role $role)
+    {
+        $guard = config('auth.defaults.guard');
+        if ($role->guard_name !== $guard) {
+            abort(404);
+        }
+
+        if ($this->isProtectedSystemRole($role)) {
+            return redirect()
+                ->route('admin.roles.index')
+                ->with('error', 'This core system role cannot be deleted.');
+        }
+
+        $role->delete();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return redirect()
+            ->route('admin.roles.index')
+            ->with('success', 'Role deleted.');
+    }
+
+    private function isProtectedSystemRole(Role $role): bool
+    {
+        return in_array($role->name, self::PROTECTED_ROLE_NAMES, true);
     }
 
     public function editPermissions(Role $role)
@@ -110,7 +164,7 @@ class RoleController extends Controller
                 $name = $p->name ?? '';
 
                 foreach ($modules as $module) {
-                    if (\Illuminate\Support\Str::startsWith($name, $module . '_') || $name === $module) {
+                    if (Str::startsWith($name, $module.'_') || $name === $module) {
                         return $module;
                     }
                 }
@@ -139,7 +193,7 @@ class RoleController extends Controller
 
         $role->permissions()->sync($permissions);
 
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()
             ->route('admin.roles.permissions.edit', $role)

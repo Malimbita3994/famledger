@@ -1,6 +1,6 @@
 @extends('layouts.metronic')
 
-@section('title', __('Super Admin Dashboard'))
+@section('title', config('app.name'))
 @section('page_title', __('Super Admin overview'))
 
 @php
@@ -87,6 +87,20 @@
     .admin-dash-chart-wrap svg {
         max-width: 100% !important;
     }
+    .admin-dash-kpi-card {
+        cursor: pointer;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .admin-dash-kpi-card:hover {
+        border-color: rgba(0, 158, 247, 0.35) !important;
+        box-shadow: 0 8px 24px rgba(0, 158, 247, 0.1);
+        transform: translateY(-1px);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .admin-dash-kpi-card:hover {
+            transform: none;
+        }
+    }
 </style>
 @endpush
 
@@ -122,13 +136,38 @@
 
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
     <div class="admin-dash-top-stats">
-        <x-famledger.pulse-stat-card :label="__('Families registered')" :value="$totalFamilies ?? 0" class="rounded-xl" />
-        <x-famledger.pulse-stat-card :label="__('User accounts')" :value="$totalUsers ?? 0" class="rounded-xl" />
-        <x-famledger.pulse-stat-card :label="__('Families (active status)')" :value="$activeFamilies ?? 0" class="rounded-xl">
+        <x-famledger.pulse-stat-card
+            class="rounded-xl admin-dash-kpi-card js-admin-stat-card"
+            data-card-type="families"
+            :label="__('Families registered')"
+            :value="$totalFamilies ?? 0"
+        />
+        <x-famledger.pulse-stat-card
+            class="rounded-xl admin-dash-kpi-card js-admin-stat-card"
+            data-card-type="users"
+            :label="__('User accounts')"
+            :value="$totalUsers ?? 0"
+        />
+        <x-famledger.pulse-stat-card
+            class="rounded-xl admin-dash-kpi-card js-admin-stat-card"
+            data-card-type="active_families"
+            :label="__('Families (active status)')"
+            :value="$activeFamilies ?? 0"
+        >
             <span class="famledger-pulse-stat-card__extra" style="color:#16a34a;font-weight:600;">{{ __('Active') }}</span>
         </x-famledger.pulse-stat-card>
-        <x-famledger.pulse-stat-card :label="__('Sum of wallet balances')" :value="$fmt($totalWalletBalance ?? 0)" class="rounded-xl" />
-        <x-famledger.pulse-stat-card :label="__('Ledger entries today')" :value="$transactionsToday ?? 0" class="rounded-xl" />
+        <x-famledger.pulse-stat-card
+            class="rounded-xl admin-dash-kpi-card js-admin-stat-card"
+            data-card-type="wallet_balance"
+            :label="__('Sum of wallet balances')"
+            :value="$fmt($totalWalletBalance ?? 0)"
+        />
+        <x-famledger.pulse-stat-card
+            class="rounded-xl admin-dash-kpi-card js-admin-stat-card"
+            data-card-type="ledger_today"
+            :label="__('Ledger entries today')"
+            :value="$transactionsToday ?? 0"
+        />
     </div>
 
     <div class="admin-dash-two-col">
@@ -332,6 +371,125 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Top KPI cards -> SweetAlert2 (same pattern as /dashboard)
+    try {
+        var familiesUrl = @json(route('families.index'));
+        var usersUrl = @json(route('admin.users.index'));
+        var totalFamilies = @json($totalFamilies ?? 0);
+        var totalUsers = @json($totalUsers ?? 0);
+        var activeFamilies = @json($activeFamilies ?? 0);
+        var totalWalletBalanceFormatted = @json($fmt($totalWalletBalance ?? 0));
+        var transactionsToday = @json($transactionsToday ?? 0);
+
+        document.querySelectorAll('.js-admin-stat-card').forEach(function (card) {
+            card.addEventListener('click', function () {
+                var type = card.getAttribute('data-card-type');
+                var title = '';
+                var html = '';
+
+                switch (type) {
+                    case 'families':
+                        title = @json(__('Families registered'));
+                        html =
+                            '<p class="text-sm mb-2 text-start">' +
+                            @json(__('All family workspaces ever created on the platform.')) +
+                            '</p>' +
+                            '<p class="text-lg font-semibold text-start">' +
+                            (totalFamilies || 0).toLocaleString() +
+                            '</p>' +
+                            '<p class="mt-3 text-start"><a class="text-primary font-semibold hover:underline" href="' +
+                            familiesUrl +
+                            '">' +
+                            @json(__('View families')) +
+                            '</a></p>';
+                        break;
+                    case 'users':
+                        title = @json(__('User accounts'));
+                        html =
+                            '<p class="text-sm mb-2 text-start">' +
+                            @json(__('Registered users across all families (every account status).')) +
+                            '</p>' +
+                            '<p class="text-lg font-semibold text-start">' +
+                            (totalUsers || 0).toLocaleString() +
+                            '</p>' +
+                            '<p class="mt-3 text-start"><a class="text-primary font-semibold hover:underline" href="' +
+                            usersUrl +
+                            '">' +
+                            @json(__('Manage users')) +
+                            '</a></p>';
+                        break;
+                    case 'active_families':
+                        title = @json(__('Families (active status)'));
+                        html =
+                            '<p class="text-sm mb-2 text-start">' +
+                            @json(__('Families whose status is currently marked active.')) +
+                            '</p>' +
+                            '<p class="text-lg font-semibold text-start">' +
+                            (activeFamilies || 0).toLocaleString() +
+                            '</p>' +
+                            '<p class="mt-3 text-start"><a class="text-primary font-semibold hover:underline" href="' +
+                            familiesUrl +
+                            '">' +
+                            @json(__('View families')) +
+                            '</a></p>';
+                        break;
+                    case 'wallet_balance':
+                        title = @json(__('Sum of wallet balances'));
+                        html =
+                            '<p class="text-sm mb-2 text-start">' +
+                            @json(__('Aggregated balance across every wallet. Amounts in different family currencies are combined as plain numbers for this total.')) +
+                            '</p>' +
+                            '<p class="text-lg font-semibold text-start">' +
+                            totalWalletBalanceFormatted +
+                            '</p>' +
+                            '<p class="mt-3 text-start"><a class="text-primary font-semibold hover:underline" href="' +
+                            familiesUrl +
+                            '">' +
+                            @json(__('Open families')) +
+                            '</a></p>';
+                        break;
+                    case 'ledger_today':
+                        title = @json(__('Ledger entries today'));
+                        html =
+                            '<p class="text-sm mb-2 text-start">' +
+                            @json(__('Income, expense, and transfer rows dated today (server timezone).')) +
+                            '</p>' +
+                            '<p class="text-lg font-semibold text-start">' +
+                            (transactionsToday || 0).toLocaleString() +
+                            '</p>' +
+                            '<p class="mt-3 text-start"><a class="text-primary font-semibold hover:underline" href="' +
+                            familiesUrl +
+                            '">' +
+                            @json(__('Browse families')) +
+                            '</a></p>';
+                        break;
+                    default:
+                        return;
+                }
+
+                if (typeof window.swalAlert === 'function') {
+                    window.swalAlert({
+                        title: title,
+                        html: html,
+                        icon: 'info',
+                        confirmButtonText: @json(__('Close')),
+                    });
+                } else if (window.Swal && typeof window.Swal.fire === 'function') {
+                    window.Swal.fire({
+                        title: title,
+                        html: html,
+                        icon: 'info',
+                        confirmButtonText: @json(__('Close')),
+                    });
+                } else {
+                    window.alert(title);
+                }
+            });
+        });
+    } catch (e) {
+        console.error(e);
+    }
+
     if (typeof ApexCharts === 'undefined') return;
     var months = @json($chartMonths ?? []);
     var userData = @json($userGrowthData ?? []);

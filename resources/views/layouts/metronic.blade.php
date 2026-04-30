@@ -11,7 +11,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
 <!DOCTYPE html>
 <html class="h-full overflow-x-hidden" data-kt-theme="true" data-kt-theme-mode="light" dir="ltr" lang="en">
  <head><base href="../../">
-  <title>@yield('title', 'FamLedger')</title>
+  <title>@yield('title', config('app.name'))</title>
   <meta charset="utf-8"/>
   <meta content="follow, index" name="robots"/>
   <link href="https://127.0.0.1:8001/metronic-html-starter-kit/layout-10/index.html" rel="canonical"/>
@@ -20,14 +20,14 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <meta content="@keenthemes" name="twitter:site"/>
   <meta content="@keenthemes" name="twitter:creator"/>
   <meta content="summary_large_image" name="twitter:card"/>
-  <meta content="FamLedger" name="twitter:title"/>
+  <meta content="{{ config('app.name') }}" name="twitter:title"/>
   <meta content="" name="twitter:description"/>
   <meta content="{{ asset('metronic/assets/media/app/og-image.png') }}" name="twitter:image"/>
   <meta content="https://127.0.0.1:8001/metronic-html-starter-kit/layout-10/index.html" property="og:url"/>
   <meta content="en_US" property="og:locale"/>
   <meta content="website" property="og:type"/>
   <meta content="@keenthemes" property="og:site_name"/>
-  <meta content="FamLedger" property="og:title"/>
+  <meta content="{{ config('app.name') }}" property="og:title"/>
   <meta content="" property="og:description"/>
   <meta content="{{ asset('metronic/assets/media/app/og-image.png') }}" property="og:image"/>
   @include('partials.famledger-favicon')
@@ -64,12 +64,28 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    /* Sidebar header: logo + wordmark + divider (not “floating” logo) */
    #sidebar_header .fl-sidebar-brand {
     border-radius: 0.5rem;
+   transition: background-color 0.2s ease, box-shadow 0.2s ease;
    }
    #sidebar_header .fl-sidebar-brand:hover {
-    background-color: color-mix(in oklab, var(--foreground) 4%, transparent);
+   background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 32%, transparent);
    }
    .dark #sidebar_header .fl-sidebar-brand:hover {
-    background-color: color-mix(in oklab, var(--foreground) 6%, transparent);
+   background-color: color-mix(in oklab, var(--primary) 16%, transparent);
+   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 36%, transparent);
+  }
+  #sidebar_header .fl-sidebar-brand-text {
+   font-weight: 700;
+   letter-spacing: -0.022em;
+   color: color-mix(in oklab, var(--primary) 76%, var(--foreground));
+   text-shadow: 0 1px 0 color-mix(in oklab, var(--background) 80%, transparent);
+  }
+  #sidebar_header .fl-sidebar-nav-label {
+   font-size: 0.66rem;
+   font-weight: 700;
+   letter-spacing: 0.16em;
+   text-transform: uppercase;
+   color: color-mix(in oklab, var(--primary) 55%, var(--muted-foreground));
    }
   </style>
   <style>
@@ -118,12 +134,25 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     color: inherit !important;
    }
 
-   /* Sidebar footer icon row: theme, notifications, logout — all use accent */
+   /* Sidebar footer icon row: theme, notifications — accent; logout — destructive */
    #sidebar .fl-sidebar-footer-icon {
     color: var(--primary) !important;
    }
    #sidebar .fl-sidebar-footer-icon i[class*="ki-"] {
     color: var(--primary) !important;
+   }
+   #sidebar .fl-sidebar-footer-icon.fl-sidebar-footer-icon--logout {
+    color: var(--destructive) !important;
+   }
+   #sidebar .fl-sidebar-footer-icon.fl-sidebar-footer-icon--logout i[class*="ki-"] {
+    color: var(--destructive) !important;
+   }
+   #sidebar .fl-sidebar-footer-icon.fl-sidebar-footer-icon--logout:hover {
+    background-color: color-mix(in oklab, var(--destructive) 14%, transparent) !important;
+   }
+   #sidebar .fl-sidebar-footer-icon.fl-sidebar-footer-icon--logout:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--destructive) 35%, transparent);
    }
   </style>
   <link href="{{ asset('css/famledger-sidebar-icons.css') }}" rel="stylesheet"/>
@@ -528,14 +557,18 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    <header class="flex lg:hidden items-center fixed z-10 top-0 start-0 end-0 shrink-0 bg-mono dark:bg-background h-(--header-height)" id="header">
     <!-- Container -->
     <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3 w-full">
-     <a href="{{ auth()->user() && auth()->user()->can('access_admin_panel') ? route('admin.dashboard') : route('dashboard') }}">
+     <a href="{{ auth()->user() && auth()->user()->can('access_admin_panel') && auth()->user()->can('dashboard_view') ? route('admin.dashboard') : route('dashboard') }}">
       <img class="app-logo" src="{{ asset('images/logo.png') }}" alt="FamLedger logo"/>
      </a>
      <div class="flex items-center gap-2">
       @auth
+      @php
+       $__hdrUser = auth()->user();
+       $__hdrAvatar = $__hdrUser?->avatar_url ?? asset('metronic/assets/media/avatars/300-2.png');
+      @endphp
       <div data-kt-dropdown="true" data-kt-dropdown-offset="10px, 10px" data-kt-dropdown-placement="bottom-end" data-kt-dropdown-trigger="click">
        <div class="cursor-pointer shrink-0 flex items-center gap-2" data-kt-dropdown-toggle="true">
-        <img alt="{{ auth()->user()->name }}" class="size-8 rounded-full border-2 border-white/30 shrink-0" src="{{ asset('metronic/assets/media/avatars/300-2.png') }}"/>
+        <img alt="{{ auth()->user()->name }}" class="size-8 rounded-full border-2 border-white/30 shrink-0 object-cover" src="{{ $__hdrAvatar }}"/>
         <span class="text-sm font-medium text-white max-w-[120px] truncate">{{ auth()->user()->name }}</span>
         <i class="ki-filled ki-down text-white text-xs"></i>
        </div>
@@ -557,7 +590,15 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            </a>
           </li>
           <li>
-           <form method="POST" action="{{ route('logout') }}" class="inline">
+           <form
+            method="POST"
+            action="{{ route('logout') }}"
+            class="inline js-confirm-logout"
+            data-confirm-title="{{ __('Log out?') }}"
+            data-confirm-message="{{ __('You will need to sign in again to access FamLedger.') }}"
+            data-confirm-yes="{{ __('Log out') }}"
+            data-confirm-no="{{ __('Cancel') }}"
+           >
             @csrf
             <button type="submit" class="kt-dropdown-menu-link w-full text-start border-0 bg-transparent cursor-pointer text-destructive hover:bg-destructive/10"><i class="ki-filled ki-exit-right"></i> Logout</button>
            </form>
@@ -585,7 +626,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      <!-- Sidebar Header: brand strip + divider + nav label -->
      <div class="flex flex-col shrink-0 border-b border-border/80 bg-background" id="sidebar_header">
       <a
-       href="{{ auth()->user() && auth()->user()->can('access_admin_panel') ? route('admin.dashboard') : route('dashboard') }}"
+       href="{{ auth()->user() && auth()->user()->can('access_admin_panel') && auth()->user()->can('dashboard_view') ? route('admin.dashboard') : route('dashboard') }}"
        class="fl-sidebar-brand flex items-center gap-2.5 px-3.5 pt-4 pb-3 min-w-0 mx-1.5 mt-1.5"
       >
        <img
@@ -595,7 +636,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         width="40"
         height="40"
        />
-       <span class="fl-sidebar-brand-text text-[1.05rem] font-semibold text-foreground tracking-tight leading-tight truncate">
+      <span class="fl-sidebar-brand-text text-[1.1rem] leading-tight truncate">
         {{ __('FamLedger') }}
        </span>
       </a>
@@ -603,7 +644,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        <div class="h-px w-full bg-border"></div>
       </div>
       <div class="px-3.5 pb-2.5 pt-0">
-       <h3 class="text-2xs font-semibold uppercase tracking-widest text-muted-foreground">
+       <h3 class="fl-sidebar-nav-label text-2xs">
         {{ __('Navigation') }}
        </h3>
       </div>
@@ -644,12 +685,6 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
              <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.overview') }}">
               <span class="kt-menu-icon text-base"><i class="ki-filled ki-home-2"></i></span>
               <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Overview</span>
-             </a>
-            </div>
-            <div class="kt-menu-item {{ request()->routeIs('families.members.*') ? 'kt-menu-item-active' : '' }}">
-             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.members.index') }}">
-              <span class="kt-menu-icon text-base"><i class="ki-filled ki-people"></i></span>
-              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium">Members</span>
              </a>
             </div>
             <div class="px-2.5 pt-3 pb-1">
@@ -1577,15 +1612,19 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          $flReportsAccordionOpen = isset($currentFamily) && $currentFamily && (
           request()->routeIs('families.wealth.*') ||
           request()->routeIs('families.reports.*') ||
-          (request()->routeIs('admin.reports.*') && auth()->user()?->can('access_admin_panel'))
+          (request()->routeIs('admin.reports.*') && auth()->user()?->can('access_admin_panel') && (
+              auth()->user()?->can('reports_view')
+              || auth()->user()?->can('reports_general_view_dashboard')
+              || auth()->user()?->can('reports_finance_view')
+          ))
          );
          $flPropertyAccordionOpen = isset($currentFamily) && $currentFamily && !empty($canManageProperty ?? null)
           && request()->routeIs('families.properties.*');
         @endphp
         <div class="kt-menu flex flex-col w-full gap-1.5 px-3.5" data-kt-menu="true" data-kt-menu-accordion-expand-all="false" id="sidebar_famledger_menu">
-         <!-- Dashboard (super admin goes to admin dashboard) -->
+         <!-- Dashboard (admin dashboard requires explicit dashboard_view, not only access_admin_panel) -->
          <div class="kt-menu-item {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'kt-menu-item-active' : '' }}" data-fl-nav="dashboard">
-          @can('access_admin_panel')
+          @if(auth()->user()?->can('access_admin_panel') && auth()->user()?->can('dashboard_view'))
           <a href="{{ route('admin.dashboard') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-item-active:bg-accent/60 kt-menu-link-hover:bg-accent/60 {{ request()->routeIs('admin.dashboard') ? 'bg-accent/60 fl-sidebar-route-active' : '' }}">
            <span class="kt-menu-icon items-start text-lg text-secondary-foreground kt-menu-item-active:text-foreground">
             <i class="ki-filled ki-home-3"></i>
@@ -1628,7 +1667,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           </div>
           @endif
           <div class="kt-menu-item">
-           <a href="{{ route('families.profile') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.profile') || request()->routeIs('families.overview') || request()->routeIs('families.show') ? 'bg-secondary' : '' }}">
+           <a href="{{ route('families.profile') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.profile') || request()->routeIs('families.overview') || request()->routeIs('families.show') || request()->routeIs('families.members.*') ? 'bg-secondary' : '' }}">
             <span class="kt-menu-icon items-start text-lg text-primary shrink-0"><i class="ki-filled ki-home-3"></i></span>
             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Family Profile</span>
            </a>
@@ -1649,12 +1688,6 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            <a href="{{ route('families.goals.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.goals.*') ? 'bg-secondary' : '' }}">
             <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-compass"></i></span>
             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Vision Board</span>
-           </a>
-          </div>
-          <div class="kt-menu-item">
-           <a href="{{ route('families.members.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.members.*') ? 'bg-secondary' : '' }}">
-            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-people"></i></span>
-            <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Members</span>
            </a>
           </div>
          </div>
@@ -1751,39 +1784,39 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            <div class="kt-menu-item">
             <a href="{{ route('families.projects.index', ['filter' => 'all']) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.projects.*') && request()->get('filter', 'all') === 'all' ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-folder"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">All Projects</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">All</span>
             </a>
            </div>
            <div class="kt-menu-item">
             <a href="{{ route('families.projects.index', ['filter' => 'active']) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->get('filter') === 'active' ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-calendar-tick"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Active Projects</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Active</span>
             </a>
            </div>
            <div class="kt-menu-item">
             <a href="{{ route('families.projects.index', ['filter' => 'completed']) }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->get('filter') === 'completed' ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-check-circle"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Completed Projects</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Completed</span>
             </a>
            </div>
            <div class="kt-menu-item">
             <a href="{{ route('families.accounts.projects-funding') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('families.projects.funding*') || request()->routeIs('families.accounts.projects-funding') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-briefcase"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Projects Funding</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Funding</span>
             </a>
            </div>
           </div>
          </div>
         @endif
         @can('access_admin_panel')
-        <!-- Administration (platform-level; visible only to super administrators) -->
+        <!-- Users (platform admin; visible only to super administrators) -->
         <div class="kt-menu-item {{ $flAdminAccordionOpen ? 'show here' : '' }}" data-fl-nav="admin" @if($flAdminAccordionOpen) data-fl-persist-open="1" @endif data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
           <div class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md border border-transparent">
            <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
             <i class="ki-filled ki-setting-2"></i>
            </span>
            <span class="kt-menu-title text-sm text-foreground font-medium">
-            Administration
+            Users
            </span>
            <span class="kt-menu-arrow text-muted-foreground">
             <span class="inline-flex kt-menu-item-show:hidden"><i class="ki-filled ki-down text-xs"></i></span>
@@ -1791,30 +1824,38 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            </span>
           </div>
           <div class="kt-menu-accordion gap-px ps-2.5">
+           @can('users_view')
            <div class="kt-menu-item">
             <a href="{{ route('admin.users.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('admin.users.*') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-profile-circle"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Users</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">User List</span>
             </a>
            </div>
+           @endcan
+           @can('roles_view')
            <div class="kt-menu-item">
             <a href="{{ route('admin.roles.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('admin.roles.*') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-security-user"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Roles</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Platform roles</span>
             </a>
            </div>
+           @endcan
+           @can('permissions_view')
            <div class="kt-menu-item">
             <a href="{{ route('admin.permissions.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('admin.permissions.*') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-key"></i></span>
              <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Permissions</span>
             </a>
            </div>
+           @endcan
+           @can('contact_messages_view')
            <div class="kt-menu-item">
             <a href="{{ route('admin.contact-messages.index') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('admin.contact-messages.*') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-message-text"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Contact messages</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Contact</span>
             </a>
            </div>
+           @endcan
           </div>
         </div>
         @endcan
@@ -1848,7 +1889,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
               <i class="ki-filled ki-profile-circle text-lg"></i>
              </span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">General report</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">General</span>
             </a>
            </div>
 
@@ -1859,7 +1900,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
               <i class="ki-filled ki-arrow-right-left text-lg"></i>
              </span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Finance reports</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Finance</span>
             </a>
            </div>
 
@@ -1870,7 +1911,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
               <i class="ki-filled ki-briefcase text-lg"></i>
              </span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Project reports</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Project</span>
             </a>
            </div>
 
@@ -1892,19 +1933,19 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
              <span class="kt-menu-icon items-start text-lg text-muted-foreground shrink-0">
               <i class="ki-filled ki-home-3 text-lg"></i>
              </span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Property reports</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Property</span>
             </a>
            </div>
 
-           @can('access_admin_panel')
+           @if(auth()->user()?->can('access_admin_panel') && (auth()->user()?->can('reports_view') || auth()->user()?->can('reports_general_view_dashboard') || auth()->user()?->can('reports_finance_view')))
            {{-- Family Report (admin) --}}
            <div class="kt-menu-item">
             <a href="{{ route('admin.reports.families') }}" class="kt-menu-link gap-2.5 py-2 px-2.5 rounded-md kt-menu-link-hover:bg-secondary {{ request()->routeIs('admin.reports.*') ? 'bg-secondary' : '' }}">
              <span class="kt-menu-icon text-lg text-muted-foreground shrink-0"><i class="ki-filled ki-profile-circle"></i></span>
-             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Family Report</span>
+             <span class="kt-menu-title text-sm text-secondary-foreground kt-menu-link-hover:text-foreground">Family</span>
             </a>
            </div>
-           @endcan
+           @endif
 
           </div>
          </div>
@@ -2040,13 +2081,11 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      </div>
     <!-- End of Sidebar kt-menu-->
     <!-- Footer -->
-     <div class="flex flex-center justify-between shrink-0 ps-4 pe-3.5 mb-3.5" id="sidebar_footer">
+     <div class="fl-sidebar-footer flex flex-center justify-between shrink-0 ps-4 pe-3.5 mb-3.5" id="sidebar_footer">
       <!-- User -->
       @php
        $__sbUser = auth()->user();
-       $__sbAvatar = ($__sbUser && ! empty($__sbUser->avatar))
-        ? \Illuminate\Support\Facades\Storage::disk('public')->url($__sbUser->avatar)
-        : asset('metronic/assets/media/avatars/gray/5.png');
+       $__sbAvatar = $__sbUser?->avatar_url ?? asset('metronic/assets/media/avatars/gray/5.png');
       @endphp
       <div data-kt-dropdown="true" data-kt-dropdown-offset="10px, 10px" data-kt-dropdown-offset-rtl="-20px, 10px" data-kt-dropdown-placement="bottom-start" data-kt-dropdown-placement-rtl="bottom-end" data-kt-dropdown-trigger="click">
        <div class="cursor-pointer shrink-0" data-kt-dropdown-toggle="true">
@@ -2102,7 +2141,15 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            </span>
            <input class="kt-switch" data-kt-theme-switch-state="dark" data-kt-theme-switch-toggle="true" name="check" type="checkbox" value="1"/>
           </div>
-          <form method="POST" action="{{ route('logout') }}">
+          <form
+           method="POST"
+           action="{{ route('logout') }}"
+           class="js-confirm-logout"
+           data-confirm-title="{{ __('Log out?') }}"
+           data-confirm-message="{{ __('You will need to sign in again to access FamLedger.') }}"
+           data-confirm-yes="{{ __('Log out') }}"
+           data-confirm-no="{{ __('Cancel') }}"
+          >
            @csrf
            <button type="submit" class="kt-btn kt-btn-outline justify-center w-full">
             Log out
@@ -2113,8 +2160,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        </div>
       </div>
       <!-- End of User -->
-      <div class="flex items-center gap-1.5">
-       <button class="fl-sidebar-footer-icon kt-btn kt-btn-ghost kt-btn-icon size-8 text-primary hover:bg-primary/15 [&_i]:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35" type="button" id="theme_panel_toggle" title="{{ __('Theme') }}" aria-label="{{ __('Theme') }}">
+      <div class="fl-sidebar-footer-actions flex items-center gap-1.5">
+       <button class="fl-sidebar-footer-icon kt-btn kt-btn-ghost kt-btn-icon size-8 text-primary hover:bg-primary/15 [&_i]:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35" type="button" id="theme_panel_toggle" title="{{ __('Theme & appearance') }}" aria-label="{{ __('Open theme and appearance') }}" aria-expanded="false" aria-controls="theme_panel">
         <i class="ki-filled ki-color-swatch text-lg text-primary">
         </i>
        </button>
@@ -2171,13 +2218,6 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
              <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.overview') }}">
               <span class="kt-menu-icon text-base"><i class="ki-filled ki-home-2"></i></span>
               <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Overview</span>
-             </a>
-            </div>
-            {{-- Members --}}
-            <div class="kt-menu-item {{ request()->routeIs('families.members.*') ? 'kt-menu-item-active' : '' }}">
-             <a class="kt-menu-link py-2 px-2.5 rounded-md kt-menu-item-active:bg-secondary kt-menu-link-hover:bg-secondary" href="{{ route('families.members.index') }}">
-              <span class="kt-menu-icon text-base"><i class="ki-filled ki-people"></i></span>
-              <span class="kt-menu-title text-sm text-foreground kt-menu-item-active:font-medium kt-menu-item-active:text-foreground kt-menu-link-hover:text-foreground">Members</span>
              </a>
             </div>
             {{-- Finances divider --}}
@@ -3471,10 +3511,18 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        </div>
        <!--End of Notifications Drawer-->
        <!-- End of Notifications -->
-      <form method="POST" action="{{ route('logout') }}">
+      <form
+       method="POST"
+       action="{{ route('logout') }}"
+       class="js-confirm-logout"
+       data-confirm-title="{{ __('Log out?') }}"
+       data-confirm-message="{{ __('You will need to sign in again to access FamLedger.') }}"
+       data-confirm-yes="{{ __('Log out') }}"
+       data-confirm-no="{{ __('Cancel') }}"
+      >
        @csrf
-       <button class="fl-sidebar-footer-icon kt-btn kt-btn-ghost kt-btn-icon size-8 text-primary hover:bg-primary/15 [&_i]:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35" type="submit" title="{{ __('Log out') }}" aria-label="{{ __('Log out') }}">
-        <i class="ki-filled ki-exit-right text-lg text-primary">
+       <button class="fl-sidebar-footer-icon fl-sidebar-footer-icon--logout kt-btn kt-btn-ghost kt-btn-icon size-8" type="submit" title="{{ __('Log out') }}" aria-label="{{ __('Log out') }}">
+        <i class="ki-filled ki-exit-right text-lg">
         </i>
        </button>
       </form>
@@ -3484,35 +3532,108 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     </div>
     <!-- End of Sidebar -->
     <div id="theme_panel_backdrop" class="fl-theme-panel-backdrop hidden" aria-hidden="true"></div>
-    <aside id="theme_panel" class="fl-theme-panel" aria-hidden="true">
-     <div class="fl-theme-panel-header">
-      <div>
-       <p class="text-xs text-muted-foreground uppercase tracking-wide">{{ __('Adaptive UI') }}</p>
-       <h3 class="text-sm font-semibold text-foreground">{{ __('Theme selection') }}</h3>
+    <aside
+     id="theme_panel"
+     class="fl-theme-panel"
+     role="dialog"
+     aria-modal="true"
+     aria-hidden="true"
+     aria-labelledby="theme_panel_title"
+     aria-describedby="theme_panel_desc"
+    >
+     <div class="fl-theme-panel-hero">
+      <div class="fl-theme-panel-hero__text">
+       <span class="fl-theme-panel-hero__badge">{{ __('Adaptive UI') }}</span>
+       <h3 id="theme_panel_title" class="fl-theme-panel-hero__title">{{ __('Theme & appearance') }}</h3>
+       <p id="theme_panel_desc" class="fl-theme-panel-hero__desc">{{ __('Tune light or dark mode and the accent color. Changes apply instantly and are saved in this browser.') }}</p>
       </div>
-      <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost text-primary hover:bg-primary/10 [&_i]:text-primary" id="theme_panel_close" aria-label="{{ __('Close') }}">
-       <i class="ki-filled ki-cross text-primary"></i>
+      <button type="button" class="fl-theme-panel-close kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0" id="theme_panel_close" aria-label="{{ __('Close') }}">
+       <i class="ki-filled ki-cross"></i>
       </button>
      </div>
+
      <div class="fl-theme-panel-body">
-      <section class="space-y-2">
-       <p class="text-xs text-muted-foreground uppercase tracking-wide">{{ __('Mode') }}</p>
-       <div class="grid grid-cols-3 gap-2 min-w-0" role="radiogroup" aria-label="{{ __('Theme mode') }}">
-        <button type="button" class="fl-theme-mode-btn w-full min-w-0" data-fl-theme-mode="light">{{ __('Light') }}</button>
-        <button type="button" class="fl-theme-mode-btn w-full min-w-0" data-fl-theme-mode="dark">{{ __('Dark') }}</button>
-        <button type="button" class="fl-theme-mode-btn w-full min-w-0" data-fl-theme-mode="system">{{ __('System') }}</button>
+      {{-- Live preview: reflects current --primary (sample button is clickable for feedback) --}}
+      <div class="fl-theme-preview" role="region" aria-label="{{ __('Accent preview') }}">
+       <div class="fl-theme-preview__window">
+        <div class="fl-theme-preview__chrome" aria-hidden="true">
+         <span class="fl-theme-preview__dot"></span>
+         <span class="fl-theme-preview__dot"></span>
+         <span class="fl-theme-preview__dot"></span>
+        </div>
+        <div class="fl-theme-preview__body">
+         <div class="fl-theme-preview__skeleton" aria-hidden="true"></div>
+         <div class="fl-theme-preview__skeleton fl-theme-preview__skeleton--short" aria-hidden="true"></div>
+         <span class="fl-theme-preview__chip">{{ __('Accent') }}</span>
+         <button type="button" class="fl-theme-preview__cta" id="fl_theme_preview_cta" aria-label="{{ __('Sample primary button — uses your accent color') }}">{{ __('Primary action') }}</button>
+        </div>
+       </div>
+       <p class="fl-theme-preview__caption">{{ __('Preview uses your current accent for buttons and chips.') }}</p>
+      </div>
+
+      <section class="fl-theme-section">
+       <div class="fl-theme-section__head">
+        <span class="fl-theme-section__label">{{ __('Appearance') }}</span>
+        <span class="fl-theme-section__hint">{{ __('Light, dark, or match the device') }}</span>
+       </div>
+       <div class="fl-theme-mode-stack" role="radiogroup" aria-label="{{ __('Theme mode') }}">
+        <button type="button" class="fl-theme-mode-btn fl-theme-mode-btn--row" data-fl-theme-mode="light">
+         <span class="fl-theme-mode-btn__icon" aria-hidden="true"><i class="ki-filled ki-sun"></i></span>
+         <span class="fl-theme-mode-btn__text">
+          <span class="fl-theme-mode-btn__title">{{ __('Light') }}</span>
+          <span class="fl-theme-mode-btn__sub">{{ __('Bright interface') }}</span>
+         </span>
+        </button>
+        <button type="button" class="fl-theme-mode-btn fl-theme-mode-btn--row" data-fl-theme-mode="dark">
+         <span class="fl-theme-mode-btn__icon" aria-hidden="true"><i class="ki-filled ki-moon"></i></span>
+         <span class="fl-theme-mode-btn__text">
+          <span class="fl-theme-mode-btn__title">{{ __('Dark') }}</span>
+          <span class="fl-theme-mode-btn__sub">{{ __('Easier on the eyes at night') }}</span>
+         </span>
+        </button>
+        <button type="button" class="fl-theme-mode-btn fl-theme-mode-btn--row" data-fl-theme-mode="system">
+         <span class="fl-theme-mode-btn__icon" aria-hidden="true"><i class="ki-filled ki-devices"></i></span>
+         <span class="fl-theme-mode-btn__text">
+          <span class="fl-theme-mode-btn__title">{{ __('System') }}</span>
+          <span class="fl-theme-mode-btn__sub">{{ __('Follow device setting') }}</span>
+         </span>
+        </button>
        </div>
       </section>
-      <section class="space-y-2 mt-5">
-       <p class="text-xs text-muted-foreground uppercase tracking-wide">{{ __('Accent') }}</p>
-       <div class="fl-accent-swatches flex flex-wrap gap-2" role="radiogroup" aria-label="{{ __('Interface accent color') }}">
-        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="blue" style="background-color:var(--color-blue-500)" title="{{ __('Blue') }}" aria-label="{{ __('Blue') }}" aria-pressed="false"></button>
-        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="teal" style="background-color:var(--color-teal-600)" title="{{ __('Teal') }}" aria-label="{{ __('Teal') }}" aria-pressed="false"></button>
-        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="emerald" style="background-color:var(--color-green-500)" title="{{ __('Emerald') }}" aria-label="{{ __('Emerald') }}" aria-pressed="false"></button>
-        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="violet" style="background-color:var(--color-violet-600)" title="{{ __('Violet') }}" aria-label="{{ __('Violet') }}" aria-pressed="false"></button>
-        <button type="button" class="fl-accent-btn size-8 shrink-0 rounded-full ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="amber" style="background-color:#d97706" title="{{ __('Amber') }}" aria-label="{{ __('Amber') }}" aria-pressed="false"></button>
+
+      <section class="fl-theme-section">
+       <div class="fl-theme-section__head">
+        <span class="fl-theme-section__label">{{ __('Accent color') }}</span>
+        <span class="fl-theme-section__hint">{{ __('Buttons, links, and focus highlights') }}</span>
+       </div>
+       <div class="fl-accent-grid" role="radiogroup" aria-label="{{ __('Interface accent color') }}">
+        <div class="fl-accent-cell">
+         <button type="button" class="fl-accent-btn fl-accent-btn--lg ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="blue" style="background-color:var(--color-blue-500)" title="{{ __('Blue') }}" aria-label="{{ __('Blue') }}" aria-pressed="false"></button>
+         <span class="fl-accent-cell__label">{{ __('Blue') }}</span>
+        </div>
+        <div class="fl-accent-cell">
+         <button type="button" class="fl-accent-btn fl-accent-btn--lg ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="teal" style="background-color:var(--color-teal-600)" title="{{ __('Teal') }}" aria-label="{{ __('Teal') }}" aria-pressed="false"></button>
+         <span class="fl-accent-cell__label">{{ __('Teal') }}</span>
+        </div>
+        <div class="fl-accent-cell">
+         <button type="button" class="fl-accent-btn fl-accent-btn--lg ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="emerald" style="background-color:var(--color-green-500)" title="{{ __('Emerald') }}" aria-label="{{ __('Emerald') }}" aria-pressed="false"></button>
+         <span class="fl-accent-cell__label">{{ __('Emerald') }}</span>
+        </div>
+        <div class="fl-accent-cell">
+         <button type="button" class="fl-accent-btn fl-accent-btn--lg ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="violet" style="background-color:var(--color-violet-600)" title="{{ __('Violet') }}" aria-label="{{ __('Violet') }}" aria-pressed="false"></button>
+         <span class="fl-accent-cell__label">{{ __('Violet') }}</span>
+        </div>
+        <div class="fl-accent-cell">
+         <button type="button" class="fl-accent-btn fl-accent-btn--lg ring-2 ring-offset-2 ring-offset-background ring-transparent transition-shadow focus:outline-none focus-visible:ring-primary" data-fl-accent-control="theme-panel" data-fl-accent="amber" style="background-color:#d97706" title="{{ __('Amber') }}" aria-label="{{ __('Amber') }}" aria-pressed="false"></button>
+         <span class="fl-accent-cell__label">{{ __('Amber') }}</span>
+        </div>
        </div>
       </section>
+
+      <p class="fl-theme-panel-footnote">
+       <i class="ki-filled ki-information-2 text-base text-primary shrink-0" aria-hidden="true"></i>
+       <span>{{ __('Saved automatically in this browser only.') }}</span>
+      </p>
      </div>
     </aside>
     <!-- Main -->
@@ -3535,6 +3656,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          {{ $label }}
         @endif
        </h1>
+       @include('partials.global-search')
       </div>
       <div class="flex items-center gap-2 shrink-0">
        @hasSection('page_actions')
@@ -3544,11 +3666,10 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
        @php
         $roleLabel = $roleLabelForTopbar ?? '';
         $__topbarUser = auth()->user();
-        $__topbarAvatar = ($__topbarUser && ! empty($__topbarUser->avatar))
-         ? \Illuminate\Support\Facades\Storage::disk('public')->url($__topbarUser->avatar)
-         : asset('metronic/assets/media/avatars/300-2.png');
+        $__topbarAvatar = $__topbarUser?->avatar_url ?? asset('metronic/assets/media/avatars/300-2.png');
        @endphp
-       <div class="relative z-50 ml-auto" data-kt-dropdown="true" data-kt-dropdown-offset="10px, 10px" data-kt-dropdown-placement="bottom-end" data-kt-dropdown-trigger="click" id="topbar_user_menu">
+       {{-- lg+: sidebar has no compact header user; mobile uses #header user dropdown — hide duplicate below lg --}}
+       <div class="relative z-50 ml-auto hidden lg:block" data-kt-dropdown="true" data-kt-dropdown-offset="10px, 10px" data-kt-dropdown-placement="bottom-end" data-kt-dropdown-trigger="click" id="topbar_user_menu">
         <div class="cursor-pointer shrink-0 flex items-center gap-2.5 py-1.5 pl-2.5 pr-1 rounded-lg hover:bg-accent/60" data-kt-dropdown-toggle="true">
          <div class="text-right min-w-0 max-w-[140px] sm:max-w-[180px]">
           <span class="text-sm font-medium text-foreground block leading-tight truncate">{{ auth()->user()->name }}</span>
@@ -3572,7 +3693,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         <div class="kt-dropdown-menu w-[250px] z-50 famledger-user-dropdown-pulse" data-kt-dropdown-menu="true">
          <div class="famledger-user-dropdown-pulse-inner">
           <div class="flex items-center gap-3 px-2.5 py-2 border-b border-border">
-           <img alt="" class="size-11 rounded-full border-2 border-border shrink-0" src="{{ asset('metronic/assets/media/avatars/300-2.png') }}"/>
+           <img alt="" class="size-11 rounded-full border-2 border-border shrink-0 object-cover" src="{{ $__topbarAvatar }}"/>
            <div class="min-w-0">
             <span class="text-sm font-semibold text-foreground block truncate">{{ auth()->user()->name }}</span>
             <span class="text-xs text-muted-foreground block truncate">{{ $roleLabel }}</span>
@@ -3592,7 +3713,15 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
            </li>
            <li><div class="kt-dropdown-menu-separator"></div></li>
            <li>
-            <form method="POST" action="{{ route('logout') }}" class="block">
+            <form
+             method="POST"
+             action="{{ route('logout') }}"
+             class="block js-confirm-logout"
+             data-confirm-title="{{ __('Log out?') }}"
+             data-confirm-message="{{ __('You will need to sign in again to access FamLedger.') }}"
+             data-confirm-yes="{{ __('Log out') }}"
+             data-confirm-no="{{ __('Cancel') }}"
+            >
              @csrf
              <button type="submit" class="kt-dropdown-menu-link w-full text-start border-0 bg-transparent cursor-pointer text-destructive hover:!bg-destructive/10 hover:!text-destructive">
               <i class="ki-filled ki-exit-right"></i> Logout
@@ -4973,7 +5102,7 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   </div>
   <!-- End of Page -->
   <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <x-sweetalert.cdn :defer="false" />
   <script src="{{ asset('metronic/assets/js/core.bundle.js') }}"></script>
   <script src="{{ asset('metronic/assets/vendors/ktui/ktui.min.js') }}"></script>
   <script src="{{ asset('metronic/assets/vendors/apexcharts/apexcharts.min.js') }}"></script>
@@ -5239,6 +5368,12 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      panel.setAttribute('aria-hidden', 'false');
      backdrop.setAttribute('aria-hidden', 'false');
      document.body.classList.add('fl-theme-panel-open');
+     if (openBtn) openBtn.setAttribute('aria-expanded', 'true');
+     window.setTimeout(function () {
+      try {
+       if (closeBtn) closeBtn.focus();
+      } catch (e2) {}
+     }, 80);
     }
     function closePanel() {
      if (!panel || !backdrop) return;
@@ -5247,6 +5382,10 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
      panel.setAttribute('aria-hidden', 'true');
      backdrop.setAttribute('aria-hidden', 'true');
      document.body.classList.remove('fl-theme-panel-open');
+     if (openBtn) openBtn.setAttribute('aria-expanded', 'false');
+     try {
+      if (openBtn) openBtn.focus();
+     } catch (e) {}
      setTimeout(function () {
       if (!backdrop.classList.contains('is-open')) backdrop.classList.add('hidden');
      }, 220);
@@ -5257,6 +5396,19 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     document.addEventListener('keydown', function (e) {
      if (e.key === 'Escape' && panel && panel.classList.contains('is-open')) closePanel();
     });
+    /* Preview “Primary action”: tactile feedback (decorative — no navigation) */
+    var previewCta = document.getElementById('fl_theme_preview_cta');
+    if (previewCta) {
+     previewCta.addEventListener('click', function (e) {
+      e.preventDefault();
+      previewCta.classList.remove('fl-theme-preview__cta--pulse');
+      void previewCta.offsetWidth;
+      previewCta.classList.add('fl-theme-preview__cta--pulse');
+      window.setTimeout(function () {
+       previewCta.classList.remove('fl-theme-preview__cta--pulse');
+      }, 480);
+     });
+    }
    })();
   </script>
   <!-- FamLedger sidebar: keep accordion groups open after KTMenu init (current route) -->
@@ -5280,129 +5432,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
     else run();
    })();
   </script>
-  @php
-    $sessionError = session('error');
-    $skipValidationFlashForSwal = request()->routeIs('families.goals.create');
-    $validationError = ! $sessionError && ! $skipValidationFlashForSwal && isset($errors) && $errors->any() ? $errors->first() : null;
-    $flashMessages = [
-      'success' => session('success'),
-      'error'   => $sessionError ?: $validationError,
-      'warning' => session('warning'),
-      'info'    => session('info'),
-    ];
-  @endphp
-  <!-- Global SweetAlert2: flash messages and confirm-delete, styled to fit Metronic -->
-  <script>
-   (function () {
-   var Swal = window.Swal;
-   if (!Swal) return;
-
-   var flash = @json($flashMessages);
-
-   function fireConfetti() {
-    if (!window.confetti) return;
-    try {
-     var duration = 1200;
-     var end = Date.now() + duration;
-     (function frame() {
-      window.confetti({
-       particleCount: 40,
-       spread: 70,
-       origin: { y: 0.25, x: 0.5 }
-      });
-      if (Date.now() < end) {
-       requestAnimationFrame(frame);
-      }
-     })();
-    } catch (e) {}
-   }
-
-   function showFlash() {
-    var type = flash.success ? 'success' : flash.error ? 'error' : flash.warning ? 'warning' : flash.info ? 'info' : null;
-    var msg = flash.success || flash.error || flash.warning || flash.info;
-    if (!type || !msg) return;
-
-    var isSuccess = type === 'success';
-
-    Swal.fire({
-     icon: type,
-     title: isSuccess ? msg : (type.charAt(0).toUpperCase() + type.slice(1)),
-     text: isSuccess ? '' : msg,
-     showConfirmButton: true,
-     confirmButtonText: isSuccess ? 'Great, thanks' : 'OK',
-     width: 420,
-     padding: '1.75rem 2rem',
-     backdrop: true,
-     customClass: {
-      popup: 'rounded-2xl',
-      title: 'text-base font-semibold',
-     },
-     didOpen: function () {
-      if (isSuccess) {
-       fireConfetti();
-      }
-     }
-    });
-   }
-
-   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', showFlash);
-   } else {
-    showFlash();
-   }
-
-   // Global helpers for use in JS
-   window.swalToast = function (msg, type) {
-    type = type || 'success';
-    Swal.fire({
-     icon: type,
-     text: msg,
-     timer: 3000,
-     timerProgressBar: true,
-     showConfirmButton: false,
-     toast: true,
-     position: 'top-end',
-     didOpen: function () {
-      if (type === 'success') {
-       fireConfetti();
-      }
-     }
-    });
-   };
-
-   window.swalAlert = function (opts) {
-    return Swal.fire(opts);
-   };
-
-   window.swalConfirm = function (opts) {
-    return Swal.fire(Object.assign({
-     showCancelButton: true,
-     confirmButtonColor: '#dc2626',
-     cancelButtonColor: '#6b7280'
-    }, opts));
-   };
-
-   // Confirm-delete: forms with class js-confirm-delete (optional data-message, data-title)
-   document.body.addEventListener('submit', function (e) {
-    var form = e.target;
-    if (!form || !form.classList.contains('js-confirm-delete')) return;
-    e.preventDefault();
-    var title = form.getAttribute('data-confirm-title') || 'Are you sure?';
-    var text = form.getAttribute('data-confirm-message') || 'This action cannot be undone.';
-    Swal.fire({
-     title: title,
-     text: text,
-     icon: 'warning',
-     showCancelButton: true,
-     confirmButtonColor: '#dc2626',
-     cancelButtonColor: '#6b7280',
-     confirmButtonText: 'Yes, delete'
-    }).then(function (r) {
-     if (r.isConfirmed) form.submit();
-    });
-   });
-   })();
-  </script>
+  <x-sweetalert.app-scripts />
+  @include('partials.transaction-search-suggestions-script')
   @stack('scripts')
   <!-- End of Scripts -->
 </body>

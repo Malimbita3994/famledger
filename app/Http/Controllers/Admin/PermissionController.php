@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -12,6 +14,8 @@ class PermissionController extends Controller
 {
     public function index(Request $request)
     {
+        Gate::authorize('permissions_view');
+
         $guard = config('auth.defaults.guard');
 
         $roles = Role::where('guard_name', $guard)
@@ -65,7 +69,7 @@ class PermissionController extends Controller
                 $name = $p->name ?? '';
 
                 foreach ($modules as $module) {
-                    if (\Illuminate\Support\Str::startsWith($name, $module . '_') || $name === $module) {
+                    if (Str::startsWith($name, $module.'_') || $name === $module) {
                         return $module;
                     }
                 }
@@ -106,11 +110,15 @@ class PermissionController extends Controller
 
     public function create()
     {
+        Gate::authorize('permissions_create');
+
         return view('admin.permissions.create');
     }
 
     public function store(Request $request)
     {
+        Gate::authorize('permissions_create');
+
         $guard = config('auth.defaults.guard');
 
         $validated = $request->validate([
@@ -128,6 +136,12 @@ class PermissionController extends Controller
 
     public function destroy(Permission $permission)
     {
+        Gate::authorize('permissions_delete');
+
+        if ($permission->guard_name !== config('auth.defaults.guard')) {
+            abort(404);
+        }
+
         $permission->delete();
 
         return redirect()->route('admin.permissions.index')
@@ -136,12 +150,14 @@ class PermissionController extends Controller
 
     public function destroyModule(string $module)
     {
+        Gate::authorize('permissions_delete');
+
         $guard = config('auth.defaults.guard');
 
         Permission::where('guard_name', $guard)
             ->where(function ($query) use ($module) {
                 $query->where('name', $module)
-                    ->orWhere('name', 'like', $module . '_%');
+                    ->orWhere('name', 'like', $module.'_%');
             })
             ->delete();
 

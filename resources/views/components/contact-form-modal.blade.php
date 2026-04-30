@@ -35,6 +35,8 @@
     'openOnLoad' => false,
     'variant' => 'form',
     'contactMessage' => null,
+    /** @var string quill | plain — plain uses a normal textarea (reliable on all browsers; landing uses plain) */
+    'messageEditor' => 'quill',
 ])
 
 @php
@@ -76,6 +78,7 @@
     $mathAnswerId = $modalId.'_contact_math_answer';
     $lblQuillId = $modalId.'_lbl_quill';
     $openFlag = filter_var($openOnLoad, FILTER_VALIDATE_BOOLEAN);
+    $usePlainMessage = ! $isView && strtolower((string) $messageEditor) === 'plain';
 @endphp
 
 <div
@@ -88,8 +91,11 @@
     data-open-on-load="{{ $openFlag ? '1' : '0' }}"
     @if (! $isView)
     data-form-id="{{ $resolvedFormId }}"
+    data-message-editor="{{ $usePlainMessage ? 'plain' : 'quill' }}"
+    @if (! $usePlainMessage)
     data-quill-container-id="{{ $quillId }}"
     data-hidden-message-id="{{ $hiddenMessageId }}"
+    @endif
     data-recaptcha-container-id="{{ filled($siteKey) ? $recaptchaId : '' }}"
     data-captcha-driver="{{ $captchaDriverResolved }}"
     @endif
@@ -203,10 +209,23 @@
                     <div class="row landing-contact-field-row">
                         <div class="col-xs-12">
                             <div class="form-group" style="margin-bottom: 10px;">
-                                {{-- Quill uses a div container; the real form field is the hidden textarea. --}}
-                                <label for="{{ $hiddenMessageId }}" id="{{ $lblQuillId }}">{{ __('Message') }}</label>
-                                <div id="{{ $quillId }}" class="landing-contact-quill-wrap" aria-labelledby="{{ $lblQuillId }}"></div>
-                                <textarea id="{{ $hiddenMessageId }}" name="message" class="sr-only" tabindex="-1" aria-hidden="true">{{ old('_contact_form_source') === $formSource ? old('message') : '' }}</textarea>
+                                @if ($usePlainMessage)
+                                    <label for="{{ $modalId }}_message">{{ __('Message') }}</label>
+                                    <textarea
+                                        name="message"
+                                        id="{{ $modalId }}_message"
+                                        class="form-control landing-contact-message-plain"
+                                        rows="6"
+                                        required
+                                        maxlength="65000"
+                                        autocomplete="off"
+                                    >{{ old('_contact_form_source') === $formSource ? old('message') : '' }}</textarea>
+                                @else
+                                    {{-- Quill uses a div container; the real form field is the hidden textarea. --}}
+                                    <label for="{{ $hiddenMessageId }}" id="{{ $lblQuillId }}">{{ __('Message') }}</label>
+                                    <div id="{{ $quillId }}" class="landing-contact-quill-wrap" aria-labelledby="{{ $lblQuillId }}"></div>
+                                    <textarea id="{{ $hiddenMessageId }}" name="message" class="sr-only" tabindex="-1" aria-hidden="true">{{ old('_contact_form_source') === $formSource ? old('message') : '' }}</textarea>
+                                @endif
                             </div>
                         </div>
                     </div>

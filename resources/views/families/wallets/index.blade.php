@@ -162,26 +162,34 @@
                 </div>
 
                 {{-- Mobile cards --}}
-                <div class="md:hidden p-4 space-y-4">
+                <div class="md:hidden px-3 sm:px-4 py-2 pb-8 space-y-5 max-w-full">
                     @foreach ($wallets as $wallet)
-                        <div class="rounded-2xl border border-border bg-background shadow-sm p-4 flex flex-col gap-3">
+                        <div class="rounded-2xl border border-border/40 bg-card shadow-sm p-5 sm:p-6 flex flex-col gap-4 min-w-0">
                             {{-- Header --}}
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <x-famledger.wallet-mark />
-                                    <div class="flex flex-col min-w-0">
-                                        <a href="{{ route('families.wallets.show', $wallet) }}" class="text-sm font-semibold text-foreground hover:text-primary truncate">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="flex items-start gap-3 min-w-0 flex-1">
+                                    <div class="shrink-0 pt-0.5">
+                                        <x-famledger.wallet-mark />
+                                    </div>
+                                    <div class="flex flex-col min-w-0 gap-1.5">
+                                        <a href="{{ route('families.wallets.show', $wallet) }}" class="text-base font-semibold text-foreground hover:text-primary leading-snug break-words">
                                             {{ $wallet->display_name }}
                                         </a>
+                                        @if ($wallet->dedicatedProject)
+                                            <p class="text-xs text-muted-foreground leading-relaxed">
+                                                <span class="text-muted-foreground">{{ __('Holds funds for') }}</span>
+                                                <a href="{{ route('families.projects.show', $wallet->dedicatedProject) }}" class="text-primary hover:underline font-medium">{{ $wallet->dedicatedProject->name }}</a>
+                                            </p>
+                                        @endif
                                         @if (filled($wallet->description))
-                                            <span class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mt-1">{{ __('Description') }}</span>
-                                            <span class="text-[11px] text-secondary-foreground line-clamp-3">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground pt-1">{{ __('Description') }}</span>
+                                            <span class="text-xs text-secondary-foreground leading-relaxed line-clamp-4">
                                                 {{ $wallet->description }}
                                             </span>
                                         @endif
                                     </div>
                                 </div>
-                                <div class="flex flex-col items-end gap-1 shrink-0">
+                                <div class="flex flex-col items-end gap-1.5 shrink-0">
                                     <span class="kt-badge kt-badge-sm {{ $wallet->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline">
                                         {{ ucfirst($wallet->status) }}
                                     </span>
@@ -191,25 +199,27 @@
                                 </div>
                             </div>
 
-                            {{-- Key numbers --}}
-                            <div class="flex items-center justify-between gap-3 border border-border/60 rounded-xl px-3 py-2 bg-muted/40">
-                                <div class="flex flex-col">
-                                    <span class="text-[11px] text-muted-foreground uppercase tracking-wide">Balance</span>
-                                    <span class="text-sm font-semibold text-foreground tabular-nums">
-                                        {{ number_format($wallet->balance, 2) }} {{ $wallet->currency_code }}
-                                    </span>
-                                </div>
-                                <div class="flex flex-col text-right">
-                                    <span class="text-[11px] text-muted-foreground uppercase tracking-wide">Type</span>
-                                    <span class="text-xs font-medium text-foreground">
-                                        {{ $walletTypes[$wallet->type] ?? $wallet->type }}
-                                    </span>
+                            {{-- Key numbers (soft panel, no outline border) --}}
+                            <div class="rounded-xl px-4 py-3.5 bg-muted/30 dark:bg-muted/20">
+                                <div class="grid grid-cols-2 gap-4 items-start">
+                                    <div class="flex flex-col gap-1 min-w-0">
+                                        <span class="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{{ __('Balance') }}</span>
+                                        <span class="text-sm font-semibold text-foreground tabular-nums leading-snug break-all">
+                                            {{ number_format($wallet->balance, 2) }} {{ $wallet->currency_code }}
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col gap-1 text-right min-w-0">
+                                        <span class="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{{ __('Type') }}</span>
+                                        <span class="text-sm font-medium text-foreground leading-snug">
+                                            {{ $walletTypes[$wallet->type] ?? $wallet->type }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
                             {{-- Meta --}}
-                            <div class="flex items-center justify-between text-[11px] text-muted-foreground">
-                                <span>Currency: <span class="font-medium text-foreground">{{ $wallet->currency_code }}</span></span>
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground px-0.5">
+                                <span class="leading-relaxed">{{ __('Currency') }}: <span class="font-medium text-foreground">{{ $wallet->currency_code }}</span></span>
                                 <span>
                                     @if ($wallet->is_shared)
                                         <span class="kt-badge kt-badge-xs kt-badge-success kt-badge-outline">Shared</span>
@@ -220,18 +230,20 @@
                             </div>
 
                             {{-- Actions --}}
-                            <div class="flex flex-wrap justify-end gap-2 pt-1">
-                                <a href="{{ route('families.wallets.show', $wallet) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1">
-                                    View
-                                </a>
-                                <a href="{{ route('families.wallets.edit', $wallet) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center gap-1">
-                                    Edit
-                                </a>
-                                <form action="{{ route('families.wallets.destroy', $wallet) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="Remove this wallet?" data-confirm-message="This cannot be undone.">
-                                    @csrf
-                                    @method('DELETE')
-                                    <x-famledger.pulse-button variant="danger" size="sm" type="submit">Remove</x-famledger.pulse-button>
-                                </form>
+                            <div class="flex flex-col gap-2.5 pt-3 mt-0.5 border-t border-border/25">
+                                <div class="flex flex-col min-[380px]:flex-row gap-2 min-[380px]:gap-2">
+                                    <a href="{{ route('families.wallets.show', $wallet) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center justify-center gap-1 min-h-[44px] px-3 min-[380px]:flex-1">
+                                        {{ __('View') }}
+                                    </a>
+                                    <a href="{{ route('families.wallets.edit', $wallet) }}" class="kt-btn kt-btn-primary kt-btn-sm inline-flex items-center justify-center gap-1 min-h-[44px] px-3 min-[380px]:flex-1">
+                                        {{ __('Edit') }}
+                                    </a>
+                                    <form action="{{ route('families.wallets.destroy', $wallet) }}" method="POST" class="js-confirm-delete min-w-0 min-[380px]:flex-1" data-confirm-title="Remove this wallet?" data-confirm-message="This cannot be undone.">
+                                        @csrf
+                                        @method('DELETE')
+                                        <x-famledger.pulse-button variant="danger" size="sm" type="submit" class="!w-full min-h-[44px] justify-center">{{ __('Remove') }}</x-famledger.pulse-button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     @endforeach

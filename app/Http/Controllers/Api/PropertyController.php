@@ -6,12 +6,11 @@ use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
 use App\Http\Controllers\Controller;
 use App\Models\Family;
 use App\Models\Property;
-use App\Models\PropertyMaintenance;
 use App\Models\PropertyDepreciation;
 use App\Models\PropertyDocument;
+use App\Models\PropertyMaintenance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class PropertyController extends Controller
 {
@@ -137,7 +136,15 @@ class PropertyController extends Controller
             'next_due_date' => ['nullable', 'date', 'after_or_equal:service_date'],
         ]);
 
-        $property = Property::where('family_id', $family->id)->findOrFail($validated['property_id']);
+        $property = Property::where('family_id', $family->id)
+            ->with(['category', 'subcategory'])
+            ->findOrFail($validated['property_id']);
+
+        if (! $property->isEligibleForRoutineMaintenance()) {
+            return response()->json([
+                'message' => 'This property type is not tracked for routine maintenance (e.g. land or farm).',
+            ], 422);
+        }
 
         $maintenance = PropertyMaintenance::create([
             'property_id' => $property->id,
@@ -357,7 +364,7 @@ class PropertyController extends Controller
 
         $validated = $request->validate([
             'property_id' => ['required', 'integer', 'exists:properties,id'],
-            'year' => ['required', 'integer', 'min:1900', 'max:' . (int) date('Y') + 1],
+            'year' => ['required', 'integer', 'min:1900', 'max:'.(int) date('Y') + 1],
             'method' => ['nullable', 'string', 'max:100'],
             'depreciation_amount' => ['required', 'numeric', 'min:0'],
             'book_value' => ['required', 'numeric', 'min:0'],
@@ -390,7 +397,7 @@ class PropertyController extends Controller
         }
 
         $validated = $request->validate([
-            'year' => ['required', 'integer', 'min:1900', 'max:' . (int) date('Y') + 1],
+            'year' => ['required', 'integer', 'min:1900', 'max:'.(int) date('Y') + 1],
             'method' => ['nullable', 'string', 'max:100'],
             'depreciation_amount' => ['required', 'numeric', 'min:0'],
             'book_value' => ['required', 'numeric', 'min:0'],

@@ -3,10 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Property extends Model
 {
@@ -77,6 +76,64 @@ class Property extends Model
     public function maintenances(): HasMany
     {
         return $this->hasMany(PropertyMaintenance::class, 'property_id');
+    }
+
+    /**
+     * Whether this asset belongs on the maintenance log (repairs, inspections for buildings and vehicles).
+     * Land parcels, farm/agricultural land, and financial instruments are excluded.
+     */
+    public function isEligibleForRoutineMaintenance(): bool
+    {
+        $this->loadMissing(['category', 'subcategory']);
+
+        if ($this->category === null) {
+            return true;
+        }
+
+        $catSlug = strtolower((string) $this->category->slug);
+
+        if ($catSlug === 'financial_investments') {
+            return false;
+        }
+
+        if ($catSlug === 'agricultural_assets') {
+            return false;
+        }
+
+        $cName = mb_strtolower(trim((string) $this->category->name));
+        $sName = mb_strtolower(trim((string) ($this->subcategory->name ?? '')));
+        $sSlug = mb_strtolower(trim((string) ($this->subcategory->slug ?? '')));
+
+        if ($cName === 'land' || $sName === 'land' || $sSlug === 'land') {
+            return false;
+        }
+
+        $blob = $cName.' '.$sName;
+
+        if (preg_match('/\b(bare\s+land|vacant\s+land|agricultural\s+land|farmland|farm\s+land|pasture|woodland|orchard|undeveloped\s+land)\b/u', $blob)) {
+            return false;
+        }
+
+        // Subcategory like "Farm" (land use), not "Farmhouse" / buildings
+        if ($sName !== '' && preg_match('/\bfarm\b/u', $sName) && ! preg_match('/\b(farmhouse|farm\s+house|farm\s+building|barn|silo|structure)\b/u', $sName)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Short label for category + subcategory (for UI lists).
+     */
+    public function categoryLine(): string
+    {
+        $this->loadMissing(['category', 'subcategory']);
+        $parts = array_filter([
+            $this->category?->name,
+            $this->subcategory?->name,
+        ]);
+
+        return $parts !== [] ? implode(' / ', $parts) : '—';
     }
 
     public function documents(): HasMany
@@ -156,4 +213,3 @@ class Property extends Model
         return $rows;
     }
 }
-

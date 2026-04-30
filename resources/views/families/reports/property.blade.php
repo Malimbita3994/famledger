@@ -1,7 +1,7 @@
 @extends('layouts.metronic')
 
-@section('title', 'Property Reports')
-@section('page_title', 'Property Reports')
+@section('title', 'Property')
+@section('page_title', 'Property')
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
@@ -11,7 +11,7 @@
 
 
     <div class="mb-6">
-        <h1 class="font-medium text-lg text-mono">Property reports</h1>
+        <h1 class="font-medium text-lg text-mono">Property</h1>
         <p class="text-sm text-muted-foreground mt-0.5">
             Snapshot of this family&rsquo;s properties with purchase vs. latest valuation and book value.
         </p>

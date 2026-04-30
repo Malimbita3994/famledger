@@ -38,5 +38,9 @@ class DatabaseSeeder extends Seeder
         if (! $user->hasRole('Super Admin')) {
             $user->assignRole('Super Admin');
         }
+
+        if (config('famledger.demo_seed.enabled')) {
+            $this->call(DemoFamilySeeder::class);
+        }
     }
 }

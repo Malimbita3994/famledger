@@ -3,16 +3,37 @@
  * Scope: .famledger-contact-form-modal
  */
 
+/* Marketing landing uses .navbar-fixed-top at z-index 100050; Bootstrap 3 modal defaults to 1050, so the bar
+   can sit above the dimmed overlay and break stacking. Keep contact modals above the nav. */
+.famledger-contact-form-modal.modal {
+  z-index: 100060 !important;
+}
+
+body > .modal-backdrop.in {
+  z-index: 100055 !important;
+}
+
+/* Center dialog in the viewport (Bootstrap 3 default is top-aligned + slide transform). */
+.famledger-contact-form-modal.fade .modal-dialog,
+.famledger-contact-form-modal.in .modal-dialog {
+  transform: none !important;
+}
+
+.famledger-contact-form-modal.in {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .famledger-contact-form-modal .modal-dialog.landing-contact-modal-wide {
   width: auto;
   max-width: min(96vw, 720px);
-  margin: 10px auto;
-}
-
-@media (min-width: 768px) {
-  .famledger-contact-form-modal .modal-dialog.landing-contact-modal-wide {
-    margin: 24px auto;
-  }
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 
 .famledger-contact-form-modal .modal-body {
@@ -94,6 +115,12 @@
 .famledger-contact-form-modal .landing-contact-quill-wrap .ql-editor.ql-blank::before {
   font-style: normal;
   color: #999;
+}
+
+.famledger-contact-form-modal textarea.landing-contact-message-plain {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.5;
 }
 
 /* Read-only message body (admin view variant — same “card” as Quill area, no editor) */

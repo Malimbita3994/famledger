@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class AdminRolesAndPermissionsSeeder extends Seeder
 {
@@ -13,6 +14,63 @@ class AdminRolesAndPermissionsSeeder extends Seeder
      * Permissions that allow opening UI routes in a read-only / oversight capacity.
      * Matches *_view*, view_*, plus explicit read-style gates that do not contain "view" in the name.
      */
+    /**
+     * Granular permissions that match Route::middleware('permission:...') on /admin/* web routes.
+     * Admin must hold these (not legacy manage_* alone) or middleware returns 403.
+     *
+     * @return list<string>
+     */
+    public static function adminPanelWebPermissionNames(): array
+    {
+        return [
+            'access_admin_panel',
+            'dashboard_view',
+            'users_view',
+            'users_create',
+            'users_update',
+            'users_delete',
+            'roles_view',
+            'roles_create',
+            'roles_update',
+            'roles_delete',
+            'roles_assign',
+            'permissions_view',
+            'permissions_create',
+            'permissions_delete',
+            'reports_view',
+            'reports_general_view_dashboard',
+            'reports_finance_view',
+            'contact_messages_view',
+            'contact_messages_delete',
+            'contact_messages_mark_read',
+            // Legacy names kept for backwards compatibility / custom gates
+            'manage_users',
+            'manage_roles',
+            'view_audit_logs',
+        ];
+    }
+
+    /**
+     * Support: helpdesk-style access (users + inbox), no roles/permissions module.
+     *
+     * @return list<string>
+     */
+    public static function supportAgentWebPermissionNames(): array
+    {
+        return [
+            'access_admin_panel',
+            'dashboard_view',
+            'users_view',
+            'users_create',
+            'users_update',
+            'contact_messages_view',
+            'contact_messages_delete',
+            'contact_messages_mark_read',
+            'manage_users',
+            'view_audit_logs',
+        ];
+    }
+
     public static function auditorViewPermissions(string $guard): Collection
     {
         $extraNames = [
@@ -468,30 +526,32 @@ class AdminRolesAndPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $name, 'guard_name' => $guard]);
         }
 
+        $guardPermissions = Permission::where('guard_name', $guard)->get();
+
         $superAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => $guard]);
-        $superAdmin->givePermissionTo(Permission::all());
+        $superAdmin->syncPermissions($guardPermissions);
 
         $admin = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => $guard]);
-        $admin->givePermissionTo([
-            'access_admin_panel',
-            'manage_users',
-            'manage_roles',
-            'view_audit_logs',
-            'contact_messages_view',
-            'contact_messages_delete',
-            'contact_messages_mark_read',
-        ]);
+        $admin->syncPermissions(
+            $guardPermissions->whereIn('name', self::adminPanelWebPermissionNames())->values()
+        );
 
-        Role::firstOrCreate(['name' => 'Support', 'guard_name' => $guard])
-            ->givePermissionTo(['access_admin_panel', 'manage_users', 'view_audit_logs', 'contact_messages_view', 'contact_messages_mark_read']);
+        $support = Role::firstOrCreate(['name' => 'Support', 'guard_name' => $guard]);
+        $support->syncPermissions(
+            $guardPermissions->whereIn('name', self::supportAgentWebPermissionNames())->values()
+        );
 
         Role::firstOrCreate(['name' => 'Auditor', 'guard_name' => $guard])
             ->syncPermissions(self::auditorViewPermissions($guard));
 
-        // Family/tenant-style roles (assign permissions in admin as needed)
-        Role::firstOrCreate(['name' => 'Owner', 'guard_name' => $guard]);
-        Role::firstOrCreate(['name' => 'Co-owner', 'guard_name' => $guard]);
-        Role::firstOrCreate(['name' => 'Member', 'guard_name' => $guard]);
-        Role::firstOrCreate(['name' => 'Viewer', 'guard_name' => $guard]);
+        /*
+         * Spatie roles below share names with family_roles (Owner, etc.) but are separate.
+         * They are not assigned by default; use /admin/roles to attach module permissions if you use them as global capability packs.
+         */
+        foreach (['Owner', 'Co-owner', 'Member', 'Viewer'] as $packName) {
+            Role::firstOrCreate(['name' => $packName, 'guard_name' => $guard]);
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

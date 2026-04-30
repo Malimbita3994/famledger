@@ -15,9 +15,9 @@ class AuditLogger
     /**
      * Log an application-level event (e.g. login, logout, "user did X").
      */
-    public static function application(string $action, ?string $description = null, array $properties = []): ?AuditLog
+    public static function application(string $action, ?string $description = null, array $properties = [], ?int $familyId = null): ?AuditLog
     {
-        return AuditLog::logApplication($action, $description, $properties);
+        return AuditLog::logApplication($action, $description, $properties, $familyId);
     }
 
     /**

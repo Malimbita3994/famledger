@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -118,6 +119,34 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Public URL for the profile photo, or null if unset or the file is missing on disk.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        $raw = $this->attributes['avatar'] ?? null;
+        if (! is_string($raw)) {
+            return null;
+        }
+        $raw = trim($raw);
+        if ($raw === '') {
+            return null;
+        }
+
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+            return $raw;
+        }
+
+        $path = ltrim(str_replace('\\', '/', $raw), '/');
+
+        if (! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        // Root-relative URL avoids broken images when APP_URL host differs from the browser (e.g. localhost vs 127.0.0.1).
+        return '/storage/'.$path;
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -176,5 +205,13 @@ class User extends Authenticatable
     public function reactions(): HasMany
     {
         return $this->hasMany(Reaction::class);
+    }
+
+    /**
+     * Linked OAuth identities (Google, Apple, etc.).
+     */
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
     }
 }

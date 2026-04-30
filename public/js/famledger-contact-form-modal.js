@@ -41,6 +41,9 @@
       return;
     }
 
+    var messageEditor = (modalEl.getAttribute("data-message-editor") || "quill").toLowerCase();
+    var usePlainMessage = messageEditor === "plain";
+
     var quillInstance = null;
     var recaptchaWidgetId = null;
 
@@ -76,6 +79,9 @@
     }
 
     function syncQuillToTextarea() {
+      if (usePlainMessage) {
+        return;
+      }
       var ta = document.getElementById(hiddenMessageId);
       if (!ta || !quillInstance) {
         return;
@@ -85,6 +91,9 @@
     }
 
     function initQuill() {
+      if (usePlainMessage) {
+        return;
+      }
       if (quillInstance) {
         return;
       }
@@ -125,6 +134,9 @@
     }
 
     function ensureQuill(attemptsLeft) {
+      if (usePlainMessage) {
+        return;
+      }
       attemptsLeft = typeof attemptsLeft === "number" ? attemptsLeft : 40;
       if (quillInstance) {
         return;
@@ -210,16 +222,20 @@
           var nameEl = formEl.querySelector('[name="name"]');
           var emailEl = formEl.querySelector('[name="email"]');
           var phoneEl = formEl.querySelector('[name="phone"]');
-          var ta = document.getElementById(hiddenMessageId);
+          var ta = usePlainMessage
+            ? formEl.querySelector('textarea[name="message"]')
+            : document.getElementById(hiddenMessageId);
           var nameVal = nameEl && nameEl.value ? nameEl.value.trim() : "";
           var emailVal = emailEl && emailEl.value ? emailEl.value.trim() : "";
           var phoneVal = phoneEl && phoneEl.value ? phoneEl.value.trim() : "";
           var msgHtml = ta && ta.value ? ta.value : "";
-          var plainMsg = msgHtml
-            .replace(/<[^>]+>/g, " ")
-            .replace(/&nbsp;/g, " ")
-            .replace(/\s+/g, " ")
-            .trim();
+          var plainMsg = usePlainMessage
+            ? msgHtml.replace(/\s+/g, " ").trim()
+            : msgHtml
+                .replace(/<[^>]+>/g, " ")
+                .replace(/&nbsp;/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
 
           if (!nameVal) {
             msgs.push("Please enter your full name.");
@@ -298,10 +314,19 @@
     var $m = window.jQuery(modalEl);
     $m.on("shown.bs.modal", function () {
       clearClientErrors();
-      ensureQuill();
-      setTimeout(function () {
-        ensureQuill(20);
-      }, 200);
+      if (usePlainMessage) {
+        var plainTa = document.getElementById(modalEl.id + "_message");
+        if (plainTa) {
+          try {
+            plainTa.focus();
+          } catch (e) {}
+        }
+      } else {
+        ensureQuill();
+        setTimeout(function () {
+          ensureQuill(20);
+        }, 200);
+      }
       if (captchaDriver === "recaptcha") {
         ensureRecaptcha();
         setTimeout(function () {

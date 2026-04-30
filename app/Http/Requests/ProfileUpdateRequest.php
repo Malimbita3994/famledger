@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,7 +12,7 @@ class ProfileUpdateRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -27,18 +28,19 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'avatar' => [
                 'nullable',
-                'image', // must be a real image (validates content, not just extension)
-                'mimes:jpeg,png,jpg,gif',
-                'mimetypes:image/jpeg,image/png,image/gif', // MIME from file content, blocks scripts
+                'image',
+                'mimes:jpeg,png,jpg,gif,webp',
+                'mimetypes:image/jpeg,image/png,image/gif,image/webp',
                 'max:2048',
             ],
+            'remove_avatar' => ['sometimes', 'boolean'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'avatar.image' => __('The avatar must be a valid image file (JPEG, PNG or GIF).'),
+            'avatar.image' => __('The avatar must be a valid image file (JPEG, PNG, GIF or WebP).'),
             'avatar.mimetypes' => __('The avatar must be a real image file. Scripts and other file types are not allowed.'),
         ];
     }

@@ -48,17 +48,17 @@
     <div class="kt-card p-5 lg:p-7.5 mb-5">
             <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div>
-                <h1 class="text-lg font-semibold text-mono">Maintenance</h1>
+                <h1 class="text-lg font-semibold text-mono">{{ __('Maintenance') }}</h1>
                 <p class="text-sm text-muted-foreground mt-0.5">
-                    Log maintenance tasks, repairs and inspections for family properties.
+                    {{ __('Log repairs, inspections, and service for buildings and vehicles. Irrelevant asset types are filtered out automatically.') }}
                 </p>
             </div>
             <div class="flex flex-wrap gap-2 w-full lg:w-auto">
                 <form method="GET" class="maintenance-filter-row">
                     <div class="flex flex-col">
-                        <label class="kt-form-label text-xs mb-1" for="property_id">Property</label>
-                        <select name="property_id" id="property_id" class="kt-select min-w-[180px]">
-                            <option value="">All properties</option>
+                        <label class="kt-form-label text-xs mb-1" for="filter_property_id">{{ __('Property') }}</label>
+                        <select name="property_id" id="filter_property_id" class="kt-select min-w-[180px]" @disabled($properties->isEmpty())>
+                            <option value="">{{ __('All eligible properties') }}</option>
                             @foreach ($properties as $prop)
                                 <option value="{{ $prop->id }}" @selected(($filters['property_id'] ?? null) == $prop->id)>
                                     {{ $prop->property_code }} · {{ $prop->name }}
@@ -67,29 +67,42 @@
                         </select>
                     </div>
                     <div class="flex flex-col">
-                        <label class="kt-form-label text-xs mb-1" for="from">From</label>
+                        <label class="kt-form-label text-xs mb-1" for="from">{{ __('From') }}</label>
                         <input id="from" type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="kt-input h-9">
                     </div>
                     <div class="flex flex-col">
-                        <label class="kt-form-label text-xs mb-1" for="to">To</label>
+                        <label class="kt-form-label text-xs mb-1" for="to">{{ __('To') }}</label>
                         <input id="to" type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="kt-input h-9">
                     </div>
                     <div class="flex items-end">
                         <button type="submit" class="kt-btn kt-btn-outline kt-btn-sm">
-                            Filter
+                            {{ __('Filter') }}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
+        @if ($properties->isEmpty())
+            <div class="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+                <p class="font-medium text-foreground">{{ __('No eligible assets for this maintenance log') }}</p>
+                <p class="mt-2 max-w-lg mx-auto">
+                    @if ($hasPropertiesButNoneEligible ?? false)
+                        {{ __('Everything in your property list is land, farm, agricultural, or investment-type—those are intentionally not listed here.') }}
+                    @else
+                        {{ __('Add a building or vehicle under Property assets first.') }}
+                    @endif
+                </p>
+                <a href="{{ route('families.properties.assets') }}" class="kt-btn kt-btn-sm kt-btn-primary mt-4">{{ __('Open property assets') }}</a>
+            </div>
+        @else
         <form method="POST" action="{{ route('families.properties.maintenance.store') }}" class="grid gap-4 lg:gap-5">
             @csrf
             <div class="maintenance-main-row">
                 <div class="maintenance-main-col grid gap-1.5">
-                    <label for="property_id" class="kt-form-label text-xs">Property <span class="text-destructive">*</span></label>
-                    <select id="property_id" name="property_id" class="kt-select">
-                        <option value="">Select property</option>
+                    <label for="maintenance_property_id" class="kt-form-label text-xs">{{ __('Property') }} <span class="text-destructive">*</span></label>
+                    <select id="maintenance_property_id" name="property_id" class="kt-select">
+                        <option value="">{{ __('Select property') }}</option>
                         @foreach ($properties as $prop)
                             <option value="{{ $prop->id }}" @selected(old('property_id') == $prop->id)>
                                 {{ $prop->property_code }} · {{ $prop->name }}
@@ -99,29 +112,29 @@
                     @error('property_id')<p class="kt-form-message">{{ $message }}</p>@enderror
                 </div>
                 <div class="maintenance-main-col grid gap-1.5">
-                    <label for="service_date" class="kt-form-label text-xs">Service date <span class="text-destructive">*</span></label>
+                    <label for="service_date" class="kt-form-label text-xs">{{ __('Service date') }} <span class="text-destructive">*</span></label>
                     <input id="service_date" type="date" name="service_date" class="kt-input" value="{{ old('service_date') }}">
                     @error('service_date')<p class="kt-form-message">{{ $message }}</p>@enderror
                 </div>
                 <div class="maintenance-main-col grid gap-1.5">
-                    <label for="cost" class="kt-form-label text-xs">Cost</label>
+                    <label for="cost" class="kt-form-label text-xs">{{ __('Cost') }}</label>
                     <input id="cost" type="number" step="0.01" name="cost" class="kt-input" value="{{ old('cost') }}">
                     @error('cost')<p class="kt-form-message">{{ $message }}</p>@enderror
                 </div>
                 <div class="maintenance-main-col grid gap-1.5">
-                    <label for="service_provider" class="kt-form-label text-xs">Service provider</label>
+                    <label for="service_provider" class="kt-form-label text-xs">{{ __('Service provider') }}</label>
                     <input id="service_provider" type="text" name="service_provider" class="kt-input" value="{{ old('service_provider') }}">
                     @error('service_provider')<p class="kt-form-message">{{ $message }}</p>@enderror
                 </div>
             </div>
             <div class="maintenance-main-row">
                 <div class="maintenance-main-col grid gap-1.5">
-                    <label for="description" class="kt-form-label text-xs">Description</label>
+                    <label for="description" class="kt-form-label text-xs">{{ __('Description') }}</label>
                     <textarea id="description" name="description" rows="2" class="kt-textarea resize-y">{{ old('description') }}</textarea>
                     @error('description')<p class="kt-form-message">{{ $message }}</p>@enderror
                 </div>
                 <div class="maintenance-main-col grid gap-1.5">
-                    <label for="next_due_date" class="kt-form-label text-xs">Next due date</label>
+                    <label for="next_due_date" class="kt-form-label text-xs">{{ __('Next due date') }}</label>
                     <input id="next_due_date" type="date" name="next_due_date" class="kt-input" value="{{ old('next_due_date') }}">
                     @error('next_due_date')<p class="kt-form-message">{{ $message }}</p>@enderror
                 </div>
@@ -129,18 +142,22 @@
             <div class="flex justify-end">
                 <button type="submit" class="kt-btn kt-btn-primary kt-btn-sm">
                     <i class="ki-filled ki-plus me-1"></i>
-                    Add maintenance
+                    {{ __('Add maintenance') }}
                 </button>
             </div>
         </form>
+        @endif
     </div>
 
     <div class="kt-card kt-card-grid min-w-full">
         <div class="kt-card-content p-0">
             @if ($maintenances->isEmpty())
-                <div class="py-10 text-center text-muted-foreground">
-                    <i class="ki-filled ki-setting-3 text-4xl mb-2"></i>
-                    <p class="text-sm">No maintenance records yet.</p>
+                <div class="py-10 text-center text-muted-foreground px-4">
+                    <i class="ki-filled ki-setting-3 text-4xl mb-2 opacity-80"></i>
+                    <p class="text-sm font-medium text-foreground">{{ __('No maintenance records yet.') }}</p>
+                    @if ($properties->isNotEmpty())
+                        <p class="text-xs mt-1 max-w-md mx-auto">{{ __('Add a row above when you complete a repair or inspection.') }}</p>
+                    @endif
                 </div>
             @else
                 <div class="kt-scrollable-x-auto">

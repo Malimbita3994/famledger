@@ -7,6 +7,12 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="text-sm text-danger mb-3 px-3 py-2.5 rounded-xl bg-red-50 border border-red-100/80" role="alert">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <form x-data="{ loading: false }" x-on:submit="loading = true" method="POST" action="{{ route('login') }}" class="flex flex-col gap-4 sm:gap-5" id="sign_in_form">
         @csrf
 
@@ -28,11 +34,11 @@
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
-            <a class="kt-btn kt-btn-outline justify-center" href="#" type="button">
+            <a class="kt-btn kt-btn-outline justify-center" href="{{ route('auth.google.redirect') }}">
                 <img alt="" class="size-3.5 shrink-0" src="{{ asset('metronic/assets/media/brand-logos/google.svg') }}"/>
                 {{ __('Use Google') }}
             </a>
-            <a class="kt-btn kt-btn-outline justify-center" href="#" type="button">
+            <a class="kt-btn kt-btn-outline justify-center" href="{{ route('auth.apple.redirect') }}">
                 <img alt="" class="size-3.5 shrink-0 dark:hidden" src="{{ asset('metronic/assets/media/brand-logos/apple-black.svg') }}"/>
                 <img alt="" class="size-3.5 shrink-0 hidden dark:block" src="{{ asset('metronic/assets/media/brand-logos/apple-white.svg') }}"/>
                 {{ __('Use Apple') }}

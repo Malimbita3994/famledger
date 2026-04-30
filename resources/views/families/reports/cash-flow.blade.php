@@ -1,7 +1,7 @@
 @extends('layouts.metronic')
 
-@section('title', 'Cash Flow Report')
-@section('page_title', 'Cash Flow Report')
+@section('title', 'Finance')
+@section('page_title', 'Finance')
 
 @section('content')
 <style>
@@ -29,7 +29,7 @@
     </x-fin-back-link>
 
     <div class="mb-6">
-        <h1 class="font-medium text-lg text-mono">Cash Flow Report</h1>
+        <h1 class="font-medium text-lg text-mono">Finance</h1>
     </div>
 
     {{-- Filters (card style like accounts/income) --}}

@@ -3,13 +3,16 @@
 namespace App\Providers;
 
 use App\Events\FamilyFinancialDataChanged;
+use App\Models\Announcement;
 use App\Models\Budget;
 use App\Models\Expense;
 use App\Models\Family;
 use App\Models\FamilyInvitation;
 use App\Models\FamilyLiability;
 use App\Models\FamilyMember;
+use App\Models\FamilyRelationship;
 use App\Models\Income;
+use App\Models\Milestone;
 use App\Models\Project;
 use App\Models\ProjectFunding;
 use App\Models\Property;
@@ -18,16 +21,26 @@ use App\Models\SavingsGoal;
 use App\Models\Transfer;
 use App\Models\Wallet;
 use App\Models\WalletReconciliation;
-use App\Services\FirebaseClient;
 use App\Observers\AuditLogObserver;
+use App\Observers\ExpenseSearchObserver;
+use App\Observers\IncomeSearchObserver;
 use App\Policies\FamilyPolicy;
+use App\Services\FirebaseClient;
+use App\Services\Search\ElasticsearchClientFactory;
+use App\Services\Search\FamilyEntitySearchService;
+use App\Services\Search\QueryParserService;
+use App\Services\Search\SearchService;
+use App\Services\Search\TransactionDocumentFactory;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Kreait\Firebase\Factory;
+use SocialiteProviders\Apple\Provider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,7 +50,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Factory::class, function () {
-            $factory = new Factory();
+            $factory = new Factory;
 
             $credentialsPath = config('firebase.credentials.path');
             $credentialsJson = config('firebase.credentials.json');
@@ -72,6 +85,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(FirebaseClient::class, function ($app) {
             return new FirebaseClient($app->make(Factory::class));
         });
+
+        $this->app->singleton(ElasticsearchClientFactory::class);
+        $this->app->singleton(TransactionDocumentFactory::class);
+        $this->app->singleton(QueryParserService::class);
+        $this->app->singleton(SearchService::class);
+        $this->app->singleton(FamilyEntitySearchService::class);
     }
 
     /**
@@ -79,6 +98,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(function (SocialiteWasCalled $event) {
+            $event->extendSocialite('apple', Provider::class);
+        });
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
         });
@@ -107,7 +130,17 @@ class AppServiceProvider extends ServiceProvider
 
             if (auth()->check()) {
                 $user = auth()->user();
-                $currentFamily = $user->families()->first();
+                $currentFamily = null;
+                $sessionFamilyId = request()->session()->get('current_family_id');
+                if ($sessionFamilyId) {
+                    $candidate = Family::query()->whereKey($sessionFamilyId)->first();
+                    if ($candidate && $candidate->members()->where('user_id', $user->id)->exists()) {
+                        $currentFamily = $candidate;
+                    }
+                }
+                if (! $currentFamily) {
+                    $currentFamily = $user->families()->first();
+                }
                 if ($currentFamily) {
                     $currentFamilyMembership = FamilyMember::where('family_id', $currentFamily->id)
                         ->where('user_id', $user->id)
@@ -151,6 +184,8 @@ class AppServiceProvider extends ServiceProvider
         // Database audit trail: log model changes
         Expense::observe(AuditLogObserver::class);
         Income::observe(AuditLogObserver::class);
+        Income::observe(IncomeSearchObserver::class);
+        Expense::observe(ExpenseSearchObserver::class);
         Transfer::observe(AuditLogObserver::class);
         Budget::observe(AuditLogObserver::class);
         Wallet::observe(AuditLogObserver::class);
@@ -164,6 +199,9 @@ class AppServiceProvider extends ServiceProvider
         FamilyLiability::observe(AuditLogObserver::class);
         FamilyInvitation::observe(AuditLogObserver::class);
         WalletReconciliation::observe(AuditLogObserver::class);
+        Milestone::observe(AuditLogObserver::class);
+        Announcement::observe(AuditLogObserver::class);
+        FamilyRelationship::observe(AuditLogObserver::class);
 
         Expense::saved(function (Expense $expense): void {
             FamilyFinancialDataChanged::dispatch($expense->family_id, 'expense');

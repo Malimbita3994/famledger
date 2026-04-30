@@ -238,6 +238,50 @@
     .dark .famledger-fin-overview .fin-contrib-row:hover {
         background: rgba(255, 255, 255, 0.04);
     }
+    /* Defeat global img { max-width:100%; height:auto } + flex min-content so avatars stay thumbnail-sized */
+    .famledger-fin-overview .fin-contrib-avatar-wrap {
+        width: 3rem;
+        height: 3rem;
+        flex-shrink: 0;
+        overflow: hidden;
+        border-radius: 9999px;
+    }
+    @media (min-width: 640px) {
+        .famledger-fin-overview .fin-contrib-avatar-wrap {
+            width: 3.5rem;
+            height: 3.5rem;
+        }
+    }
+    .famledger-fin-overview .fin-contrib-avatar-wrap img {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        object-fit: cover;
+        display: block;
+    }
+    /* Delete family danger card: theme sometimes zeros padding on rounded borders */
+    .famledger-delete-family-zone {
+        box-sizing: border-box !important;
+        padding-top: 2.75rem !important;
+        padding-left: 1.75rem !important;
+        padding-right: 1.75rem !important;
+        padding-bottom: 1.75rem !important;
+    }
+    @media (min-width: 640px) {
+        .famledger-delete-family-zone {
+            padding-top: 3.25rem !important;
+            padding-left: 2.25rem !important;
+            padding-right: 2.25rem !important;
+            padding-bottom: 2rem !important;
+        }
+    }
+    @media (min-width: 1024px) {
+        .famledger-delete-family-zone {
+            padding-top: 3.5rem !important;
+            padding-left: 2.5rem !important;
+            padding-right: 2.5rem !important;
+        }
+    }
     </style>
 
     <div class="famledger-family-profile-tabs kt-card rounded-2xl border border-border/80 shadow-sm overflow-hidden mb-6">
@@ -270,62 +314,83 @@
         <div class="tab-content p-4 sm:p-6 lg:p-8 bg-card">
     {{-- TAB: Family details --}}
     <div class="tab-pane fade show active" id="fam_panel_details" role="tabpanel" aria-labelledby="fam_tab_details" tabindex="0">
-    {{-- Summary / hero --}}
-    <div class="kt-card mb-6 rounded-2xl border border-border/80 bg-gradient-to-br from-card via-card to-muted/25 shadow-sm overflow-visible">
-        <div class="kt-card-content p-5 sm:p-7 lg:p-9 overflow-visible">
+    {{-- Summary: compact header (page title is above; avoid repeating section labels) --}}
+    <div class="kt-card mb-5 rounded-xl border border-border/70 bg-card shadow-sm overflow-visible">
+        <div class="kt-card-content p-4 sm:p-5 overflow-visible">
 
-            <div class="flex flex-col sm:flex-row items-start gap-5 sm:gap-7">
+            <div class="flex flex-row items-start gap-3 sm:gap-4">
 
-                <div class="shrink-0 self-start flex h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 via-primary/8 to-primary/5 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-inset ring-primary/15">
-                    <i class="ki-filled ki-people text-[1.65rem] sm:text-[2rem] leading-none opacity-95" aria-hidden="true"></i>
+                <div class="shrink-0 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <i class="ki-filled ki-people text-[1.35rem] sm:text-[1.5rem] leading-none" aria-hidden="true"></i>
                 </div>
 
-                <div class="flex-1 min-w-0 flex flex-col gap-2.5 sm:gap-3 pt-0.5">
-                    <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                        <span class="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{{ __('Overview') }}</span>
-                        <span class="kt-badge {{ $family->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-[30px] shrink-0">
+                <div class="flex-1 min-w-0 flex flex-col gap-2">
+                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+                        <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-foreground leading-tight">
+                            {{ $family->name }}
+                        </h2>
+                        <span class="kt-badge kt-badge-sm {{ $family->status === 'active' ? 'kt-badge-success' : 'kt-badge-secondary' }} kt-badge-outline rounded-full shrink-0">
                             <span class="kt-badge-dot size-1.5"></span>
                             {{ ucfirst($family->status) }}
                         </span>
                     </div>
 
-                    <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-foreground leading-snug">
-                        {{ $family->name }}
-                    </h2>
-
-                    {{-- Description --}}
-                    @if ($family->description)
-                        <p class="text-secondary-foreground text-sm leading-relaxed max-w-2xl">{{ Str::limit($family->description, 220) }}</p>
+                    @if ($family->created_at)
+                        <p class="text-xs text-muted-foreground leading-normal">
+                            <span class="sr-only">{{ __('Created') }}</span>
+                            <time datetime="{{ $family->created_at->toIso8601String() }}">{{ $family->created_at->format('M j, Y') }}</time>
+                            <span class="text-border/80 mx-1.5" aria-hidden="true">·</span>
+                            {{ $family->created_at->diffForHumans() }}
+                        </p>
                     @endif
 
-                    @php $metaSep = false; @endphp
-                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground @if($family->description) mt-0.5 @endif">
+                    @if ($family->description)
+                        <p class="text-sm text-muted-foreground leading-snug line-clamp-2 max-w-3xl" title="{{ e($family->description) }}">{{ $family->description }}</p>
+                    @else
+                        <p class="text-xs text-muted-foreground">
+                            <a href="{{ route('families.edit', $family) }}" class="text-primary hover:underline">{{ __('Add a short description') }}</a>
+                        </p>
+                    @endif
+
+                    <div class="flex flex-row flex-nowrap gap-2 sm:gap-2.5 w-full min-w-0 border-t border-border/50 pt-3 mt-1">
+                        {{-- Hairline border + soft shadow (no heavy stroke) --}}
+                        <div class="flex-1 min-w-0 basis-0 rounded-lg border border-sky-400/25 bg-gradient-to-br from-sky-500/[0.07] to-card px-2 py-2 sm:py-2.5 shadow-[0_10px_32px_-10px_rgba(14,165,233,0.38),0_4px_14px_-6px_rgba(15,23,42,0.08)] dark:border-sky-500/20 dark:from-sky-500/10 dark:shadow-[0_12px_36px_-12px_rgba(56,189,248,0.22),0_4px_16px_-8px_rgba(0,0,0,0.35)]">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="ki-filled ki-people text-base text-sky-600 dark:text-sky-400 shrink-0" aria-hidden="true"></i>
+                                <div class="min-w-0 leading-tight">
+                                    <span class="text-[10px] uppercase tracking-wide text-sky-700/80 dark:text-sky-300/90 block">{{ __('Members') }}</span>
+                                    <span class="text-sm font-semibold tabular-nums text-foreground">{{ number_format($family->familyMembers->count()) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0 basis-0 rounded-lg border border-emerald-400/25 bg-gradient-to-br from-emerald-500/[0.07] to-card px-2 py-2 sm:py-2.5 shadow-[0_10px_32px_-10px_rgba(16,185,129,0.35),0_4px_14px_-6px_rgba(15,23,42,0.08)] dark:border-emerald-500/20 dark:from-emerald-500/10 dark:shadow-[0_12px_36px_-12px_rgba(52,211,153,0.2),0_4px_16px_-8px_rgba(0,0,0,0.35)]">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="ki-filled ki-geolocation text-base text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true"></i>
+                                <div class="min-w-0 leading-tight">
+                                    <span class="text-[10px] uppercase tracking-wide text-emerald-800/75 dark:text-emerald-300/90 block">{{ __('Country') }}</span>
+                                    <span class="text-sm font-semibold text-foreground truncate">{{ $family->country ?: '—' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0 basis-0 rounded-lg border border-amber-400/25 bg-gradient-to-br from-amber-500/[0.08] to-card px-2 py-2 sm:py-2.5 shadow-[0_10px_32px_-10px_rgba(245,158,11,0.38),0_4px_14px_-6px_rgba(15,23,42,0.08)] dark:border-amber-500/20 dark:from-amber-500/10 dark:shadow-[0_12px_36px_-12px_rgba(251,191,36,0.22),0_4px_16px_-8px_rgba(0,0,0,0.35)]">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="ki-filled ki-time text-base text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true"></i>
+                                <div class="min-w-0 leading-tight">
+                                    <span class="text-[10px] uppercase tracking-wide text-amber-800/75 dark:text-amber-300/90 block">{{ __('Timezone') }}</span>
+                                    <span class="text-xs sm:text-sm font-medium text-foreground truncate font-mono">{{ $family->timezone ?: '—' }}</span>
+                                </div>
+                            </div>
+                        </div>
                         @if ($family->creator)
-                            <span class="inline-flex items-center gap-1">
-                                <i class="ki-filled ki-user text-sm"></i>
-                                {{ __('Created by') }} <span class="text-foreground font-medium ml-0.5">{{ $family->creator->name }}</span>
-                            </span>
-                            @php $metaSep = true; @endphp
-                        @endif
-                        @if ($family->created_at)
-                            @if ($metaSep)<span class="text-border select-none" aria-hidden="true">·</span>@endif
-                            <span class="inline-flex items-center gap-1">
-                                <i class="ki-filled ki-calendar text-sm"></i>
-                                {{ $family->created_at->format('M j, Y') }}
-                            </span>
-                            @php $metaSep = true; @endphp
-                        @endif
-                        @if($family->country)
-                            @if ($metaSep)<span class="text-border select-none" aria-hidden="true">·</span>@endif
-                            <span class="inline-flex items-center gap-1">
-                                <i class="ki-filled ki-geolocation text-sm"></i>
-                                {{ $family->country }}
-                            </span>
-                            @php $metaSep = true; @endphp
-                        @endif
-                        @if($family->timezone)
-                            @if ($metaSep)<span class="text-border select-none" aria-hidden="true">·</span>@endif
-                            <span>{{ $family->timezone }}</span>
+                        <div class="flex-1 min-w-0 basis-0 rounded-lg border border-violet-400/25 bg-gradient-to-br from-violet-500/[0.07] to-card px-2 py-2 sm:py-2.5 shadow-[0_10px_32px_-10px_rgba(139,92,246,0.35),0_4px_14px_-6px_rgba(15,23,42,0.08)] dark:border-violet-500/20 dark:from-violet-500/10 dark:shadow-[0_12px_36px_-12px_rgba(167,139,250,0.22),0_4px_16px_-8px_rgba(0,0,0,0.35)]">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="ki-filled ki-user text-base text-violet-600 dark:text-violet-400 shrink-0" aria-hidden="true"></i>
+                                <div class="min-w-0 leading-tight">
+                                    <span class="text-[10px] uppercase tracking-wide text-violet-800/75 dark:text-violet-300/90 block">{{ __('Created by') }}</span>
+                                    <span class="text-sm font-semibold text-foreground truncate" title="{{ $family->creator->name }}">{{ $family->creator->name }}</span>
+                                </div>
+                            </div>
+                        </div>
                         @endif
                     </div>
                 </div>
@@ -333,8 +398,12 @@
         </div>
     </div>
 
-    <div class="mt-8">
-        <h2 class="text-sm font-semibold text-foreground mb-4">{{ __('Details') }}</h2>
+    <div class="mt-8 px-3 sm:px-4">
+        <header class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5 min-w-0">
+            {{-- Inset from tab edge + plain glyph (same pattern as transactions, expenses, etc.) --}}
+            <i class="ki-filled ki-information-2 text-2xl sm:text-[1.65rem] text-primary shrink-0 leading-none" aria-hidden="true"></i>
+            <h2 class="min-w-0 flex-1 text-base sm:text-lg font-semibold tracking-tight text-foreground leading-tight">{{ __('Details') }}</h2>
+        </header>
         <div class="kt-card rounded-xl border border-border/80 shadow-sm">
             <div class="kt-card-content p-4 sm:p-6">
                 <dl class="family-details-grid text-sm">
@@ -379,7 +448,24 @@
                 @endif
             </div>
         </div>
+    </div>{{-- /Details block inset --}}
+
+    @if ($isFamilyOwner ?? false)
+    <div class="famledger-delete-family-zone mt-8 rounded-2xl border border-destructive/30 bg-destructive/[0.06] dark:bg-destructive/10 box-border w-full max-w-full min-w-0">
+        <h2 class="text-sm font-semibold text-destructive mb-2">{{ __('Delete family') }}</h2>
+        <p class="text-sm text-muted-foreground leading-relaxed mb-4 max-w-2xl">
+            {{ __('Permanently delete this family and all related data—including wallets, transactions, budgets, and member access. This cannot be undone.') }}
+        </p>
+        <form action="{{ route('families.destroy', $family) }}" method="POST" class="js-confirm-delete js-confirm-delete-danger inline-block" data-confirm-title="{{ __('Delete this family?') }}" data-confirm-message="{{ __('All data for this family will be removed permanently. Members will lose access immediately.') }}" data-confirm-danger-note="{{ __('This cannot be undone.') }}" data-confirm-yes="{{ __('Yes, delete permanently') }}" data-confirm-no="{{ __('Cancel') }}">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="kt-btn kt-btn-outline border-destructive/40 text-destructive hover:bg-destructive/10 inline-flex items-center gap-2">
+                <i class="ki-filled ki-trash"></i>
+                {{ __('Delete family permanently') }}
+            </button>
+        </form>
     </div>
+    @endif
 
     </div>{{-- /fam_panel_details --}}
 
@@ -532,11 +618,11 @@
             <li class="fin-contrib-row rounded-lg">
                 <div class="flex items-center gap-3.5 px-3 py-3.5 sm:gap-4 sm:px-5 sm:py-4">
                     <span class="{{ $rankClass }} flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold tabular-nums" aria-hidden="true">{{ $rank }}</span>
-                    <div class="relative shrink-0">
+                    <div class="fin-contrib-avatar-wrap relative shrink-0 shadow-sm ring-1 ring-border/30">
                         @if($user['avatar'])
-                            <img src="{{ $user['avatar'] }}" alt="{{ $user['name'] }}" class="user-avatar size-12 rounded-full object-cover shadow-sm sm:size-14" data-id="{{ $user['id'] }}">
+                            <img src="{{ $user['avatar'] }}" alt="{{ $user['name'] }}" class="user-avatar" data-id="{{ $user['id'] }}">
                         @else
-                            <div class="user-avatar flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-primary/5 text-sm font-semibold text-primary shadow-sm sm:size-14 sm:text-base" data-id="{{ $user['id'] }}">
+                            <div class="user-avatar flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/30 to-primary/5 text-sm font-semibold text-primary sm:text-base" data-id="{{ $user['id'] }}">
                                 <span class="select-none">{{ strtoupper(substr($user['name'], 0, 1)) }}</span>
                             </div>
                         @endif
@@ -880,9 +966,6 @@
                                 </div>
                             @endforeach
                         </div>
-                        @if ($canManageMembers ?? false)
-                        <p class="text-xs text-muted-foreground mt-3">{{ __('Use “Add member” to invite people by email.') }}</p>
-                        @endif
                     @endif
                 </div>
             </div>

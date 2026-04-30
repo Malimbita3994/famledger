@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\ReconciliationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SavingsGoalController;
+use App\Http\Controllers\Api\SearchController as ApiSearchController;
 use App\Http\Controllers\Api\TransferController;
 use App\Http\Controllers\Api\UserSettingsController;
 use App\Http\Controllers\Api\WalletController;
@@ -42,6 +43,7 @@ Route::middleware(['auth:sanctum', 'throttle:api', 'must.change.password'])->gro
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
+    Route::get('/search', [ApiSearchController::class, 'globalSearch']);
     Route::get('/families', [FamilyController::class, 'index']);
     Route::post('/families', [FamilyController::class, 'store']);
     Route::get('/families/{family}', [FamilyController::class, 'show']);
@@ -152,6 +154,9 @@ Route::middleware(['auth:sanctum', 'throttle:api', 'must.change.password'])->gro
     Route::get('/families/{family}/reports/savings', [ReportController::class, 'savings']);
     Route::get('/families/{family}/reports/project-summary', [ReportController::class, 'projectSummary']);
     Route::get('/families/{family}/audit-trail', [AuditTrailController::class, 'index']);
+
+    Route::get('/families/{family}/search', [ApiSearchController::class, 'index']);
+    Route::get('/families/{family}/search/suggestions', [ApiSearchController::class, 'suggestions']);
 
     // Family Tree routes
     Route::get('/families/{family}/tree', [FamilyTreeController::class, 'index'])->name('api.families.tree.index');

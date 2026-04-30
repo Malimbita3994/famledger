@@ -263,23 +263,52 @@
                             </form>
                         @endif
 
-                        <form method="post" action="{{ route('profile.update') }}" class="admin-pulse-create grid gap-4 lg:gap-5 max-w-xl">
+                        <form method="post" action="{{ route('profile.update') }}" class="admin-pulse-create grid gap-4 lg:gap-5 max-w-xl" enctype="multipart/form-data">
                             @csrf
                             @method('patch')
 
-                            <div class="flex items-center gap-4">
-                                <div class="relative inline-flex items-center justify-center rounded-full bg-primary/10 text-primary font-semibold size-12">
-                                    <span class="text-sm">
-                                        {{ strtoupper(mb_substr($user->name, 0, 2)) }}
-                                    </span>
+                            @php
+                                $profileAvatarUrl = $user->avatar_url;
+                            @endphp
+                            <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+                                <div id="profile-avatar-preview-wrap" class="size-20 shrink-0 rounded-full overflow-hidden border-2 border-border ring-2 ring-primary/10 bg-background">
+                                    @if ($profileAvatarUrl)
+                                        <img
+                                            id="profile-avatar-preview"
+                                            src="{{ $profileAvatarUrl }}"
+                                            alt=""
+                                            width="80"
+                                            height="80"
+                                            class="size-full object-cover"
+                                        />
+                                    @else
+                                        <div
+                                            id="profile-avatar-preview"
+                                            class="flex size-full items-center justify-center bg-primary/10 text-primary font-semibold text-lg"
+                                        >
+                                            {{ strtoupper(mb_substr($user->name, 0, 2)) }}
+                                        </div>
+                                    @endif
                                 </div>
-                                <div class="flex flex-col gap-1">
-                                    <span class="text-sm font-medium text-foreground">
-                                        {{ $user->name }}
-                                    </span>
-                                    <span class="admin-pulse-hint">
-                                        {{ __('Avatar or profile image upload coming soon') }}
-                                    </span>
+                                <div class="flex flex-col gap-2 min-w-0 flex-1">
+                                    <label for="avatar" class="kt-form-label">{{ __('Profile photo') }}</label>
+                                    <input
+                                        id="avatar"
+                                        name="avatar"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/gif,image/webp"
+                                        class="kt-input w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary file:text-xs file:font-semibold"
+                                    />
+                                    <p class="admin-pulse-hint">{{ __('JPEG, PNG, GIF or WebP. Max 2 MB.') }}</p>
+                                    @if ($profileAvatarUrl)
+                                        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                                            <input type="checkbox" name="remove_avatar" id="remove_avatar" value="1" class="rounded border-border text-primary focus:ring-primary" @checked(old('remove_avatar')) />
+                                            <span class="text-sm text-foreground">{{ __('Remove current photo') }}</span>
+                                        </label>
+                                    @endif
+                                    @error('avatar')
+                                        <p class="text-xs text-destructive">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -443,4 +472,25 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+(function () {
+    var input = document.getElementById('avatar');
+    var wrap = document.getElementById('profile-avatar-preview-wrap');
+    var removeCb = document.getElementById('remove_avatar');
+    if (!input || !wrap) return;
+    input.addEventListener('change', function () {
+        var f = input.files && input.files[0];
+        if (!f) return;
+        if (removeCb) removeCb.checked = false;
+        var url = URL.createObjectURL(f);
+        wrap.innerHTML =
+            '<img id="profile-avatar-preview" src="' +
+            url +
+            '" alt="" width="80" height="80" class="size-full object-cover" />';
+    });
+})();
+</script>
+@endpush
 @endsection

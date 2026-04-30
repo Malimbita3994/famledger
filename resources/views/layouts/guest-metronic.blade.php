@@ -20,7 +20,7 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
     <meta name="robots" content="follow, index"/>
 
-    <title>{{ $title ?? config('app.name', 'FamLedger') }}</title>
+    <title>{{ $title ?? config('app.name') }}</title>
 
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Flavicon.png') }}"/>
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Flavicon.png') }}"/>
@@ -34,7 +34,9 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
     <link href="{{ asset('metronic/assets/css/styles.css') }}" rel="stylesheet"/>
     <link href="{{ asset('css/famledger-kt-btn-crud.css') }}" rel="stylesheet"/>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <x-sweetalert.compact-styles />
+
+    <x-sweetalert.cdn />
     <style>
         #global-page-loader {
             position: fixed;
@@ -106,8 +108,10 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
             min-height: 100dvh !important;
         }
         .auth-branded-bg {
-            background-color: #e5f3ff;
-            background-image: radial-gradient(circle at top, #ffffff 0%, #e5f3ff 32%, #d6ecff 60%, #c0e0ff 85%, #a5d4ff 100%);
+            background-color: #eef6ff;
+            background-image:
+                radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.95) 0%, transparent 55%),
+                linear-gradient(165deg, #f0f9ff 0%, #e0f2fe 38%, #dbeafe 72%, #cffafe 100%);
             background-repeat: no-repeat;
             background-size: cover;
             background-position: top center;
@@ -214,61 +218,87 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         .auth-feature-row {
             display: grid;
             grid-template-columns: minmax(0, 1fr);
-            gap: 0.9rem;
+            gap: 1rem;
             width: 100%;
-            max-width: min(720px, 100%);
+            max-width: min(760px, 100%);
             margin-left: auto;
             margin-right: auto;
-            padding-left: 0.75rem;
-            padding-right: 0.75rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
             box-sizing: border-box;
+            align-items: stretch;
         }
         @media (min-width: 640px) {
             .auth-feature-row {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 1rem;
-                padding-left: 1rem;
-                padding-right: 1rem;
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
             }
         }
         @media (min-width: 1024px) {
             .auth-feature-row {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 1.25rem;
-                padding-left: 1.25rem;
-                padding-right: 1.25rem;
+                gap: 1.125rem;
+                padding-left: 0;
+                padding-right: 0;
             }
         }
         .auth-feature-card {
-            border-radius: 1.75rem;
+            border-radius: 1.25rem;
+            height: 100%;
+            min-width: 0;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
             transition:
                 transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.4s ease,
                 border-color 0.3s ease;
         }
+        .auth-feature-card-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.875rem;
+            width: 100%;
+            min-width: 0;
+        }
+        .auth-feature-card-title {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 0.9375rem;
+            line-height: 1.35;
+            letter-spacing: -0.01em;
+        }
+        .auth-feature-card-desc {
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            color: #475569;
+            max-width: 16rem;
+            margin: 0 auto;
+        }
         @media (max-width: 639px) {
             .auth-feature-card {
-                border-radius: 1rem;
-                padding: 0.8rem 0.85rem !important;
-                gap: 0.7rem !important;
+                border-radius: 1.125rem;
+                padding: 1.125rem 1rem !important;
             }
-            .auth-feature-card .text-sm {
+            .auth-feature-card-desc {
                 font-size: 0.8rem;
-                line-height: 1.25rem;
+                max-width: none;
             }
         }
         .auth-feature-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 22px 50px rgba(15, 23, 42, 0.14);
-            border-color: rgba(14, 165, 233, 0.35);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.1);
+            border-color: rgba(14, 165, 233, 0.28) !important;
         }
         .auth-feature-icon {
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 1rem;
-            width: 3rem;
-            height: 3rem;
+            width: 3.25rem;
+            height: 3.25rem;
             color: #ffffff;
             flex-shrink: 0;
             animation: auth-feature-icon-pulse 3.2s ease-in-out infinite;
@@ -287,16 +317,16 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
         }
         /* Footer / version strip */
         .auth-footer {
-            max-width: 720px;
+            max-width: 760px;
             margin-left: auto;
             margin-right: auto;
-            padding-top: 1rem;
-            padding-left: 1.5rem;
-            padding-right: 1.5rem;
-            border-top: 1px solid rgba(148, 163, 184, 0.7);
+            padding-top: 1.25rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.45);
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 1rem;
             font-size: 0.75rem;
             color: #0f172a;
         }
@@ -305,14 +335,27 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                 flex-direction: row;
                 align-items: center;
                 justify-content: space-between;
+                gap: 1rem;
             }
         }
         .auth-footer-pills {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 0.5rem 1.25rem;
-            color: #1e293b;
+            gap: 0.5rem 0.75rem;
+            color: #334155;
+        }
+        .auth-footer-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #334155;
         }
         .auth-footer-badge {
             display: inline-flex;
@@ -585,90 +628,13 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
 
     @php
         $isLoginRoute = request()->routeIs('login');
-        $loginErrorMessage = $isLoginRoute ? ($errors->first('email') ?: $errors->first('password') ?: null) : null;
         $isRegisterRoute = request()->routeIs('register');
-        $registerErrorMessage = $isRegisterRoute ? ($errors->first('email') ?: $errors->first('password') ?: $errors->first('name') ?: null) : null;
         $isPasswordRequestRoute = request()->routeIs('password.request');
         $isPulseAuthForm = $isLoginRoute || $isRegisterRoute || $isPasswordRequestRoute;
         $pulseFormHasErrors = $isPulseAuthForm && $errors->any();
-        $guestFlash = [
-            'success' => session('success'),
-            'error'   => session('error'),
-            'warning' => session('warning'),
-            'info'    => session('info'),
-        ];
     @endphp
 
-    @if ($isLoginRoute && $loginErrorMessage)
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                if (typeof Swal === 'undefined') {
-                    return;
-                }
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Login failed',
-                    text: @json($loginErrorMessage),
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#2563eb',
-                    heightAuto: false,
-                });
-            });
-        </script>
-    @endif
-
-    @if ($isRegisterRoute && $registerErrorMessage)
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                if (typeof Swal === 'undefined') {
-                    return;
-                }
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Sign up failed',
-                    text: @json($registerErrorMessage),
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#2563eb',
-                    heightAuto: false,
-                });
-            });
-        </script>
-    @endif
-
-    @if ($guestFlash['success'] || $guestFlash['error'] || $guestFlash['warning'] || $guestFlash['info'])
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                if (typeof Swal === 'undefined' || typeof Swal.fire !== 'function') {
-                    return;
-                }
-
-                var flash = @json($guestFlash);
-                var type = flash.success ? 'success' : flash.error ? 'error' : flash.warning ? 'warning' : flash.info ? 'info' : null;
-                var msg = flash.success || flash.error || flash.warning || flash.info;
-                if (!type || !msg) {
-                    return;
-                }
-
-                var isSuccess = type === 'success';
-
-                Swal.fire({
-                    icon: type,
-                    title: isSuccess ? msg : (type.charAt(0).toUpperCase() + type.slice(1)),
-                    text: isSuccess ? '' : msg,
-                    showConfirmButton: true,
-                    confirmButtonText: isSuccess ? 'Great, thanks' : 'OK',
-                    width: 520,
-                    padding: '2.5rem 2.75rem',
-                    backdrop: true,
-                    heightAuto: false,
-                    customClass: {
-                        popup: 'rounded-2xl',
-                        title: 'text-lg font-semibold',
-                    },
-                });
-            });
-        </script>
-    @endif
+    <x-sweetalert.guest-auth-scripts />
 
     <div class="auth-layout-grid grid flex-1 grid-cols-1 grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1 w-full min-w-0 min-h-[100dvh]">
         <!-- Form column: full-height bg + justify-center keeps the card vertically centered with even top/bottom space; min-h-0 avoids grid/flex overflow bugs -->
@@ -728,31 +694,37 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
 
                     {{-- BELOW: 3 feature highlight cards --}}
                     <div class="auth-feature-row auth-brand-reveal-row">
-                        <div class="auth-feature-card auth-brand-reveal rounded-3xl bg-white/95 border border-sky-100 px-5 py-5 flex items-center gap-4">
-                            <span class="auth-feature-icon auth-feature-icon--secure">
-                                <i class="ki-filled ki-shield-tick text-2xl"></i>
-                            </span>
-                            <div class="text-left">
-                                <div class="font-semibold text-slate-900">{{ __('Secure by design') }}</div>
-                                <div class="text-sm text-slate-600">{{ __('Role-based access for every member.') }}</div>
+                        <div class="auth-feature-card auth-brand-reveal bg-white/90 border border-slate-200/90 backdrop-blur-sm px-5 py-6">
+                            <div class="auth-feature-card-body">
+                                <span class="auth-feature-icon auth-feature-icon--secure" aria-hidden="true">
+                                    <i class="ki-filled ki-shield-tick text-2xl"></i>
+                                </span>
+                                <div class="min-w-0">
+                                    <div class="auth-feature-card-title">{{ __('Secure by design') }}</div>
+                                    <p class="auth-feature-card-desc mt-1">{{ __('Role-based access for every member.') }}</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="auth-feature-card auth-brand-reveal rounded-3xl bg-white/95 border border-sky-100 px-5 py-5 flex items-center gap-4">
-                            <span class="auth-feature-icon auth-feature-icon--clarity">
-                                <i class="ki-filled ki-graph-up text-2xl"></i>
-                            </span>
-                            <div class="text-left">
-                                <div class="font-semibold text-slate-900">{{ __('Financial clarity') }}</div>
-                                <div class="text-sm text-slate-600">{{ __('Track balances and contributions.') }}</div>
+                        <div class="auth-feature-card auth-brand-reveal bg-white/90 border border-slate-200/90 backdrop-blur-sm px-5 py-6">
+                            <div class="auth-feature-card-body">
+                                <span class="auth-feature-icon auth-feature-icon--clarity" aria-hidden="true">
+                                    <i class="ki-filled ki-graph-up text-2xl"></i>
+                                </span>
+                                <div class="min-w-0">
+                                    <div class="auth-feature-card-title">{{ __('Financial clarity') }}</div>
+                                    <p class="auth-feature-card-desc mt-1">{{ __('Track balances and contributions.') }}</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="auth-feature-card auth-brand-reveal rounded-3xl bg-white/95 border border-sky-100 px-5 py-5 flex items-center gap-4">
-                            <span class="auth-feature-icon auth-feature-icon--projects">
-                                <i class="ki-filled ki-home-2 text-2xl"></i>
-                            </span>
-                            <div class="text-left">
-                                <div class="font-semibold text-slate-900">{{ __('Family projects') }}</div>
-                                <div class="text-sm text-slate-600">{{ __('Plan construction, education, goals.') }}</div>
+                        <div class="auth-feature-card auth-brand-reveal bg-white/90 border border-slate-200/90 backdrop-blur-sm px-5 py-6">
+                            <div class="auth-feature-card-body">
+                                <span class="auth-feature-icon auth-feature-icon--projects" aria-hidden="true">
+                                    <i class="ki-filled ki-home-2 text-2xl"></i>
+                                </span>
+                                <div class="min-w-0">
+                                    <div class="auth-feature-card-title">{{ __('Family projects') }}</div>
+                                    <p class="auth-feature-card-desc mt-1">{{ __('Plan construction, education, goals.') }}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -764,23 +736,22 @@ Based on Metronic Tailwind CSS branded sign-in (v9.4.5)
                 <div class="w-full shrink-0 pt-8 auth-brand-reveal auth-brand-reveal--footer">
                     <div class="auth-footer">
                         <div class="auth-footer-pills">
-                            <span class="inline-flex items-center gap-1.5">
-                                <span class="size-5 inline-flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                            <span class="auth-footer-pill">
+                                <span class="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                                     <i class="ki-filled ki-lock text-[10px]"></i>
                                 </span>
-                                <span class="font-medium">{{ __('End-to-end security') }}</span>
+                                {{ __('End-to-end security') }}
                             </span>
-
-                            <span class="inline-flex items-center gap-1.5">
-                                <span class="size-5 inline-flex items-center justify-center rounded-full bg-sky-50 text-sky-600">
+                            <span class="auth-footer-pill">
+                                <span class="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
                                     <i class="ki-filled ki-devices text-[10px]"></i>
                                 </span>
-                                <span class="font-medium">{{ __('Works on all devices') }}</span>
+                                {{ __('Works on all devices') }}
                             </span>
                         </div>
 
-                        <div class="flex flex-col items-start sm:items-end text-left sm:text-right gap-0.5">
-                            <span class="auth-footer-mark">FamLedger v1.0</span>
+                        <div class="flex flex-col items-start sm:items-end text-left sm:text-right gap-1 sm:pl-4">
+                            <span class="auth-footer-mark">{{ __('FamLedger') }} v1.0</span>
                             <span class="auth-footer-subtitle">{{ __('Private Family System') }}</span>
                         </div>
                     </div>

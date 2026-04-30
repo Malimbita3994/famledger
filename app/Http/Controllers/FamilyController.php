@@ -47,7 +47,13 @@ class FamilyController extends Controller
 
         $memberFamilyIds = $user->families()->pluck('families.id')->all();
 
-        return view('families.index', compact('families', 'memberFamilyIds'));
+        $ownerFamilyIds = FamilyMember::query()
+            ->where('user_id', $user->id)
+            ->whereHas('role', fn ($q) => $q->where('name', 'Owner'))
+            ->pluck('family_id')
+            ->all();
+
+        return view('families.index', compact('families', 'memberFamilyIds', 'ownerFamilyIds'));
     }
 
     /**
@@ -129,6 +135,7 @@ class FamilyController extends Controller
             ->with('role')
             ->first();
         $canManageMembers = $currentMembership && in_array($currentMembership->role->name ?? '', ['Owner', 'Co-owner'], true);
+        $isFamilyOwner = $currentMembership && ($currentMembership->role->name ?? '') === 'Owner';
 
         // Financial summary for the overview page (same aggregates as leaderboard / wallet logic)
         $financeService = app(FamilyFinancialService::class);
@@ -152,7 +159,7 @@ class FamilyController extends Controller
         $relationships = FamilyRelationship::where('family_id', $family->id)->get();
         $treePreview = app(FamilyTreeBuilder::class)->buildRoots($members, $relationships);
 
-        return view('families.show', compact('family', 'canManageMembers', 'totalIncome', 'totalExpenses', 'balance', 'healthIndex', 'leaderboard', 'currencies', 'recentMilestones', 'activeGoals', 'treePreview'));
+        return view('families.show', compact('family', 'canManageMembers', 'isFamilyOwner', 'totalIncome', 'totalExpenses', 'balance', 'healthIndex', 'leaderboard', 'currencies', 'recentMilestones', 'activeGoals', 'treePreview'));
     }
 
     /**
@@ -236,14 +243,41 @@ class FamilyController extends Controller
     }
 
     /**
-     * Delete family.
+     * Delete family (Owner role only; Co-owners cannot delete).
      */
-    public function destroy(Family $family)
+    public function destroy(Request $request, Family $family)
     {
         $this->authorizeFamilyMember($family);
 
-        $family->delete();
+        $membership = FamilyMember::where('family_id', $family->id)
+            ->where('user_id', auth()->id())
+            ->with('role')
+            ->first();
 
-        return redirect()->route('families.index')->with('success', 'Family deleted.');
+        if (($membership?->role?->name ?? '') !== 'Owner') {
+            abort(403, __('Only the family owner can delete this family.'));
+        }
+
+        $user = $request->user();
+        $deletedFamilyId = (int) $family->id;
+        $nextFamilyId = FamilyMember::query()
+            ->where('user_id', $user->id)
+            ->where('family_id', '!=', $deletedFamilyId)
+            ->orderByDesc('id')
+            ->value('family_id');
+
+        DB::transaction(fn () => $family->delete());
+
+        if ((int) $request->session()->get('current_family_id') === $deletedFamilyId) {
+            if ($nextFamilyId) {
+                $request->session()->put('current_family_id', $nextFamilyId);
+            } else {
+                $request->session()->forget('current_family_id');
+            }
+        }
+
+        return redirect()
+            ->route('families.index')
+            ->with('success', __('Family deleted permanently.'));
     }
 }

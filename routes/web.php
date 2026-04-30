@@ -20,6 +20,7 @@ use App\Http\Controllers\FamilyMemberController;
 use App\Http\Controllers\FamilyTreeController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InviteJoinController;
+use App\Http\Controllers\LandingSearchController;
 use App\Http\Controllers\LegacyFamilyScopedUrlRedirectController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\ReconciliationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SavingsGoalController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\TransactionController;
@@ -37,6 +39,7 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WealthController;
 use App\Models\NotificationFaq;
 use App\Models\NotificationSupportContact;
+use App\Support\CurrentFamilyResolver;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
@@ -99,14 +102,19 @@ Route::get('/', function () {
         return trim((string) ($faq->group_label ?? ''));
     })->sortBy(fn ($items) => $items->min('sort_order'));
 
+    $req = request();
+
     return view('marketing.landing', [
         'landingFaqs' => $landingFaqs,
         'landingFaqGroups' => $landingFaqGroups,
         'landingSupportContacts' => NotificationSupportContact::query()->active()->ordered()->get(),
         'contactCaptchaDriver' => config('services.contact_captcha.driver'),
         'recaptchaSiteKey' => $useRecaptcha ? config('services.recaptcha.site_key') : null,
+        'currentFamily' => $req->user() ? CurrentFamilyResolver::family($req) : null,
     ]);
 })->name('landing');
+
+Route::get('/landing/search/suggestions', [LandingSearchController::class, 'suggestions'])->name('landing.search.suggestions');
 
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
@@ -265,6 +273,7 @@ Route::middleware(['auth', 'bind.account.family', 'sync.current.family', 'must.c
         Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
         Route::get('expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
         Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+        Route::get('expenses/{expense}', [ExpenseController::class, 'show'])->name('expenses.show');
 
         // Budgets (planning layer; monitor spending vs plan)
         Route::resource('budgets', BudgetController::class)->names('budgets');
@@ -327,6 +336,10 @@ Route::middleware(['auth', 'bind.account.family', 'sync.current.family', 'must.c
         Route::get('reports/budget-vs-actual/export-pdf', [ReportController::class, 'exportBudgetVsActualPdf'])->name('reports.budget-vs-actual.export-pdf');
         Route::get('reports/project-summary/export-pdf', [ReportController::class, 'exportProjectSummaryPdf'])->name('reports.project-summary.export-pdf');
         Route::get('reports/property/export-pdf', [ReportController::class, 'exportPropertyPdf'])->name('reports.property.export-pdf');
+
+        // Elasticsearch-backed transaction search
+        Route::get('search', [SearchController::class, 'index'])->name('search.index');
+        Route::get('search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
 
         // Audit trail (application + database) for this family
         Route::get('audit-trail', [AuditTrailController::class, 'index'])->name('audit-trail.index');
@@ -413,6 +426,9 @@ Route::middleware(['auth', 'bind.account.family', 'sync.current.family', 'must.c
         Route::put('roles/{role}', [RoleController::class, 'update'])
             ->name('roles.update')
             ->middleware('permission:roles_update');
+        Route::delete('roles/{role}', [RoleController::class, 'destroy'])
+            ->name('roles.destroy')
+            ->middleware('permission:roles_delete');
         Route::get('roles/{role}/permissions', [RoleController::class, 'editPermissions'])
             ->name('roles.permissions.edit')
             ->middleware('permission:roles_view|roles_assign');
@@ -444,15 +460,20 @@ Route::middleware(['auth', 'bind.account.family', 'sync.current.family', 'must.c
 
         // Contact messages (landing page "Talk to the FamLedger team")
         Route::get('contact-messages', [ContactMessageController::class, 'index'])
-            ->name('contact-messages.index');
+            ->name('contact-messages.index')
+            ->middleware('permission:contact_messages_view');
         Route::get('contact-messages/{contact_message}/modal', [ContactMessageController::class, 'modal'])
-            ->name('contact-messages.modal');
+            ->name('contact-messages.modal')
+            ->middleware('permission:contact_messages_view');
         Route::get('contact-messages/{contact_message}', [ContactMessageController::class, 'show'])
-            ->name('contact-messages.show');
+            ->name('contact-messages.show')
+            ->middleware('permission:contact_messages_view');
         Route::patch('contact-messages/{contact_message}/read-status', [ContactMessageController::class, 'updateReadStatus'])
-            ->name('contact-messages.read-status');
+            ->name('contact-messages.read-status')
+            ->middleware('permission:contact_messages_mark_read');
         Route::delete('contact-messages/{contact_message}', [ContactMessageController::class, 'destroy'])
-            ->name('contact-messages.destroy');
+            ->name('contact-messages.destroy')
+            ->middleware('permission:contact_messages_delete');
     });
 });
 

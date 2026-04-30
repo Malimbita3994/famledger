@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Project Summary – {{ $family->name }}</title>
+<title>Project – {{ $family->name }}</title>
 <style>
 body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #1a1a1a; margin: 16px 20px; }
 h1 { font-size: 15px; margin: 0 0 2px 0; font-weight: bold; }
@@ -23,7 +23,7 @@ tr:nth-child(even) { background: #f9fafb; }
 </head>
 <body>
 @include('partials.pdf-brand-header')
-<h1>Project Summary</h1>
+<h1>Project</h1>
 <div class="subtitle">{{ $family->name }}</div>
 <div class="meta">Currency: {{ $currency }} &nbsp;·&nbsp; Generated {{ $generatedAt }}</div>
 

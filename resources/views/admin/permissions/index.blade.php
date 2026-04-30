@@ -4,25 +4,39 @@
 @section('page_title', 'Permissions — Toggle')
 
 @section('content')
+@php
+    $canAssignToRoles = auth()->user()->can('roles_assign');
+    $canDeletePermission = auth()->user()->can('permissions_delete');
+    $canCreatePermission = auth()->user()->can('permissions_create');
+@endphp
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 pt-6 lg:pt-8 pb-6">
     <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
         <div class="flex flex-col justify-center gap-2">
             <h1 class="text-xl font-medium leading-none text-mono">
-                Permissions -Toggle
+                {{ __('Permissions') }}
             </h1>
             <div class="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Overview of all team members and roles.
+                {{ __('Map permissions to roles. Changes require the matching ability on your account.') }}
             </div>
         </div>
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2.5 flex-wrap justify-end">
+            @can('roles_view')
             <a href="{{ route('admin.roles.index') }}" class="kt-btn kt-btn-outline">
-                View Roles
+                {{ __('View roles') }}
             </a>
+            @endcan
+            @can('permissions_create')
             <a href="{{ route('admin.permissions.create') }}" class="kt-btn kt-btn-primary">
-                New Permission
+                {{ __('New permission') }}
             </a>
+            @endcan
         </div>
     </div>
+    @if (! $canAssignToRoles)
+        <div class="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground mb-4 max-w-3xl">
+            {{ __('You can review permissions below. To turn them on or off for a role, you need the “assign roles” permission.') }}
+        </div>
+    @endif
 </div>
 
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 pb-10">
@@ -63,9 +77,13 @@
             </div>
 
             @if ($currentRole)
+                @if ($canAssignToRoles)
                 <form method="POST" action="{{ route('admin.roles.permissions.update', $currentRole) }}">
                     @csrf
                     @method('PUT')
+                @else
+                <div class="permission-matrix-readonly">
+                @endif
 
                     <div class="kt-card-content grid grid-cols-1 lg:grid-cols-2 gap-5 py-5 lg:py-7.5">
                         @foreach ($permissions as $group => $perms)
@@ -77,13 +95,14 @@
                                         </span>
                                         <span class="text-xs font-medium text-muted-foreground">
                                             {{ $perms->count() }}
-                                            {{ \Illuminate\Support\Str::plural('permission', $perms->count()) }}
+                                            {{ \Illuminate\Support\Str::plural(__('permission'), $perms->count()) }}
                                         </span>
                                     </div>
                                     <div class="flex items-center gap-2">
+                                        @if ($canAssignToRoles)
                                         <label class="inline-flex items-center gap-1.5">
                                             <span class="text-[11px] font-medium text-muted-foreground">
-                                                All
+                                                {{ __('All') }}
                                             </span>
                                             <input
                                                 type="checkbox"
@@ -97,7 +116,8 @@
                                                 @checked($allChecked)
                                             >
                                         </label>
-                                        @if ($group !== 'other')
+                                        @endif
+                                        @if ($canDeletePermission && $group !== 'other')
                                         <button
                                             type="submit"
                                             form="delete-module-{{ $group }}"
@@ -140,6 +160,7 @@
                                                 </span>
                                             </label>
                                             <div class="flex items-center gap-2">
+                                                @if ($canAssignToRoles)
                                                 <input
                                                     type="checkbox"
                                                     name="permissions[]"
@@ -147,6 +168,12 @@
                                                     class="kt-switch kt-switch-sm"
                                                     @checked($currentRole->permissions->contains('id', $permission->id))
                                                 >
+                                                @else
+                                                <span class="text-xs font-medium tabular-nums px-2 py-1 rounded-md {{ $currentRole->permissions->contains('id', $permission->id) ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground' }}" title="{{ __('Read only') }}">
+                                                    {{ $currentRole->permissions->contains('id', $permission->id) ? __('On') : __('Off') }}
+                                                </span>
+                                                @endif
+                                                @if ($canDeletePermission)
                                                 <button
                                                     type="submit"
                                                     form="delete-permission-{{ $permission->id }}"
@@ -154,6 +181,7 @@
                                                 >
                                                     <i class="ki-filled ki-trash"></i>
                                                 </button>
+                                                @endif
                                             </div>
                                         </div>
                                     @endforeach
@@ -179,6 +207,7 @@
                                                         </span>
                                                     </label>
                                                     <div class="flex items-center gap-2">
+                                                        @if ($canAssignToRoles)
                                                         <input
                                                             type="checkbox"
                                                             name="permissions[]"
@@ -186,6 +215,12 @@
                                                             class="kt-switch kt-switch-sm"
                                                             @checked($currentRole->permissions->contains('id', $permission->id))
                                                         >
+                                                        @else
+                                                        <span class="text-xs font-medium tabular-nums px-2 py-1 rounded-md {{ $currentRole->permissions->contains('id', $permission->id) ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground' }}" title="{{ __('Read only') }}">
+                                                            {{ $currentRole->permissions->contains('id', $permission->id) ? __('On') : __('Off') }}
+                                                        </span>
+                                                        @endif
+                                                        @if ($canDeletePermission)
                                                         <button
                                                             type="submit"
                                                             form="delete-permission-{{ $permission->id }}"
@@ -193,6 +228,7 @@
                                                         >
                                                             <i class="ki-filled ki-trash"></i>
                                                         </button>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -213,14 +249,21 @@
                         @endforeach
                     </div>
 
+                    @if ($canAssignToRoles)
                     <div class="kt-card-footer justify-end gap-2">
                         <button type="submit" class="kt-btn kt-btn-primary">
-                            Save Changes
+                            {{ __('Save changes') }}
                         </button>
                     </div>
+                    @endif
+                @if ($canAssignToRoles)
                 </form>
+                @else
+                </div>
+                @endif
 
-                {{-- Hidden forms for deleting individual permissions --}}
+                {{-- Hidden forms for deleting permissions (only when user may delete) --}}
+                @if ($canDeletePermission)
                 @foreach ($permissions as $group => $perms)
                     @if ($group !== 'other')
                     <form
@@ -228,8 +271,8 @@
                         method="POST"
                         action="{{ route('admin.permissions.module.destroy', $group) }}"
                         class="hidden js-confirm-delete"
-                        data-confirm-title="Delete module?"
-                        data-confirm-message="Delete all permissions in the {{ \Illuminate\Support\Str::headline($group) }} module? This cannot be undone."
+                        data-confirm-title="{{ __('Delete module?') }}"
+                        data-confirm-message="{{ __('Delete all permissions in the :module module? This cannot be undone.', ['module' => \Illuminate\Support\Str::headline($group)]) }}"
                     >
                         @csrf
                         @method('DELETE')
@@ -241,14 +284,15 @@
                             method="POST"
                             action="{{ route('admin.permissions.destroy', $permission) }}"
                             class="hidden js-confirm-delete"
-                            data-confirm-title="Delete permission?"
-                            data-confirm-message="Delete the {{ \Illuminate\Support\Str::headline($permission->name) }} permission? This cannot be undone."
+                            data-confirm-title="{{ __('Delete permission?') }}"
+                            data-confirm-message="{{ __('Delete the :name permission? This cannot be undone.', ['name' => \Illuminate\Support\Str::headline($permission->name)]) }}"
                         >
                             @csrf
                             @method('DELETE')
                         </form>
                     @endforeach
                 @endforeach
+                @endif
             @if (isset($permissionsPaginator) && $permissionsPaginator->hasPages())
                 <div class="flex justify-between items-center px-5 pb-5">
                     <div class="text-xs text-muted-foreground">

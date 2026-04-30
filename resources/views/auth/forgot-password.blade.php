@@ -60,8 +60,7 @@
                         title: statusMessage,
                         showConfirmButton: true,
                         confirmButtonText: 'Great, thanks',
-                        width: 420,
-                        padding: '1.75rem 2rem',
+                        customClass: { popup: 'rounded-2xl' },
                     });
                 } else if (emailErrors.length > 0) {
                     Swal.fire({
@@ -70,8 +69,7 @@
                         text: emailErrors[0],
                         showConfirmButton: true,
                         confirmButtonText: 'OK',
-                        width: 420,
-                        padding: '1.75rem 2rem',
+                        customClass: { popup: 'rounded-2xl' },
                     });
                 }
             })();

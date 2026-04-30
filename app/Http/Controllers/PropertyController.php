@@ -384,20 +384,16 @@ class PropertyController extends Controller
     {
         $this->authorizeFamilyMember($family);
 
-        // Only list properties that realistically need maintenance (e.g. buildings, vehicles),
-        // excluding assets like bare land.
-        $properties = Property::where('family_id', $family->id)
+        $allProperties = Property::where('family_id', $family->id)
             ->with(['category', 'subcategory'])
             ->orderBy('name')
-            ->get()
-            ->filter(function (Property $prop) {
-                $categoryName = mb_strtolower($prop->category->name ?? '');
-                $subcategoryName = mb_strtolower($prop->subcategory->name ?? '');
+            ->get();
 
-                // Exclude "Land" category/subcategory from maintenance list
-                return $categoryName !== 'land' && $subcategoryName !== 'land';
-            })
+        $properties = $allProperties
+            ->filter(fn (Property $prop) => $prop->isEligibleForRoutineMaintenance())
             ->values();
+
+        $hasPropertiesButNoneEligible = $allProperties->isNotEmpty() && $properties->isEmpty();
 
         $propertyId = (int) $request->query('property_id', 0);
         $from = $request->query('from');
@@ -424,6 +420,7 @@ class PropertyController extends Controller
         return view('families.properties.maintenance', [
             'family' => $family,
             'properties' => $properties,
+            'hasPropertiesButNoneEligible' => $hasPropertiesButNoneEligible,
             'maintenances' => $maintenances,
             'filters' => [
                 'property_id' => $propertyId ?: null,
@@ -671,7 +668,17 @@ class PropertyController extends Controller
         // Ensure the property belongs to this family
         $property = Property::where('family_id', $family->id)
             ->where('id', $validated['property_id'])
+            ->with(['category', 'subcategory'])
             ->firstOrFail();
+
+        if (! $property->isEligibleForRoutineMaintenance()) {
+            return redirect()
+                ->route('families.properties.maintenance')
+                ->withInput()
+                ->withErrors([
+                    'property_id' => __('This property type is not tracked here—use this log for buildings and vehicles. Land, farm, and investment holdings are excluded.'),
+                ]);
+        }
 
         PropertyMaintenance::create([
             'property_id' => $property->id,

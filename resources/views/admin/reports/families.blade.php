@@ -1,13 +1,13 @@
 @extends('layouts.metronic')
 
-@section('title', 'Family List Report')
-@section('page_title', 'Family List Report')
+@section('title', 'Family')
+@section('page_title', 'Family')
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
     <div class="flex flex-wrap items-center justify-between gap-4 famledger-page-toolbar">
         <div>
-            <h1 class="font-medium text-lg text-mono">Family List Report</h1>
+            <h1 class="font-medium text-lg text-mono">Family</h1>
             <p class="text-sm text-muted-foreground mt-0.5">All families on the platform with their owner and member count. Super Administrator report.</p>
         </div>
     </div>

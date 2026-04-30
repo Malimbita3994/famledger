@@ -645,7 +645,7 @@
                  icon: 'info',
                  confirmButtonText: '{{ __('Close') }}',
                  customClass: {
-                     popup: 'swal2-rounded',
+                     popup: 'rounded-2xl swal2-rounded',
                      title: 'text-sm font-semibold text-foreground',
                      confirmButton: 'kt-btn kt-btn-sm kt-btn-primary'
                  }

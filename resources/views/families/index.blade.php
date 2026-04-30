@@ -218,17 +218,19 @@
                                                                 <span class="kt-menu-title">Edit</span>
                                                             </a>
                                                         </div>
+                                                        @if (in_array($family->id, $ownerFamilyIds ?? [], true))
                                                         <div class="kt-menu-separator"></div>
                                                         <div class="kt-menu-item">
-                                                            <form action="{{ route('families.destroy', $family) }}" method="POST" class="js-confirm-delete inline-block w-full" data-confirm-title="Delete this family?" data-confirm-message="This cannot be undone.">
+                                                            <form action="{{ route('families.destroy', $family) }}" method="POST" class="js-confirm-delete js-confirm-delete-danger inline-block w-full" data-confirm-title="{{ __('Delete this family?') }}" data-confirm-message="{{ __('All data for this family will be removed permanently.') }}" data-confirm-danger-note="{{ __('This cannot be undone.') }}" data-confirm-yes="{{ __('Yes, delete permanently') }}" data-confirm-no="{{ __('Cancel') }}">
                                                                 @csrf
                                                                 @method('DELETE')
                                                                 <button type="submit" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer text-destructive hover:!bg-destructive/10">
                                                                     <span class="kt-menu-icon"><i class="ki-filled ki-trash"></i></span>
-                                                                    <span class="kt-menu-title">Remove</span>
+                                                                    <span class="kt-menu-title">{{ __('Delete family') }}</span>
                                                                 </button>
                                                             </form>
                                                         </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -254,13 +256,15 @@
                                     <a href="{{ route('families.edit', $family) }}" onclick="event.stopPropagation()" class="fin-pulse-btn-outline fin-pulse-btn-sm" title="Edit">
                                         Edit
                                     </a>
-                                    <form action="{{ route('families.destroy', $family) }}" method="POST" class="inline js-confirm-delete" data-confirm-title="Delete this family?" data-confirm-message="This cannot be undone." onclick="event.stopPropagation()">
+                                    @if (in_array($family->id, $ownerFamilyIds ?? [], true))
+                                    <form action="{{ route('families.destroy', $family) }}" method="POST" class="inline js-confirm-delete js-confirm-delete-danger" data-confirm-title="{{ __('Delete this family?') }}" data-confirm-message="{{ __('All data for this family will be removed permanently.') }}" data-confirm-danger-note="{{ __('This cannot be undone.') }}" data-confirm-yes="{{ __('Yes, delete permanently') }}" data-confirm-no="{{ __('Cancel') }}" onclick="event.stopPropagation()">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="fin-pulse-btn-outline fin-pulse-btn-sm fin-pulse-btn-outline-danger" title="Delete">
-                                            Remove
+                                        <button type="submit" class="fin-pulse-btn-outline fin-pulse-btn-sm fin-pulse-btn-outline-danger" title="{{ __('Delete family') }}">
+                                            {{ __('Delete') }}
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                                 @endif
                                 @if ($isMemberOfFamily)

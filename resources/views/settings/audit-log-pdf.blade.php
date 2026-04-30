@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>{{ __('Audit log') }} — FamLedger</title>
+    <title>{{ __('Audit log') }} — {{ config('app.name') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 8px; color: #333; margin: 12px; }
         h1 { font-size: 14px; margin: 0 0 4px 0; }

@@ -1,7 +1,7 @@
 @extends('layouts.metronic')
 
-@section('title', 'Contact messages')
-@section('page_title', 'Contact messages')
+@section('title', 'Contact')
+@section('page_title', 'Contact')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/famledger-bootstrap3-modal-slim.css') }}">
@@ -293,13 +293,13 @@
         <div class="kt-container-fixed flex flex-row flex-wrap items-start gap-4 w-full min-w-0 px-4 sm:px-6 lg:px-8">
             <div class="min-w-0 flex-1">
                 <p class="admin-pulse-eyebrow mb-1.5">{{ __('Platform') }}</p>
-                <h1 class="admin-pulse-title">{{ __('Contact messages') }}</h1>
+                <h1 class="admin-pulse-title">{{ __('Contact') }}</h1>
                 <div class="admin-pulse-breadcrumb flex items-center flex-wrap gap-1 text-sm font-normal mt-2">
                     <a href="{{ route('dashboard') }}">{{ __('Home') }}</a>
                     <span class="text-muted-foreground">/</span>
                     <a href="{{ route('admin.dashboard') }}">{{ __('Admin') }}</a>
                     <span class="text-muted-foreground">/</span>
-                    <span class="text-foreground font-medium">{{ __('Contact messages') }}</span>
+                    <span class="text-foreground font-medium">{{ __('Contact') }}</span>
                 </div>
             </div>
             <div class="shrink-0 ms-auto">

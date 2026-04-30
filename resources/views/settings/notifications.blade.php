@@ -956,7 +956,7 @@
         @can('contact_messages_view')
          <a href="{{ route('admin.contact-messages.index') }}" class="inline-flex items-center gap-2 text-sm text-primary font-medium hover:underline shrink-0">
           <i class="ki-filled ki-message-text text-base"></i>
-          {{ __('Contact messages') }}
+          {{ __('Contact') }}
          </a>
         @endcan
        </div>

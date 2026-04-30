@@ -1,15 +1,20 @@
 @extends('layouts.metronic')
 
-@section('title', __('Edit role'))
-@section('page_title', __('Edit role'))
+@section('title', 'Edit role')
+@section('page_title', 'Edit role')
 
 @push('styles')
 <style>
+    /* Adaptive UI: tie page chrome to global --primary (data-fl-accent) */
     .admin-pulse-page {
-        --ap-accent: #009ef7;
-        --ap-accent-2: #0ea5e9;
-        --ap-soft: #f0f9ff;
-        --ap-ring: rgba(0, 158, 247, 0.28);
+        --ap-accent: var(--primary);
+        --ap-accent-2: color-mix(in oklab, var(--primary) 68%, #ffffff);
+        --ap-soft: color-mix(in oklab, var(--primary) 10%, #ffffff);
+        --ap-ring: color-mix(in oklab, var(--primary) 32%, transparent);
+    }
+    html.dark .admin-pulse-page {
+        --ap-accent-2: color-mix(in oklab, var(--primary) 74%, #020617);
+        --ap-soft: color-mix(in oklab, var(--primary) 12%, #0f172a);
     }
     .admin-pulse-eyebrow {
         font-size: 0.6875rem;
@@ -37,12 +42,12 @@
         border-radius: 24px;
         background: linear-gradient(
             135deg,
-            rgba(0, 158, 247, 0.42) 0%,
+            color-mix(in oklab, var(--primary) 40%, transparent) 0%,
             rgba(255, 255, 255, 0.96) 46%,
-            rgba(14, 165, 233, 0.3) 100%
+            color-mix(in oklab, var(--primary) 32%, transparent) 100%
         );
         box-shadow:
-            0 4px 24px rgba(0, 158, 247, 0.12),
+            0 4px 24px color-mix(in oklab, var(--primary) 14%, transparent),
             0 24px 48px rgba(15, 23, 42, 0.08);
         width: 100%;
         max-width: min(56rem, 100%);
@@ -107,10 +112,17 @@
     }
     .admin-pulse-create .kt-input:hover,
     .admin-pulse-create .kt-textarea:hover {
-        background: #e0f2fe !important;
+        background: color-mix(in oklab, var(--primary) 12%, #ffffff) !important;
+    }
+    .dark .admin-pulse-create .kt-input:hover,
+    .dark .admin-pulse-create .kt-textarea:hover {
+        background: color-mix(in oklab, var(--primary) 14%, #0f172a) !important;
     }
     .admin-pulse-create select.kt-select:hover {
-        background-color: #e0f2fe !important;
+        background-color: color-mix(in oklab, var(--primary) 12%, #ffffff) !important;
+    }
+    .dark .admin-pulse-create select.kt-select:hover {
+        background-color: color-mix(in oklab, var(--primary) 14%, #0f172a) !important;
     }
     .admin-pulse-create .kt-input:focus,
     .admin-pulse-create .kt-textarea:focus {
@@ -134,16 +146,16 @@
         font-size: 0.8125rem;
         font-weight: 600;
         border-radius: 12px;
-        color: #fff !important;
+        color: var(--primary-foreground, #fff) !important;
         border: none;
         cursor: pointer;
         background: linear-gradient(135deg, var(--ap-accent) 0%, var(--ap-accent-2) 100%);
-        box-shadow: 0 4px 14px rgba(0, 158, 247, 0.35);
+        box-shadow: 0 4px 14px color-mix(in oklab, var(--primary) 38%, transparent);
         transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
     }
     .admin-pulse-btn-primary:hover {
         filter: brightness(1.05);
-        box-shadow: 0 6px 20px rgba(0, 158, 247, 0.42);
+        box-shadow: 0 6px 20px color-mix(in oklab, var(--primary) 45%, transparent);
         transform: translateY(-1px);
     }
     .admin-pulse-btn-outline {
@@ -162,8 +174,8 @@
     }
     .admin-pulse-btn-outline:hover {
         border-color: var(--ap-accent);
-        background: rgba(0, 158, 247, 0.06);
-        box-shadow: 0 0 0 1px rgba(0, 158, 247, 0.12);
+        background: color-mix(in oklab, var(--primary) 10%, transparent);
+        box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 22%, transparent);
     }
     .dark .admin-pulse-btn-outline {
         background: rgba(30, 41, 59, 0.9);
@@ -216,21 +228,21 @@
     <div class="famledger-page-header">
         <div class="kt-container-fixed flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="admin-pulse-eyebrow mb-1.5">{{ __('Access control') }}</p>
-                <h1 class="admin-pulse-title">{{ __('Edit role') }}</h1>
+                <p class="admin-pulse-eyebrow mb-1.5">Access control</p>
+                <h1 class="admin-pulse-title">Edit role</h1>
                 <div class="admin-pulse-breadcrumb flex items-center gap-1.5 text-sm mt-2 flex-wrap">
-                    <a href="{{ route('admin.roles.index') }}">{{ __('Roles') }}</a>
+                    <a href="{{ route('admin.roles.index') }}">Platform roles</a>
                     <span class="text-muted-foreground">/</span>
-                    <span class="text-foreground font-medium truncate max-w-[12rem]" title="{{ $role->name }}">{{ $role->name }}</span>
+                    <span class="text-foreground font-medium truncate max-w-[12rem]" title="{{ $role->name }}">{{ $role->display_name ?: $role->name }}</span>
                     <span class="text-muted-foreground">/</span>
-                    <span class="text-muted-foreground font-medium">{{ __('Edit') }}</span>
+                    <span class="text-muted-foreground font-medium">Edit</span>
                 </div>
             </div>
             <div class="flex flex-col sm:items-end gap-2 shrink-0">
-                <x-fin-back-link href="{{ route('admin.roles.index') }}" class="!mb-0">{{ __('Back to roles') }}</x-fin-back-link>
+                <x-fin-back-link href="{{ route('admin.roles.index') }}" class="!mb-0">Back to platform roles</x-fin-back-link>
                 <a href="{{ route('admin.roles.permissions.edit', $role) }}" class="admin-pulse-link-secondary inline-flex items-center gap-1">
                     <i class="ki-filled ki-setting-2 text-sm"></i>
-                    {{ __('Manage permissions') }}
+                    Manage permissions
                 </a>
             </div>
         </div>
@@ -243,15 +255,15 @@
 
             <div class="admin-pulse-frame">
                 <div class="admin-pulse-card-inner">
-                    <h2 class="admin-pulse-section-title mb-1">{{ __('Role information') }}</h2>
-                    <p class="admin-pulse-hint mb-6">{{ __('Update the identifier and labels. Permission sets are managed separately.') }}</p>
+                    <h2 class="admin-pulse-section-title mb-1">Role information</h2>
+                    <p class="admin-pulse-hint mb-6">Update the identifier and labels. Permission sets are managed separately.</p>
 
                     <div>
-                        <h3 class="admin-pulse-subhead mb-4">{{ __('Basic information') }}</h3>
+                        <h3 class="admin-pulse-subhead mb-4">Basic information</h3>
                         <div class="admin-role-main-row">
                             <div class="admin-role-main-col flex flex-col gap-1.5">
                                 <label for="name" class="admin-pulse-field-label">
-                                    {{ __('Role name') }} <span class="text-red-600 dark:text-red-400">*</span>
+                                    Role name <span class="text-red-600 dark:text-red-400">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -260,16 +272,16 @@
                                     value="{{ old('name', $role->name) }}"
                                     required
                                     class="kt-input"
-                                    placeholder="{{ __('e.g. content_manager') }}"
+                                    placeholder="e.g. content_manager"
                                 />
-                                <p class="admin-pulse-hint mt-0.5">{{ __('Use lowercase with underscores (e.g. content_manager).') }}</p>
+                                <p class="admin-pulse-hint mt-0.5">Use lowercase with underscores (e.g. content_manager).</p>
                                 @error('name')
                                     <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
                             </div>
                             <div class="admin-role-main-col flex flex-col gap-1.5">
                                 <label for="display_name" class="admin-pulse-field-label">
-                                    {{ __('Display name') }}
+                                    Display name
                                 </label>
                                 <input
                                     type="text"
@@ -277,23 +289,23 @@
                                     id="display_name"
                                     value="{{ old('display_name', $role->display_name ?? '') }}"
                                     class="kt-input"
-                                    placeholder="{{ __('e.g. Content Manager') }}"
+                                    placeholder="e.g. Content Manager"
                                 />
-                                <p class="admin-pulse-hint mt-0.5">{{ __('Human-readable label (optional).') }}</p>
+                                <p class="admin-pulse-hint mt-0.5">Human-readable label (optional).</p>
                                 @error('display_name')
                                     <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
                             </div>
                             <div class="admin-role-main-col flex flex-col gap-1.5">
                                 <label for="description" class="admin-pulse-field-label">
-                                    {{ __('Description') }}
+                                    Description
                                 </label>
                                 <textarea
                                     name="description"
                                     id="description"
                                     rows="3"
                                     class="kt-textarea min-h-[88px] resize-y"
-                                    placeholder="{{ __('Brief description of this role') }}"
+                                    placeholder="Brief description of this role"
                                 >{{ old('description', $role->description ?? '') }}</textarea>
                                 @error('description')
                                     <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -303,10 +315,10 @@
                     </div>
 
                     <div class="flex flex-row flex-nowrap justify-end items-center gap-3 pt-8 mt-6 border-t border-sky-100/80 dark:border-slate-600/50">
-                        <a href="{{ route('admin.roles.index') }}" class="admin-pulse-btn-outline justify-center text-center shrink-0 whitespace-nowrap">{{ __('Cancel') }}</a>
+                        <a href="{{ route('admin.roles.index') }}" class="admin-pulse-btn-outline justify-center text-center shrink-0 whitespace-nowrap">Cancel</a>
                         <button type="submit" class="admin-pulse-btn-primary justify-center shrink-0 whitespace-nowrap">
                             <i class="ki-filled ki-check text-base"></i>
-                            {{ __('Update role') }}
+                            Update role
                         </button>
                     </div>
                 </div>

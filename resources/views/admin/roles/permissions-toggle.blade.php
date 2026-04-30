@@ -16,7 +16,7 @@
         </div>
         <div class="flex items-center gap-2.5">
             <a href="{{ route('admin.roles.index') }}" class="kt-btn kt-btn-outline">
-                View Roles
+                Platform roles
             </a>
         </div>
     </div>
@@ -28,8 +28,8 @@
             <div class="kt-card-header flex flex-wrap items-center justify-between gap-3">
                 <h3 class="kt-card-title">
                     Role Permissions for
-                    <a href="{{ route('admin.roles.edit', $role) }}" class="text-primary hover:underline">
-                        {{ $role->name }}
+                    <a href="{{ route('admin.roles.edit', $role) }}" class="text-primary hover:underline" title="{{ $role->name }}">
+                        {{ $role->display_name ?: $role->name }}
                     </a>
                 </h3>
                 @if (session('success'))

@@ -110,9 +110,11 @@ html[data-fl-accent] #sidebar .fl-sidebar-route-active .kt-menu-icon {
   position: fixed;
   inset: 0;
   z-index: 74;
-  background: rgb(2 6 23 / 0.35);
+  background: rgb(2 6 23 / 0.42);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   opacity: 0;
-  transition: opacity 0.22s ease;
+  transition: opacity 0.24s ease;
 }
 
 .fl-theme-panel-backdrop.is-open {
@@ -124,14 +126,19 @@ html[data-fl-accent] #sidebar .fl-sidebar-route-active .kt-menu-icon {
   top: 0;
   right: 0;
   height: 100vh;
-  width: min(94vw, 360px);
+  height: 100dvh;
+  width: min(96vw, 400px);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 75;
   background: var(--card);
   color: var(--foreground);
   border-left: 1px solid var(--border);
-  box-shadow: -18px 0 38px rgb(2 6 23 / 0.15);
+  box-shadow:
+    -24px 0 48px rgb(2 6 23 / 0.12),
+    -8px 0 24px rgb(2 6 23 / 0.08);
   transform: translateX(105%);
-  transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.28s cubic-bezier(0.22, 0.9, 0.28, 1);
   display: flex;
   flex-direction: column;
 }
@@ -140,33 +147,232 @@ html[data-fl-accent] #sidebar .fl-sidebar-route-active .kt-menu-icon {
   transform: translateX(0);
 }
 
-.fl-theme-panel-header {
+/* Hero header */
+.fl-theme-panel-hero {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 1rem 1rem 0.875rem;
-  border-bottom: 1px solid var(--border);
+  padding: 1.125rem 1.125rem 1rem;
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--primary) 12%, var(--card)) 0%,
+    var(--card) 48%,
+    color-mix(in oklab, var(--primary) 6%, var(--card)) 100%
+  );
+  border-bottom: 1px solid color-mix(in oklab, var(--primary) 18%, var(--border));
+}
+
+.fl-theme-panel-hero__text {
+  min-width: 0;
+  flex: 1;
+}
+
+.fl-theme-panel-hero__badge {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.35rem;
+}
+
+.fl-theme-panel-hero__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--foreground);
+}
+
+.fl-theme-panel-hero__desc {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.fl-theme-panel-close {
+  color: var(--primary) !important;
+}
+.fl-theme-panel-close:hover {
+  background-color: color-mix(in oklab, var(--primary) 12%, transparent) !important;
 }
 
 .fl-theme-panel-body {
-  padding: 1rem;
+  flex: 1;
+  min-height: 0;
+  padding: 1.125rem 1.125rem 1.25rem;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 body.fl-theme-panel-open {
   overflow: hidden;
 }
 
-/* Theme panel: mode chips follow live --primary (not build-time kt-btn-primary) */
+/* Live preview */
+.fl-theme-preview {
+  border-radius: 0.875rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 35%, var(--card));
+  padding: 0.875rem;
+}
+
+.fl-theme-preview__window {
+  border-radius: 0.625rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+  background: var(--background);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+}
+
+.fl-theme-preview__chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.65rem;
+  background: color-mix(in oklab, var(--muted) 50%, var(--background));
+  border-bottom: 1px solid var(--border);
+}
+
+.fl-theme-preview__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--muted-foreground) 35%, transparent);
+}
+
+.fl-theme-preview__body {
+  padding: 0.75rem 0.85rem 0.9rem;
+}
+
+.fl-theme-preview__skeleton {
+  height: 0.45rem;
+  border-radius: 0.25rem;
+  background: color-mix(in oklab, var(--muted-foreground) 22%, transparent);
+  margin-bottom: 0.45rem;
+  max-width: 88%;
+}
+
+.fl-theme-preview__skeleton--short {
+  max-width: 55%;
+  margin-bottom: 0.65rem;
+}
+
+.fl-theme-preview__chip {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.35rem;
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.fl-theme-preview__cta {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  background: var(--primary);
+  color: var(--primary-foreground, #fff);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+
+.fl-theme-preview__cta:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 3px 10px color-mix(in oklab, var(--primary) 35%, transparent);
+}
+
+.fl-theme-preview__cta:active {
+  transform: scale(0.98);
+  filter: brightness(0.96);
+}
+
+.fl-theme-preview__cta:focus {
+  outline: none;
+}
+
+.fl-theme-preview__cta:focus-visible {
+  outline: 2px solid var(--ring, var(--primary));
+  outline-offset: 2px;
+}
+
+@keyframes fl-theme-preview-cta-pulse {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.fl-theme-preview__cta.fl-theme-preview__cta--pulse {
+  animation: fl-theme-preview-cta-pulse 0.45s ease;
+}
+
+.fl-theme-preview__caption {
+  margin: 0.55rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.fl-theme-section__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.65rem;
+}
+
+.fl-theme-section__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.fl-theme-section__hint {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  opacity: 0.92;
+}
+
+/* Appearance: stacked mode rows */
+.fl-theme-mode-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .fl-theme-mode-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.25rem;
-  padding: 0.375rem 0.5rem;
-  border-radius: 0.5rem;
-  font-size: 0.8125rem;
+  border-radius: 0.625rem;
   font-weight: 600;
   line-height: 1.2;
   border: 1px solid var(--border);
@@ -178,18 +384,122 @@ body.fl-theme-panel-open {
     color 0.18s ease,
     box-shadow 0.18s ease;
 }
+
+.fl-theme-mode-btn--row {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  min-height: 3rem;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+}
+
+.fl-theme-mode-btn__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background: color-mix(in oklab, var(--primary) 10%, var(--background));
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.fl-theme-mode-btn__icon i {
+  font-size: 1.125rem;
+}
+
+.fl-theme-mode-btn__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.fl-theme-mode-btn__title {
+  font-size: 0.875rem;
+}
+
+.fl-theme-mode-btn__sub {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  line-height: 1.3;
+}
+
 .fl-theme-mode-btn:hover {
   border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
   background-color: color-mix(in oklab, var(--primary) 8%, var(--background));
 }
+
 .fl-theme-mode-btn[aria-pressed='true'] {
   background-color: var(--primary) !important;
   border-color: var(--primary) !important;
   color: var(--primary-foreground) !important;
-  box-shadow: 0 1px 0 rgb(0 0 0 / 0.06);
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 35%, transparent);
 }
-.fl-theme-panel #theme_panel_close i[class*='ki-'] {
-  color: var(--primary) !important;
+
+.fl-theme-mode-btn[aria-pressed='true'] .fl-theme-mode-btn__icon {
+  background: rgb(255 255 255 / 0.2);
+  color: var(--primary-foreground);
+}
+
+.fl-theme-mode-btn[aria-pressed='true'] .fl-theme-mode-btn__sub {
+  color: color-mix(in oklab, var(--primary-foreground) 78%, transparent);
+}
+
+/* Accent grid */
+.fl-accent-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem 0.35rem;
+  align-items: start;
+}
+
+@media (max-width: 360px) {
+  .fl-accent-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.fl-accent-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.fl-accent-cell__label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fl-accent-btn.fl-accent-btn--lg {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.fl-theme-panel-footnote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem 0.65rem;
+  border-radius: 0.625rem;
+  background: color-mix(in oklab, var(--primary) 6%, var(--background));
+  border: 1px solid color-mix(in oklab, var(--primary) 14%, var(--border));
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -199,5 +509,116 @@ body.fl-theme-panel-open {
   .fl-theme-panel,
   .fl-theme-panel-backdrop {
     transition: none;
+  }
+}
+
+/* Top nav: search opener — pill + primary icon well (reads as “search”, not a flat icon) */
+.fl-topbar-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.65rem 0.2rem 0.28rem;
+  margin: 0;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, var(--primary) 28%, var(--border));
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--primary) 7%, var(--background)) 0%,
+    var(--background) 100%
+  );
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    inset 0 1px 0 rgb(255 255 255 / 0.55);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--foreground);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+.dark .fl-topbar-search-btn {
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.25),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+.fl-topbar-search-btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--primary) 48%, var(--border));
+  background: color-mix(in oklab, var(--primary) 10%, var(--background));
+  box-shadow:
+    0 4px 16px -4px color-mix(in oklab, var(--primary) 38%, transparent),
+    0 2px 4px rgb(15 23 42 / 0.06);
+}
+.dark .fl-topbar-search-btn:hover {
+  box-shadow:
+    0 6px 20px -6px color-mix(in oklab, var(--primary) 42%, transparent),
+    0 2px 6px rgb(0 0 0 / 0.35);
+}
+.fl-topbar-search-btn:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--primary) 55%, transparent);
+  outline-offset: 2px;
+}
+.fl-topbar-search-btn:active {
+  transform: translateY(0);
+}
+.fl-topbar-search-btn__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 22%, transparent);
+}
+.fl-topbar-search-btn__icon {
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--primary);
+}
+.fl-topbar-search-btn__label {
+  padding-right: 0.15rem;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (min-width: 640px) {
+  .fl-topbar-search-btn__label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    white-space: normal;
+    padding-right: 0.15rem;
+  }
+}
+@media (max-width: 639.98px) {
+  .fl-topbar-search-btn {
+    padding: 0.2rem;
+    min-width: 2rem;
+    justify-content: center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fl-topbar-search-btn,
+  .fl-topbar-search-btn:hover,
+  .fl-topbar-search-btn:active {
+    transform: none;
   }
 }

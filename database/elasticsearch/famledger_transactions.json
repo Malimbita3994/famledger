@@ -1,0 +1,61 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "filter": {
+        "famledger_edge_ngram": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20
+        }
+      },
+      "analyzer": {
+        "famledger_search": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "asciifolding"]
+        },
+        "famledger_autocomplete": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "asciifolding", "famledger_edge_ngram"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "type": { "type": "keyword" },
+      "title": {
+        "type": "text",
+        "analyzer": "famledger_search",
+        "fields": {
+          "keyword": { "type": "keyword", "ignore_above": 512 },
+          "autocomplete": {
+            "type": "text",
+            "analyzer": "famledger_autocomplete",
+            "search_analyzer": "famledger_search"
+          }
+        }
+      },
+      "description": {
+        "type": "text",
+        "analyzer": "famledger_search"
+      },
+      "amount": { "type": "double" },
+      "currency_code": { "type": "keyword" },
+      "category": { "type": "keyword" },
+      "category_id": { "type": "integer" },
+      "person": { "type": "keyword" },
+      "person_keyword": { "type": "keyword" },
+      "date": { "type": "date" },
+      "tags": { "type": "keyword" },
+      "household_id": { "type": "keyword" },
+      "family_id": { "type": "keyword" },
+      "record_id": { "type": "integer" },
+      "created_at": { "type": "date" }
+    }
+  }
+}

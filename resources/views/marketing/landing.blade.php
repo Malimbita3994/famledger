@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 
-	<title>FamLedger – Family accounting & private wealth ledger</title>
+	<title>{{ config('app.name') }} – Family accounting & private wealth ledger</title>
 	<!--
 
     FamLedger marketing landing page — family accounting, wallets, assets, and governance in one place.
@@ -66,6 +66,27 @@
        background-color: #ffffff;
        color: #009EF7 !important;
        border-color: #ffffff;
+     }
+
+     .hero-cta-demo {
+       background-color: rgba(255, 255, 255, 0.12);
+       border: 1px solid rgba(0, 158, 247, 0.95);
+       color: #ffffff !important;
+     }
+
+     .hero-cta-demo:hover {
+       background-color: rgba(0, 158, 247, 0.35);
+       color: #ffffff !important;
+       border-color: #7ccfff;
+     }
+
+     /* Hero CTA buttons: reset native <button> so pill styles match <a> CTAs */
+     .famledger-hero-cta-row button.section-btn.hero-cta {
+       font-family: inherit;
+       cursor: pointer;
+       appearance: none;
+       -webkit-appearance: none;
+       text-align: center;
      }
 
      /* Accounting-focused marketing hero */
@@ -1531,7 +1552,9 @@
        }
        .hero-cta,
        .section-btn.hero-cta,
-       .section-btn.pricing-btn {
+       .section-btn.hero-cta-demo,
+       .section-btn.pricing-btn,
+       button.section-btn.pricing-btn {
          min-height: 44px;
          display: inline-flex;
          align-items: center;
@@ -1550,7 +1573,7 @@
          top: max(12px, env(safe-area-inset-top, 0px));
        }
        #landingContactModal .modal-dialog {
-         margin: 10px auto;
+         margin: 0 auto;
          width: auto;
          max-width: calc(100vw - 20px);
        }
@@ -1595,6 +1618,86 @@
        .famledger-feature-tabs > li > a {
          font-size: 12px;
          padding: 10px 12px;
+       }
+     }
+
+     /* Preloader is z-index 99999 full-screen; fixed navbar must sit above it or the bar looks clickable but hits the overlay. */
+     .famledger-landing .navbar.custom-navbar.navbar-fixed-top {
+       z-index: 100050;
+     }
+     /* Landing nav: search control (right). Tooplate applies margin-left to all .navbar-nav — reset for the right cluster. */
+     .famledger-landing .custom-navbar .navbar-nav.famledger-landing-nav-actions {
+       margin-left: 0 !important;
+       margin-right: 0;
+       float: right !important;
+     }
+     .famledger-landing .navbar-nav.famledger-landing-nav-actions > li {
+       float: left;
+     }
+     .famledger-landing .navbar-landing-search-btn {
+       position: relative;
+       z-index: 1;
+       display: inline-flex;
+       align-items: center;
+       gap: 0.45rem;
+       margin: 10px 0 10px 12px;
+       padding: 0.45rem 0.95rem;
+       border-radius: 999px;
+       border: 1px solid rgba(255, 255, 255, 0.42);
+       background: rgba(0, 158, 247, 0.22);
+       color: #fff !important;
+       font-weight: 600;
+       font-size: 0.875rem;
+       line-height: 1.2;
+       cursor: pointer;
+       text-decoration: none !important;
+       transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+     }
+     .famledger-landing .navbar-landing-search-btn:hover,
+     .famledger-landing .navbar-landing-search-btn:focus-visible {
+       background: rgba(0, 158, 247, 0.38);
+       border-color: rgba(255, 255, 255, 0.65);
+       color: #fff !important;
+       outline: none;
+       box-shadow: 0 4px 14px rgba(0, 158, 247, 0.35);
+     }
+     /* Scrolled / white navbar: solid brand button */
+     .famledger-landing .custom-navbar.top-nav-collapse .navbar-landing-search-btn {
+       background: #009ef7;
+       border-color: #009ef7;
+       color: #fff !important;
+       box-shadow: 0 2px 8px rgba(0, 158, 247, 0.35);
+     }
+     .famledger-landing .custom-navbar.top-nav-collapse .navbar-landing-search-btn:hover,
+     .famledger-landing .custom-navbar.top-nav-collapse .navbar-landing-search-btn:focus-visible {
+       background: #0088d4;
+       border-color: #0088d4;
+       color: #fff !important;
+     }
+     .famledger-landing .navbar-landing-search-btn--link {
+       border-style: solid;
+     }
+     .famledger-landing .navbar-landing-search-btn .fa-search {
+       font-size: 0.95rem;
+       opacity: 0.95;
+     }
+     @media (max-width: 767px) {
+       .famledger-landing .custom-navbar .navbar-nav.famledger-landing-nav-actions {
+         float: none !important;
+         width: 100%;
+       }
+       .famledger-landing .navbar-nav.famledger-landing-nav-actions > li {
+         text-align: left;
+       }
+       .famledger-landing .navbar-landing-search-btn {
+         margin: 6px 0 10px 0;
+       }
+       /* Mobile menu uses white bar (tooplate); keep solid search button */
+       .famledger-landing .custom-navbar .navbar-landing-search-btn {
+         background: #009ef7;
+         border-color: #009ef7;
+         color: #fff !important;
        }
      }
 
@@ -1648,6 +1751,25 @@
                          {{-- Pricing hidden for now --}}
                          <li><a href="#contact" class="smoothScroll">Contact</a></li>
                     </ul>
+                    @php
+                        $landingSearchFamily = $currentFamily ?? null;
+                    @endphp
+                    <ul class="nav navbar-nav navbar-right famledger-landing-nav-actions">
+                         <li>
+                              <button
+                                   type="button"
+                                   class="navbar-landing-search-btn"
+                                   data-fl-open-search-modal
+                                   data-suggestions-url="{{ $landingSearchFamily ? route('families.search.suggestions') : route('landing.search.suggestions') }}"
+                                   data-search-url="{{ $landingSearchFamily ? route('families.search.index') : route('landing') }}"
+                                   @if(!$landingSearchFamily) data-search-fragment="#faq" @endif
+                                   aria-haspopup="dialog"
+                              >
+                                   <i class="fa fa-search" aria-hidden="true"></i>
+                                   <span class="navbar-landing-search-btn-label">{{ __('Search') }}</span>
+                              </button>
+                         </li>
+                    </ul>
                </div>
 
         </div>
@@ -1668,6 +1790,13 @@
                               </h2>
                               <div class="famledger-hero-cta-row" style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
                                    <a href="{{ route('register') }}" class="section-btn hero-cta">{{ __('Start family accounting') }}</a>
+                                   <button
+                                        type="button"
+                                        class="section-btn hero-cta hero-cta-demo landing-support-modal-btn"
+                                        data-toggle="modal"
+                                        data-target="#landingContactModal"
+                                        aria-haspopup="dialog"
+                                   >{{ __('Book a demo') }}</button>
                                    <a href="{{ route('login') }}" class="section-btn hero-cta hero-cta-secondary">{{ __('Sign in') }}</a>
                               </div>
                          </div>
@@ -1943,7 +2072,13 @@
                             </div>
                              <div class="pricing-bottom">
                                    <span class="pricing-dollar">Talk to us</span>
-                                   <a href="#contact" class="section-btn pricing-btn">Book a demo</a>
+                                   <button
+                                        type="button"
+                                        class="section-btn pricing-btn landing-support-modal-btn"
+                                        data-toggle="modal"
+                                        data-target="#landingContactModal"
+                                        aria-haspopup="dialog"
+                                   >{{ __('Book a demo') }}</button>
                             </div>
                         </div>
                     </div>
@@ -2144,6 +2279,7 @@
         </section>
 
      <x-contact-form-modal
+         message-editor="plain"
          :captcha-driver="$contactCaptchaDriver"
          :recaptcha-site-key="$recaptchaSiteKey"
          :open-on-load="$errors->any() && old('_contact_form_source') === 'modal'"
@@ -2491,8 +2627,69 @@
          });
        })();
 
+       /* Deep-link from search: #faqCollapse{id} opens the right FAQ group and expands the panel */
+       (function () {
+         var $ = window.jQuery;
+         if (!$ || typeof $.fn.collapse !== "function") {
+           return;
+         }
+         function openFaqCollapseFromHash() {
+           var m = (window.location.hash || "").match(/^#faqCollapse(\d+)$/);
+           if (!m) {
+             return;
+           }
+           var idNum = m[1];
+           var collapseEl = document.getElementById("faqCollapse" + idNum);
+           if (!collapseEl) {
+             return;
+           }
+           var faqLayout = document.querySelector("#faq .landing-faq-layout");
+           if (!faqLayout) {
+             return;
+           }
+           var groupBlock = collapseEl.closest(".landing-faq-group-block");
+           if (groupBlock && groupBlock.id) {
+             var groupBlocks = faqLayout.querySelectorAll("[data-landing-faq-group]");
+             if (groupBlocks.length > 1) {
+               groupBlocks.forEach(function (block) {
+                 block.hidden = block.id !== groupBlock.id;
+               });
+               faqLayout.querySelectorAll(".landing-faq-tab").forEach(function (tab) {
+                 var tid = tab.getAttribute("data-landing-faq-target") || "";
+                 if (!tid && tab.getAttribute("href")) {
+                   tid = tab.getAttribute("href").replace(/^#/, "");
+                 }
+                 var on = tid === groupBlock.id;
+                 tab.classList.toggle("is-landing-faq-active", on);
+                 if (on) {
+                   tab.setAttribute("aria-current", "page");
+                 } else {
+                   tab.removeAttribute("aria-current");
+                 }
+               });
+             }
+           }
+           $("#faqCollapse" + idNum).collapse("show");
+           window.setTimeout(function () {
+             var heading = document.getElementById("faqHeading" + idNum);
+             var faqSection = document.getElementById("faq");
+             if (faqSection) {
+               faqSection.scrollIntoView({ behavior: "smooth", block: "start" });
+             }
+             (heading || collapseEl).scrollIntoView({ behavior: "smooth", block: "nearest" });
+           }, 100);
+         }
+         openFaqCollapseFromHash();
+         window.addEventListener("hashchange", openFaqCollapseFromHash);
+       })();
+
      });
      </script>
+
+     <x-sweetalert.cdn :defer="false" />
+     <x-sweetalert.compact-styles />
+     @include('partials.transaction-search-suggestions-script')
+     @stack('scripts')
 
 </body>
 </html>

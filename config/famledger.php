@@ -59,4 +59,21 @@ return [
 
     'default_new_member_password' => env('FAMLEDGER_DEFAULT_NEW_MEMBER_PASSWORD', 'FamLedgerMember123!'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Staging / demo dataset (DemoFamilySeeder)
+    |--------------------------------------------------------------------------
+    |
+    | When FAMLEDGER_DEMO_SEED=true, `php artisan db:seed` also runs DemoFamilySeeder.
+    | You can always run the seeder alone: `php artisan db:seed --class=DemoFamilySeeder`
+    |
+    */
+
+    'demo_seed' => [
+        'enabled' => (bool) env('FAMLEDGER_DEMO_SEED', false),
+        'user_email' => env('FAMLEDGER_DEMO_USER_EMAIL', 'demo@famledger.local'),
+        'user_password' => env('FAMLEDGER_DEMO_USER_PASSWORD', 'password'),
+        'family_name' => env('FAMLEDGER_DEMO_FAMILY_NAME', 'Rivera family (demo)'),
+    ],
+
 ];

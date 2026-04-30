@@ -8,10 +8,12 @@ use App\Models\Budget;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\Family;
+use App\Models\Project;
 use App\Services\WalletBalanceGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class ExpenseController extends Controller
 {
@@ -34,7 +36,7 @@ class ExpenseController extends Controller
         return view('families.expenses.index', compact('family', 'expenses', 'wallets'));
     }
 
-    public function create(Family $family)
+    public function create(Request $request, Family $family)
     {
         $this->authorizeFamilyMember($family);
 
@@ -46,7 +48,15 @@ class ExpenseController extends Controller
         }
         $categories = ExpenseCategory::defaults();
         $members = $family->members()->orderBy('name')->get(['users.id', 'users.name']);
-        $projects = $family->projects()->whereIn('status', ['planning', 'active'])->orderBy('name')->get(['id', 'name']);
+        $projects = $family->projects()
+            ->where(function ($q) use ($request) {
+                $q->whereIn('status', [Project::STATUS_PLANNING, Project::STATUS_ACTIVE]);
+                if ($request->filled('project_id')) {
+                    $q->orWhere('id', (int) $request->query('project_id'));
+                }
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
         $budgets = $family->budgets()
             ->where('status', 'active')
             ->with(['wallets:id', 'categories:id'])
@@ -179,5 +189,28 @@ class ExpenseController extends Controller
                 ->route('families.expenses.index')
                 ->with('success', 'Expense recorded. Wallet balance updated.');
         });
+    }
+
+    public function show(Expense $expense, Family $family): View
+    {
+        $this->authorizeFamilyMember($family);
+        $this->assertExpenseInFamily($family, $expense);
+
+        $expense->load([
+            'wallet:id,name,currency_code',
+            'category',
+            'paidBy:id,name',
+            'createdBy:id,name',
+            'budget:id,name,type',
+        ]);
+
+        return view('families.expenses.show', compact('family', 'expense'));
+    }
+
+    protected function assertExpenseInFamily(Family $family, Expense $expense): void
+    {
+        if ($expense->family_id !== $family->id) {
+            abort(404);
+        }
     }
 }

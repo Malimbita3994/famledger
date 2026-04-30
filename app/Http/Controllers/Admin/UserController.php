@@ -3,11 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
+use App\Models\Family;
+use App\Models\FamilyInvitation;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -30,7 +36,7 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = \Spatie\Permission\Models\Role::where('guard_name', config('auth.defaults.guard'))->orderBy('name')->get();
+        $roles = Role::where('guard_name', config('auth.defaults.guard'))->orderBy('name')->get();
 
         return view('admin.users.create', compact('roles'));
     }
@@ -73,7 +79,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = \Spatie\Permission\Models\Role::where('guard_name', config('auth.defaults.guard'))->orderBy('name')->get();
+        $roles = Role::where('guard_name', config('auth.defaults.guard'))->orderBy('name')->get();
         $user->load('roles');
 
         return view('admin.users.edit', compact('user', 'roles'));
@@ -119,10 +125,52 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        abort_unless(auth()->user()?->hasRole('Super Admin'), 403);
+
         if ($user->id === auth()->id()) {
-            return redirect()->route('admin.users.index')->with('error', 'You cannot delete your own account.');
+            return redirect()->route('admin.users.index')->with('error', __('You cannot delete your own account.'));
         }
-        $user->update(['status' => User::STATUS_SUSPENDED]);
-        return redirect()->route('admin.users.index')->with('success', 'User deactivated.');
+
+        if ($user->hasRole('Super Admin') && User::role('Super Admin')->count() <= 1) {
+            return redirect()->route('admin.users.index')->with('error', __('Cannot delete the only Super Admin account.'));
+        }
+
+        DB::transaction(function () use ($user) {
+            $actorId = auth()->id();
+            $familyIds = $user->familyMemberships()
+                ->pluck('family_id')
+                ->merge(Family::where('created_by', $user->id)->pluck('id'))
+                ->unique()
+                ->filter()
+                ->values();
+            $deletedName = $user->name;
+            $deletedEmail = $user->email;
+            $deletedUserId = $user->id;
+
+            Family::where('created_by', $user->id)->update(['created_by' => $actorId]);
+            FamilyInvitation::where('invited_by', $user->id)->update(['invited_by' => $actorId]);
+
+            $user->tokens()->delete();
+            $user->syncRoles([]);
+
+            $user->delete();
+
+            foreach ($familyIds as $familyId) {
+                AuditLogger::application(
+                    AuditLog::ACTION_DELETED,
+                    __('User :name (:email) was permanently removed from the platform.', [
+                        'name' => $deletedName,
+                        'email' => $deletedEmail,
+                    ]),
+                    [
+                        'context' => 'admin_user_delete',
+                        'deleted_user_id' => $deletedUserId,
+                    ],
+                    (int) $familyId
+                );
+            }
+        });
+
+        return redirect()->route('admin.users.index')->with('success', __('User deleted permanently.'));
     }
 }

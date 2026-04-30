@@ -145,11 +145,38 @@ class FamilyController extends Controller
         ]);
     }
 
-    public function destroy(Family $family): JsonResponse
+    public function destroy(Request $request, Family $family): JsonResponse
     {
         $this->authorizeFamilyMember($family);
 
-        $family->delete();
+        $membership = FamilyMember::where('family_id', $family->id)
+            ->where('user_id', $request->user()->id)
+            ->with('role')
+            ->first();
+
+        if (($membership?->role?->name ?? '') !== 'Owner') {
+            return response()->json([
+                'message' => 'Only the family owner can delete this family.',
+            ], 403);
+        }
+
+        $user = $request->user();
+        $deletedFamilyId = (int) $family->id;
+        $nextFamilyId = FamilyMember::query()
+            ->where('user_id', $user->id)
+            ->where('family_id', '!=', $deletedFamilyId)
+            ->orderByDesc('id')
+            ->value('family_id');
+
+        DB::transaction(fn () => $family->delete());
+
+        if ($request->hasSession() && (int) $request->session()->get('current_family_id') === $deletedFamilyId) {
+            if ($nextFamilyId) {
+                $request->session()->put('current_family_id', $nextFamilyId);
+            } else {
+                $request->session()->forget('current_family_id');
+            }
+        }
 
         return response()->json([
             'message' => 'Family deleted.',

@@ -1,7 +1,7 @@
 @extends('layouts.metronic')
 
-@section('title', 'Users')
-@section('page_title', 'User Management')
+@section('title', 'User List')
+@section('page_title', 'User List')
 
 @section('content')
 @push('styles')
@@ -119,7 +119,7 @@
         <div class="kt-card-content" style="display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; justify-content:space-between; gap:1rem; width:100%; min-width:0;">
             <div class="admin-users-hero-left flex-1 min-w-0">
                 <p class="fin-pulse-eyebrow mb-1">Admin Console</p>
-                <h1 class="fin-pulse-title admin-users-hero-title truncate">Users</h1>
+                <h1 class="fin-pulse-title admin-users-hero-title truncate">User List</h1>
                 <p class="text-sm text-muted-foreground mt-0.5">Platform user accounts.</p>
             </div>
             <div style="flex:0 0 auto; min-width:0;">
@@ -163,8 +163,11 @@
                             <th class="min-w-[160px]">Name</th>
                             <th class="min-w-[180px]">Email</th>
                             <th class="min-w-[100px]">Status</th>
-                            <th class="min-w-[140px]">Roles</th>
-                            <th class="min-w-[180px]">Families</th>
+                            <th class="min-w-[160px]" title="{{ __('Shows platform (Spatie) roles when assigned. If the user has none, shows their first family membership role (e.g. Owner)—that is the household role, not /admin/roles.') }}">
+                                {{ __('Roles') }}
+                                <span class="block text-[10px] font-normal text-muted-foreground normal-case tracking-normal">{{ __('platform or family') }}</span>
+                            </th>
+                            <th class="min-w-[180px]">{{ __('Families') }}</th>
                             <th class="w-14 text-end">Actions</th>
                         </tr>
                     </thead>
@@ -209,6 +212,19 @@
                                             <span class="kt-menu-title">{{ __('Edit') }}</span>
                                         </a>
                                     </div>
+                                    @if (auth()->user()?->hasRole('Super Admin') && auth()->id() !== $u->id)
+                                        <div class="kt-menu-separator"></div>
+                                        <div class="kt-menu-item">
+                                            <form action="{{ route('admin.users.destroy', $u) }}" method="POST" class="js-confirm-delete inline-block w-full" data-confirm-title="{{ __('Delete this user?') }}" data-confirm-message="{{ __('This permanently removes the account, roles, and sessions. Families they created stay on the platform with you recorded as creator.') }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="kt-menu-link w-full text-start border-0 bg-transparent cursor-pointer text-destructive hover:!bg-destructive/10">
+                                                    <span class="kt-menu-icon"><i class="ki-filled ki-trash fl-dots-action-icon--danger"></i></span>
+                                                    <span class="kt-menu-title">{{ __('Delete') }}</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
                                 </x-famledger.dots-actions-menu>
                             </td>
                         </tr>
@@ -246,7 +262,7 @@
                             $systemNames = $u->roles->pluck('name');
                             $roleText = $systemNames->isNotEmpty() ? $systemNames->join(', ') : ($u->familyMemberships->first()?->role?->name ?? '—');
                         @endphp
-                        <span class="uppercase tracking-wide">Roles:</span>
+                        <span class="uppercase tracking-wide">{{ __('Roles (platform or family):') }}</span>
                         <span class="font-medium text-foreground">{{ $roleText }}</span>
                     </div>
 
@@ -275,6 +291,15 @@
                         <a href="{{ route('admin.users.edit', $u) }}" class="fin-pulse-btn-outline fin-pulse-btn-sm">
                             Edit
                         </a>
+                        @if (auth()->user()?->hasRole('Super Admin') && auth()->id() !== $u->id)
+                            <form action="{{ route('admin.users.destroy', $u) }}" method="POST" class="js-confirm-delete inline-block" data-confirm-title="{{ __('Delete this user?') }}" data-confirm-message="{{ __('This permanently removes the account. Families they created remain; you will be recorded as creator.') }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="fin-pulse-btn-outline fin-pulse-btn-sm fin-pulse-btn-outline-danger">
+                                    {{ __('Delete') }}
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
                 @endforeach

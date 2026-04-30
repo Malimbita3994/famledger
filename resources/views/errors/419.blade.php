@@ -38,13 +38,11 @@
    html: @json(__('This page was open too long or the security token is no longer valid. Refresh the page and try again.')),
    confirmButtonText: @json(__('Continue')),
    confirmButtonColor: '#2563eb',
-   width: 520,
-   padding: '2.5rem 2.75rem',
    backdrop: true,
    allowOutsideClick: false,
    customClass: {
     popup: 'rounded-2xl',
-    title: 'text-lg font-semibold',
+    title: 'text-base font-semibold',
    }
   }).then(function () {
    goSafe();

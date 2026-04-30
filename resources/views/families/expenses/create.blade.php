@@ -140,7 +140,7 @@
                                 <option value="">— None —</option>
                                 @if(isset($projects) && $projects->isNotEmpty())
                                     @foreach ($projects as $proj)
-                                        <option value="{{ $proj->id }}" {{ old('project_id') == $proj->id ? 'selected' : '' }}>{{ $proj->name }}</option>
+                                        <option value="{{ $proj->id }}" {{ (string) old('project_id', request('project_id')) === (string) $proj->id ? 'selected' : '' }}>{{ $proj->name }}</option>
                                     @endforeach
                                 @endif
                             </select>

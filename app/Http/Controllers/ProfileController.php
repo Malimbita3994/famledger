@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\AuditLog;
+use App\Models\Family;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -26,13 +30,27 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($request->safe()->only(['name', 'email']));
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $user->avatar = $request->file('avatar')->store('avatars/'.$user->id, 'public');
+        } elseif ($request->boolean('remove_avatar')) {
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $user->avatar = null;
         }
 
-        $request->user()->save();
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit')
             ->with('status', 'profile-updated')
@@ -49,6 +67,29 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        $familyIds = $user->familyMemberships()
+            ->pluck('family_id')
+            ->merge(Family::where('created_by', $user->id)->pluck('id'))
+            ->unique()
+            ->filter()
+            ->values();
+        $name = $user->name;
+        $email = $user->email;
+        foreach ($familyIds as $familyId) {
+            AuditLogger::application(
+                AuditLog::ACTION_DELETED,
+                __('Account :name (:email) was permanently deleted.', [
+                    'name' => $name,
+                    'email' => $email,
+                ]),
+                [
+                    'context' => 'self_service_account_deletion',
+                    'deleted_user_id' => $user->id,
+                ],
+                (int) $familyId
+            );
+        }
 
         Auth::logout();
 

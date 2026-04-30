@@ -53,4 +53,27 @@ return [
         'secret' => env('RECAPTCHA_SECRET_KEY'),
     ],
 
+    /*
+    | Google OAuth (Sign in with Google). Set redirect URI in Google Cloud Console to match APP_URL.
+    */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL', ''), '/').'/auth/google/callback'),
+    ],
+
+    /*
+    | Apple Sign In (socialiteproviders/apple). Callback must be POST; excluded from CSRF verification.
+    | client_secret may be empty if APPLE_PRIVATE_KEY + APPLE_TEAM_ID + APPLE_KEY_ID are set (JWT generated per request).
+    */
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+        'client_secret' => env('APPLE_CLIENT_SECRET'),
+        'redirect' => env('APPLE_REDIRECT_URI', rtrim((string) env('APP_URL', ''), '/').'/auth/apple/callback'),
+        'team_id' => env('APPLE_TEAM_ID'),
+        'key_id' => env('APPLE_KEY_ID'),
+        'private_key' => env('APPLE_PRIVATE_KEY'),
+        'passphrase' => env('APPLE_PASSPHRASE'),
+    ],
+
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -139,6 +140,48 @@ class Wallet extends Model
             : (float) $this->outgoingTransfers()->sum('amount');
 
         return (float) $this->initial_balance + $income - $expense + $incoming - $outgoing;
+    }
+
+    /**
+     * Ledger balance at end of the given calendar day (inclusive of that day’s transactions).
+     * Used by reports (opening balance before a period, wallet statement running balance).
+     */
+    public function balanceAsOf(Carbon $date): float
+    {
+        $initial = $this->resolveInitialBalanceForPartialModel();
+        $end = $date->copy()->endOfDay();
+
+        $income = (float) $this->incomes()
+            ->where('received_date', '<=', $end)
+            ->sum('amount');
+
+        $expense = (float) $this->expenses()
+            ->where('expense_date', '<=', $end)
+            ->sum('amount');
+
+        $incoming = (float) $this->incomingTransfers()
+            ->where('transfer_date', '<=', $end)
+            ->sum('amount');
+
+        $outgoing = (float) $this->outgoingTransfers()
+            ->where('transfer_date', '<=', $end)
+            ->sum('amount');
+
+        return $initial + $income - $expense + $incoming - $outgoing;
+    }
+
+    /**
+     * Report queries sometimes load wallets with only id/name; initial_balance must still apply.
+     */
+    protected function resolveInitialBalanceForPartialModel(): float
+    {
+        if (array_key_exists('initial_balance', $this->attributes) && $this->attributes['initial_balance'] !== null) {
+            return (float) $this->attributes['initial_balance'];
+        }
+
+        $value = static::query()->whereKey($this->getKey())->value('initial_balance');
+
+        return (float) ($value ?? 0);
     }
 
     /**

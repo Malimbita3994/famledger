@@ -1,13 +1,13 @@
 @extends('layouts.metronic')
 
-@section('title', 'General Report')
-@section('page_title', 'General Report')
+@section('title', 'General')
+@section('page_title', 'General')
 
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-            <h1 class="font-medium text-lg text-mono">General Report</h1>
+            <h1 class="font-medium text-lg text-mono">General</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Overview of family finances, budgets, savings, and projects. Filter by date and wallet.</p>
         </div>
         <x-famledger.export-pdf-button :href="route('families.reports.export-pdf') . '?' . http_build_query(request()->only(['from','to','wallet_id']))" />
@@ -378,7 +378,7 @@
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>
                 <a href="{{ route('families.reports.cash-flow') }}?from={{ $dateFrom }}&to={{ $dateTo }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <span class="text-sm font-medium">Cash Flow</span>
+                    <span class="text-sm font-medium">Finance</span>
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>
                 <a href="{{ route('families.reports.budget-vs-actual') }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
@@ -393,12 +393,12 @@
         </div>
         <div class="kt-card rounded-xl border border-border shadow-sm overflow-hidden bg-card">
             <div class="kt-card-header border-b border-border">
-                <h3 class="kt-card-title text-sm">Project Reports</h3>
+                <h3 class="kt-card-title text-sm">Project</h3>
                 <p class="text-sm text-muted-foreground mt-0.5">Project summary, funding, expenses, and timeline</p>
             </div>
             <div class="kt-card-content p-5 space-y-2">
                 <a href="{{ route('families.reports.project-summary') }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <span class="text-sm font-medium">Project Summary</span>
+                    <span class="text-sm font-medium">Project</span>
                     <i class="ki-filled ki-right text-muted-foreground text-sm"></i>
                 </a>
                 <div class="py-2 px-3 rounded-lg text-sm text-muted-foreground">

@@ -4,189 +4,417 @@
 @section('page_title', __('Family Vision Board'))
 
 @push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet"/>
 <style>
+    .vision-board-page {
+        --vb-dark: #2f2f2f;
+        --vb-yellow: #e9cf5c;
+        --vb-yellow-bg: #f7f1d4;
+        --vb-peach: #f0e0d4;
+        --vb-mist: #e6e6e2;
+        --vb-white: #ffffff;
+        --vb-ink: #1a1a1a;
+        --vb-muted: #3a3a3a;
+        font-family: 'Fraunces', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    }
+
+    .vision-board-shell {
+        background: linear-gradient(160deg, #eceae6 0%, #e0ddd8 100%);
+        border-radius: 1rem;
+        padding: 3px;
+        overflow: hidden;
+        box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.75) inset,
+            0 12px 40px -12px rgba(15, 23, 42, 0.12);
+    }
+
     .vision-board-grid {
         display: grid;
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: 1fr;
+        gap: 3px;
         width: 100%;
-    }
-    @media (min-width: 640px) {
-        .vision-board-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (min-width: 1024px) {
-        .vision-board-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    }
-    @media (min-width: 1280px) {
-        .vision-board-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    }
-    
-    .vision-card {
-        background: linear-gradient(to bottom, #f4faff 0%, #ffffff 100%);
-        border: 1.5px solid #22d3ee; /* cyan-400 */
-        border-radius: 0.75rem; /* rounded-xl */
+        min-height: 12rem;
+        background: var(--vb-white);
         overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        box-shadow: 0 4px 6px -1px rgba(34, 211, 238, 0.1);
-    }
-    
-    .vision-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 15px -3px rgba(34, 211, 238, 0.2);
     }
 
-    .vision-card-img-wrapper {
-        height: 12rem;
-        max-height: 40vh;
+    @media (min-width: 640px) {
+        .vision-board-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-auto-rows: minmax(9rem, auto);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .vision-board-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-auto-rows: minmax(8.5rem, auto);
+        }
+
+        .vision-board-intro {
+            grid-column: span 1;
+            grid-row: span 2;
+            min-height: 18rem;
+        }
+
+        .vision-tile--tall {
+            grid-row: span 2;
+            min-height: 17rem;
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .vision-board-intro {
+            min-height: 20rem;
+        }
+    }
+
+    .vision-board-intro {
+        background: var(--vb-dark);
+        color: var(--vb-white);
+        padding: 1.75rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 0.75rem;
         position: relative;
         overflow: hidden;
-        border-bottom: 1px solid #bae6fd; /* border-sky-200 */
-        background: #f0f9ff;
     }
-    
-    .vision-card-img {
+
+    .vision-board-intro::after {
+        content: '';
         position: absolute;
         inset: 0;
-        width: 100%;
-        height: 100%;
-        max-width: 100%;
-        object-fit: cover;
-        object-position: center;
-        transition: transform 0.5s ease;
-    }
-    
-    .vision-card:hover .vision-card-img {
-        transform: scale(1.05);
+        background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(233, 207, 92, 0.12), transparent 55%);
+        pointer-events: none;
     }
 
-    .vision-card-body {
-        padding: 1.25rem;
-        flex-grow: 1;
+    .vision-board-intro-badge {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 9999px;
+        background: var(--vb-yellow);
+        box-shadow: 0 0 0 3px rgba(233, 207, 92, 0.25);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .vision-board-intro h2 {
+        font-family: inherit;
+        font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--vb-yellow);
+        margin: 0;
+        line-height: 1.15;
+        position: relative;
+        z-index: 1;
+    }
+
+    .vision-board-intro p {
+        font-family: 'Source Serif 4', Georgia, serif;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.88);
+        margin: 0;
+        max-width: 22rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .vision-toolbar {
+        font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .vision-tile {
+        position: relative;
         display: flex;
         flex-direction: column;
+        min-height: 11rem;
+        min-width: 0;
+        overflow: hidden;
+        isolation: isolate;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .vision-card-title {
+    .vision-tile:hover {
+        box-shadow: 0 18px 38px -18px rgba(15, 23, 42, 0.22);
+    }
+
+    .vision-tile--tone-yellow { background: var(--vb-yellow-bg); }
+    .vision-tile--tone-peach { background: var(--vb-peach); }
+    .vision-tile--tone-mist { background: var(--vb-mist); }
+
+    .vision-tile--tone-yellow .vision-tile-title { color: #b8860b; }
+    .vision-tile--tone-peach .vision-tile-title { color: #a65d3a; }
+    .vision-tile--tone-mist .vision-tile-title { color: var(--vb-ink); }
+
+    /* Background image avoids Metronic’s global `img { max-width:100%; height:auto }` fighting layout and leaking into adjacent grid cells. */
+    .vision-tile-media {
+        position: relative;
+        flex: 0 0 auto;
+        height: 7.75rem;
+        max-height: 7.75rem;
+        min-height: 0;
+        overflow: hidden;
+        background-color: rgba(0, 0, 0, 0.06);
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+        contain: paint;
+    }
+
+    .vision-tile--no-image .vision-tile-media {
+        display: none;
+    }
+
+    .vision-tile--no-image .vision-tile-inner {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .vision-tile-inner {
+        flex: 1 1 auto;
+        min-height: 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: center;
+        padding: 1.25rem 1.25rem 1.1rem;
+        gap: 0.5rem;
+    }
+
+    .vision-tile-title {
+        font-family: inherit;
+        font-size: 1.2rem;
         font-weight: 700;
-        font-size: 1.125rem;
-        color: #2563eb; /* text-blue-600 */
-        margin-bottom: 0.5rem;
+        margin: 0;
+        line-height: 1.2;
+        word-break: break-word;
     }
 
-    .vision-card-desc {
-        color: #475569; /* text-slate-600 */
+    .vision-tile-desc {
+        font-family: 'Source Serif 4', Georgia, serif;
         font-size: 0.875rem;
-        line-height: 1.5;
+        line-height: 1.45;
+        color: var(--vb-muted);
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
-    .line-clamp-1 {
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;  
+    .vision-tile-meta {
+        width: 100%;
+        margin-top: auto;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .vision-tile-progress-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(0, 0, 0, 0.38);
+        margin-bottom: 0.35rem;
+    }
+
+    .vision-tile-progress-label span:last-child {
+        color: rgba(0, 0, 0, 0.55);
+        font-size: 0.7rem;
+    }
+
+    .vision-tile-progress-track {
+        height: 5px;
+        border-radius: 9999px;
+        background: rgba(0, 0, 0, 0.1);
         overflow: hidden;
     }
-    .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;  
-        overflow: hidden;
+
+    .vision-tile-progress-fill {
+        height: 100%;
+        border-radius: 9999px;
+        background: linear-gradient(90deg, #6b5a3e, #a67c52);
+        transition: width 0.6s ease;
+    }
+
+    .vision-tile-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        justify-content: center;
+        margin-top: 0.65rem;
+    }
+
+    .vision-tile-actions .kt-btn {
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.75rem;
+    }
+
+    .vision-tile-done {
+        position: absolute;
+        top: 0.6rem;
+        right: 0.6rem;
+        z-index: 3;
+        width: 1.65rem;
+        height: 1.65rem;
+        border-radius: 9999px;
+        background: #16a34a;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .vision-tile-done i {
+        font-size: 0.75rem;
+    }
+
+    .vision-empty-hint {
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--text-muted-foreground, #64748b);
+        font-size: 0.9rem;
     }
 </style>
 @endpush
 
 @section('content')
-{{-- Toolbar / Header --}}
-<div class="pb-6">
-    <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
-        <div class="flex flex-col items-start gap-1">
-            <h1 class="font-semibold text-2xl text-foreground">Family Vision Board</h1>
-            <p class="text-sm text-muted-foreground">This is what we want our family life to look like.</p>
-        </div>
-        <div class="flex items-center gap-2">
-            <a href="{{ route('families.goals.create') }}" class="kt-btn kt-btn-primary shadow-sm">
-                <i class="ki-filled ki-plus"></i> Add New Vision
-            </a>
+<div class="vision-board-page">
+    {{-- Toolbar --}}
+    <div class="vision-toolbar pb-6">
+        <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-3">
+            <div class="flex flex-col items-start gap-1">
+                <h1 class="font-semibold text-2xl text-foreground">Family Vision Board</h1>
+                <p class="text-sm text-muted-foreground">The things we want to accomplish together.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('families.goals.create') }}" class="kt-btn kt-btn-primary shadow-sm">
+                    <i class="ki-filled ki-plus"></i> {{ __('Add vision') }}
+                </a>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="kt-container-fixed">
-    <div class="vision-board-grid mb-10">
-        @forelse($goals as $goal)
-            <div class="vision-card group">
-                <div class="vision-card-img-wrapper">
+    <div class="kt-container-fixed">
+        <div class="vision-board-shell mb-10">
+            <div class="vision-board-grid">
+                <div class="vision-board-intro">
+                    <div class="vision-board-intro-badge" aria-hidden="true"></div>
+                    <h2>{{ __('FAMILY VISION BOARD') }}</h2>
+                    <p>{{ __('The things that we wish to accomplish together as a family.') }}</p>
+                </div>
+
+                @php
+                    $tones = ['yellow', 'peach', 'mist'];
+                    $fallbackImage = "https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&q=80&w=600";
+                    $imgByKeyword = [
+                        'home' => "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=600",
+                        'house' => "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=600",
+                        'travel' => "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=600",
+                        'trip' => "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=600",
+                        'money' => "https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&q=80&w=600",
+                        'save' => "https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&q=80&w=600",
+                        'financial' => "https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&q=80&w=600",
+                    ];
+                @endphp
+
+                @forelse($goals as $goal)
                     @php
-                        $fallbackImage = "https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&q=80&w=600";
+                        $tone = $tones[$loop->index % 3];
                         $titleLower = strtolower($goal->title);
-                        if(str_contains($titleLower, 'home') || str_contains($titleLower, 'house')) $fallbackImage = "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=600";
-                        if(str_contains($titleLower, 'travel') || str_contains($titleLower, 'trip')) $fallbackImage = "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=600";
-                        if(str_contains($titleLower, 'money') || str_contains($titleLower, 'save')) $fallbackImage = "https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&q=80&w=600";
+                        $hasImage = (bool) ($goal->resolved_image_url);
+                        $img = $goal->resolved_image_url ?? $fallbackImage;
+                        if (!$hasImage) {
+                            foreach ($imgByKeyword as $kw => $url) {
+                                if (str_contains($titleLower, $kw)) {
+                                    $img = $url;
+                                    break;
+                                }
+                            }
+                        }
+                        $tall = ($loop->index % 5 === 1);
                     @endphp
-                    <img src="{{ $goal->resolved_image_url ?? $fallbackImage }}" class="vision-card-img" alt="{{ $goal->title }}" onerror="this.onerror=null;this.src='{{ $fallbackImage }}'">
-                    
-                    <a href="{{ route('families.goals.show', $goal) }}" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
-                        <span class="bg-white/90 text-primary px-5 py-2.5 rounded-full font-bold text-sm shadow-lg group-hover:bg-white transition-transform pointer-events-none">
-                            {{ __('View details') }}
-                        </span>
-                    </a>
-
-                    @if($goal->status === 'completed')
-                        <div class="absolute top-3 right-3 bg-green-500 text-white p-1.5 rounded-full shadow-md border-2 border-white">
-                            <i class="ki-filled ki-check text-sm"></i>
+                    <article class="vision-tile vision-tile--tone-{{ $tone }} {{ $hasImage ? '' : 'vision-tile--no-image' }} {{ $tall ? 'vision-tile--tall' : '' }} group">
+                        @if($hasImage)
+                            {{-- Single-quoted style so json_encode("url") double-quotes do not break the attribute --}}
+                            <div class="vision-tile-media" style='background-image: url({{ json_encode($img) }});'>
+                                <a href="{{ route('families.goals.show', $goal) }}" class="absolute inset-0 z-[2]" aria-label="{{ __('View') }}: {{ $goal->title }}"></a>
+                                @if($goal->status === 'completed')
+                                    <div class="vision-tile-done"><i class="ki-filled ki-check"></i></div>
+                                @endif
+                            </div>
+                        @else
+                            @if($goal->status === 'completed')
+                                <div class="vision-tile-done"><i class="ki-filled ki-check"></i></div>
+                            @endif
+                        @endif
+                        <div class="vision-tile-inner">
+                            <h2 class="vision-tile-title">{{ $goal->title }}</h2>
+                            <p class="vision-tile-desc">{{ $goal->description ?? __('Visualizing our family achievement.') }}</p>
+                            <div class="vision-tile-meta relative z-[2]">
+                                <div class="vision-tile-progress-label">
+                                    <span>{{ __('Progress') }}</span>
+                                    <span>{{ $goal->progress }}%</span>
+                                </div>
+                                <div class="vision-tile-progress-track">
+                                    <div class="vision-tile-progress-fill" style="width: {{ min(100, max(0, (int) $goal->progress)) }}%;"></div>
+                                </div>
+                                <div class="vision-tile-actions">
+                                    <a href="{{ route('families.goals.show', $goal) }}" class="kt-btn kt-btn-sm kt-btn-primary">{{ __('View') }}</a>
+                                    <a href="{{ route('families.goals.edit', $goal) }}" class="kt-btn kt-btn-sm kt-btn-outline">{{ __('Edit') }}</a>
+                                </div>
+                            </div>
                         </div>
-                    @endif
-                </div>
-
-                <div class="vision-card-body">
-                    <h2 class="vision-card-title line-clamp-1">{{ $goal->title }}</h2>
-                    <p class="vision-card-desc line-clamp-3 flex-grow">
-                        {{ $goal->description ?? __('Visualizing our family achievement.') }}
-                    </p>
-                    
-                    <div class="mt-4 pt-4 border-t border-sky-100">
-                        <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Progress</span>
-                            <span class="text-[11px] font-bold text-blue-600">{{ $goal->progress }}%</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                            <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-1000" style="width: {{ $goal->progress }}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <a href="{{ route('families.goals.show', $goal) }}" class="kt-btn kt-btn-sm kt-btn-primary flex-1 min-w-[6rem] justify-center">{{ __('View') }}</a>
-                        <a href="{{ route('families.goals.edit', $goal) }}" class="kt-btn kt-btn-sm kt-btn-outline flex-1 min-w-[6rem] justify-center">{{ __('Edit') }}</a>
-                    </div>
-                </div>
+                    </article>
+                @empty
+                    @php
+                        $samples = [
+                            ['title' => __('Home & living'), 'desc' => __('Build a calm, secure place we love coming home to.'), 'tone' => 'peach'],
+                            ['title' => __('Travel'), 'desc' => __('See new places together and share stories for years.'), 'tone' => 'yellow', 'tall' => true],
+                            ['title' => __('Financial stability'), 'desc' => __('Save steadily and stay debt-free as a team.'), 'tone' => 'mist'],
+                            ['title' => __('Family bond'), 'desc' => __('Protect Sundays and small rituals that keep us close.'), 'tone' => 'yellow'],
+                            ['title' => __('Wellness'), 'desc' => __('Move more, stress less, and cheer each other on.'), 'tone' => 'mist'],
+                            ['title' => __('Education'), 'desc' => __('Keep learning—kids and adults—out of curiosity.'), 'tone' => 'peach'],
+                        ];
+                    @endphp
+                    <p class="vision-empty-hint">{{ __('No visions yet—the samples below show how your board will look. Add your first goal to replace them.') }}</p>
+                    @foreach($samples as $i => $sample)
+                        <article class="vision-tile vision-tile--tone-{{ $sample['tone'] }} vision-tile--no-image {{ !empty($sample['tall']) ? 'vision-tile--tall' : '' }} opacity-90">
+                            <div class="vision-tile-inner">
+                                <h2 class="vision-tile-title">{{ $sample['title'] }}</h2>
+                                <p class="vision-tile-desc">{{ $sample['desc'] }}</p>
+                                <div class="vision-tile-meta">
+                                    <div class="vision-tile-progress-label">
+                                        <span>{{ __('Progress') }}</span>
+                                        <span>0%</span>
+                                    </div>
+                                    <div class="vision-tile-progress-track">
+                                        <div class="vision-tile-progress-fill" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    @endforeach
+                @endforelse
             </div>
-        @empty
-            <!-- Sample Cards if no goals -->
-            @php
-                $samples = [
-                    ['title' => 'Home & Living', 'desc' => 'Build a modern, peaceful home with comfort and security.', 'img' => 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=600'],
-                    ['title' => 'Financial Stability', 'desc' => 'Grow wealth through smart savings and multiple income streams.', 'img' => 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&q=80&w=600'],
-                    ['title' => 'Family Bond', 'desc' => 'Strengthen relationships through shared values and unity.', 'img' => 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&q=80&w=600'],
-                    ['title' => 'Education', 'desc' => 'Ensure continuous learning and skill development.', 'img' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600'],
-                ];
-            @endphp
-
-            @foreach($samples as $sample)
-            <div class="vision-card opacity-80">
-                <div class="vision-card-img-wrapper">
-                    <!-- Added onerror to simulate the user's broken image visual gracefully if Unsplash is blocked -->
-                    <img src="{{ $sample['img'] }}" class="vision-card-img" alt="{{ $sample['title'] }}" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%\' height=\'100%\'><rect width=\'100%\' height=\'100%\' fill=\'%23f0f9ff\'/></svg>'">
-                </div>
-                <div class="vision-card-body">
-                    <h2 class="vision-card-title">{{ $sample['title'] }}</h2>
-                    <p class="vision-card-desc flex-grow">
-                        {{ $sample['desc'] }}
-                    </p>
-                </div>
-            </div>
-            @endforeach
-        @endforelse
+        </div>
     </div>
 </div>
 @endsection

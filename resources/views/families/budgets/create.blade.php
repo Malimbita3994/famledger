@@ -6,6 +6,7 @@
 @section('content')
 <div class="kt-container-fixed px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-12">
     @php
+        $initialType = old('type', $prefillBudgetType ?? \App\Models\Budget::TYPE_FAMILY);
         // Build category groups and subcategories from expense category names ("Group - Subcategory")
         $budgetCategoryGroups = [];
         $budgetGroupToSubIds = [];
@@ -78,7 +79,7 @@
                             <label for="type" class="kt-form-label">Budget type <span class="text-destructive">*</span></label>
                             <select name="type" id="type" required class="kt-select">
                                 @foreach (\App\Models\Budget::types() as $value => $label)
-                                    <option value="{{ $value }}" {{ old('type', \App\Models\Budget::TYPE_FAMILY) === $value ? 'selected' : '' }}>
+                                    <option value="{{ $value }}" {{ $initialType === $value ? 'selected' : '' }}>
                                         {{ $label }}
                                     </option>
                                 @endforeach
@@ -88,7 +89,7 @@
 
                         <div class="budget-main-col">
                             <label class="inline-flex items-center gap-2 text-sm">
-                                <input type="checkbox" id="is_main_budget" class="mt-0.5" {{ old('type', 'family') === \App\Models\Budget::TYPE_FAMILY ? 'checked' : '' }}>
+                                <input type="checkbox" id="is_main_budget" class="mt-0.5" {{ $initialType === \App\Models\Budget::TYPE_FAMILY ? 'checked' : '' }}>
                                 <span class="kt-form-label m-0">Main budget</span>
                             </label>
                         </div>

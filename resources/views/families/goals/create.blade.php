@@ -202,7 +202,6 @@
             title: @json(__('Could not save goal')),
             html: html,
             confirmButtonText: @json(__('OK')),
-            width: 480,
             backdrop: true,
             customClass: {
                 popup: 'rounded-2xl',

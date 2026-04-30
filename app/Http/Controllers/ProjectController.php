@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\AuthorizesFamilyMember;
-use App\Models\Family;
 use App\Models\Budget;
+use App\Models\Family;
 use App\Models\Project;
-use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -52,7 +51,13 @@ class ProjectController extends Controller
         $priorities = Project::priorities();
 
         return view('families.projects.index', compact(
-            'family', 'projects', 'currency', 'projectTypes', 'projectStatuses', 'priorities', 'filter'
+            'family',
+            'projects',
+            'currency',
+            'projectTypes',
+            'projectStatuses',
+            'priorities',
+            'filter',
         ));
     }
 

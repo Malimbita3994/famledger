@@ -1,15 +1,15 @@
 @extends('layouts.metronic')
 
-@section('title', 'Project Summary Report')
-@section('page_title', 'Project Summary Report')
+@section('title', 'Project')
+@section('page_title', 'Project')
 
 @php
     $filterTab = $filterTab ?? 'all';
     $tabs = [
-        'all'       => ['label' => 'All Projects', 'icon' => 'ki-briefcase'],
-        'active'    => ['label' => 'Active Projects', 'icon' => 'ki-flag'],
-        'completed' => ['label' => 'Completed Projects', 'icon' => 'ki-check-circle'],
-        'funding'   => ['label' => 'Projects Funding', 'icon' => 'ki-wallet'],
+        'all'       => ['label' => 'All', 'icon' => 'ki-briefcase'],
+        'active'    => ['label' => 'Active', 'icon' => 'ki-flag'],
+        'completed' => ['label' => 'Completed', 'icon' => 'ki-check-circle'],
+        'funding'   => ['label' => 'Funding', 'icon' => 'ki-wallet'],
     ];
 @endphp
 
@@ -21,7 +21,7 @@
 
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-            <h1 class="font-medium text-lg text-mono">Project Summary Report</h1>
+            <h1 class="font-medium text-lg text-mono">Project</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Status, budget, spent, remaining, and completion. Filter by tab or search by name.</p>
         </div>
         <x-famledger.export-pdf-button :href="route('families.reports.project-summary.export-pdf') . '?' . http_build_query(request()->only(['tab','search']))" />
@@ -60,7 +60,7 @@
     <div class="report-kpi-grid">
         <x-famledger.pulse-stat-card
             class="report-kpi-card"
-            label="All Projects"
+            label="All"
             :value="(string) ($totalProjects ?? 0)"
         >
             Total projects

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
  * Application and database audit trail.
@@ -12,12 +13,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AuditLog extends Model
 {
     public const TYPE_APPLICATION = 'application';
+
     public const TYPE_DATABASE = 'database';
 
     public const ACTION_LOGIN = 'login';
+
     public const ACTION_LOGOUT = 'logout';
+
     public const ACTION_CREATED = 'created';
+
     public const ACTION_UPDATED = 'updated';
+
     public const ACTION_DELETED = 'deleted';
 
     protected $fillable = [
@@ -52,7 +58,7 @@ class AuditLog extends Model
         return $this->belongsTo(Family::class);
     }
 
-    public function subject(): \Illuminate\Database\Eloquent\Relations\MorphTo
+    public function subject(): MorphTo
     {
         return $this->morphTo('subject', 'subject_type', 'subject_id');
     }
@@ -84,8 +90,10 @@ class AuditLog extends Model
 
     /**
      * Log an application-level event (login, logout, custom action).
+     *
+     * @param  int|null  $familyId  When set, attributes the entry to this family (e.g. admin actions affecting many families).
      */
-    public static function logApplication(string $action, ?string $description = null, array $properties = []): ?self
+    public static function logApplication(string $action, ?string $description = null, array $properties = [], ?int $familyId = null): ?self
     {
         $request = request();
         $data = [
@@ -94,12 +102,13 @@ class AuditLog extends Model
             'description' => $description,
             'properties' => $properties ?: null,
             'user_id' => auth()->id(),
-            'family_id' => $request && $request->hasSession() ? $request->session()->get('current_family_id') : null,
+            'family_id' => $familyId ?? ($request && $request->hasSession() ? $request->session()->get('current_family_id') : null),
             'ip' => $request ? $request->ip() : null,
             'user_agent' => $request ? $request->userAgent() : null,
             'url' => $request ? $request->fullUrl() : null,
             'request_method' => $request ? $request->method() : null,
         ];
+
         return self::create($data);
     }
 
@@ -136,6 +145,7 @@ class AuditLog extends Model
             'url' => $request ? $request->fullUrl() : null,
             'request_method' => $request ? $request->method() : null,
         ];
+
         return self::create(array_merge($data, array_diff_key($overrides, array_flip(['subject_type', 'family_id']))));
     }
 
@@ -159,12 +169,23 @@ class AuditLog extends Model
                 'Family' => 'Members & roles',
                 'FamilyMember' => 'Members & roles',
                 'FamilyInvitation' => 'Members & roles',
+                'Milestone' => 'Timeline',
+                'Announcement' => 'Announcements',
+                'FamilyRelationship' => 'Family tree',
             ];
+
             return $map[$short] ?? $short;
         }
         if (in_array($this->action, [self::ACTION_LOGIN, self::ACTION_LOGOUT], true)) {
             return 'Security';
         }
+        if ($this->type === self::TYPE_APPLICATION && $this->action === self::ACTION_DELETED && is_array($this->properties)) {
+            $ctx = $this->properties['context'] ?? null;
+            if (in_array($ctx, ['admin_user_delete', 'self_service_account_deletion'], true)) {
+                return 'Members & roles';
+            }
+        }
+
         return 'General';
     }
 }

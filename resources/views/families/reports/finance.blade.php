@@ -1,7 +1,7 @@
 @extends('layouts.metronic')
 
-@section('title', 'Finance Reports')
-@section('page_title', 'Finance Reports')
+@section('title', 'Finance')
+@section('page_title', 'Finance')
 
 @php
     $report = $report ?? 'cash-flow';
@@ -22,7 +22,7 @@
     </x-fin-back-link>
 
     <div class="mb-6">
-        <h1 class="font-medium text-lg text-mono">Finance Reports</h1>
+        <h1 class="font-medium text-lg text-mono">Finance</h1>
     </div>
 
     {{-- Filter report card with tabs --}}

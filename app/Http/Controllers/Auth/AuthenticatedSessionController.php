@@ -44,7 +44,9 @@ class AuthenticatedSessionController extends Controller
             report($e);
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()
+            ->intended(route('dashboard', absolute: false))
+            ->with('success', __('Welcome back!'));
     }
 
     /**
@@ -82,6 +84,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('login', ['logged_out' => '1']);
     }
 }

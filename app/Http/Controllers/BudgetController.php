@@ -45,9 +45,14 @@ class BudgetController extends Controller
         ]);
     }
 
-    public function create(Family $family)
+    public function create(Request $request, Family $family)
     {
         $this->authorizeFamilyMember($family);
+
+        $prefillBudgetType = $request->query('type');
+        if ($prefillBudgetType !== null && ! array_key_exists($prefillBudgetType, Budget::types())) {
+            $prefillBudgetType = null;
+        }
 
         $wallets = $family->wallets()->where('status', 'active')->orderBy('name')->get(['id', 'name', 'currency_code']);
         $categories = ExpenseCategory::defaults();
@@ -58,7 +63,9 @@ class BudgetController extends Controller
 
         $projects = $family->projects()->orderBy('name')->get(['id', 'name']);
 
-        return view('families.budgets.create', compact('family', 'wallets', 'categories', 'currencies', 'projects'));
+        return view('families.budgets.create', compact(
+            'family', 'wallets', 'categories', 'currencies', 'projects', 'prefillBudgetType'
+        ));
     }
 
     public function store(Request $request, Family $family)

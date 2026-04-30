@@ -1,7 +1,7 @@
 @extends('layouts.metronic')
 
-@section('title', 'Projects Funding')
-@section('page_title', 'Projects Funding')
+@section('title', 'Funding')
+@section('page_title', 'Funding')
 
 @section('content')
 <style>
@@ -44,7 +44,7 @@
 
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-            <h1 class="font-semibold text-lg text-mono">Projects Funding</h1>
+            <h1 class="font-semibold text-lg text-mono">Funding</h1>
             <p class="text-sm text-muted-foreground mt-0.5">Allocate funds from family wallets to projects.</p>
         </div>
         <a href="{{ route('families.projects.funding.create') }}" class="kt-btn kt-btn-primary">
@@ -147,6 +147,12 @@
                                                         <a class="kt-menu-link" href="{{ route('families.projects.edit', $project) }}">
                                                             <span class="kt-menu-icon"><i class="ki-filled ki-pencil"></i></span>
                                                             <span class="kt-menu-title">{{ __('Edit') }}</span>
+                                                        </a>
+                                                    </div>
+                                                    <div class="kt-menu-item">
+                                                        <a class="kt-menu-link" href="{{ route('families.expenses.create', ['project_id' => $project->id]) }}">
+                                                            <span class="kt-menu-icon"><i class="ki-filled ki-arrow-down"></i></span>
+                                                            <span class="kt-menu-title">{{ __('Record expense') }}</span>
                                                         </a>
                                                     </div>
                                                     <div class="kt-menu-separator"></div>
