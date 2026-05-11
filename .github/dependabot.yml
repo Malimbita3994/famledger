@@ -1,0 +1,47 @@
+version: 2
+updates:
+  # Enable version updates for PHP dependencies
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "Malimbita3994"
+    labels:
+      - "dependencies"
+      - "php"
+    allow:
+      - dependency-type: "all"
+    ignore:
+      # Add any packages you want to manually manage here
+      # Example: - dependency-name: "some/package"
+
+  # Enable version updates for npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "Malimbita3994"
+    labels:
+      - "dependencies"
+      - "javascript"
+    allow:
+      - dependency-type: "all"
+
+  # Security updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+    labels:
+      - "dependencies"
+      - "github-actions"
